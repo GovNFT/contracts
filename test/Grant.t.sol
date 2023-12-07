@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import {BaseTest} from "test/utils/BaseTest.sol";
 
 import "src/VestingEscrow.sol";
+import "src/Vault.sol";
 
 contract GrantTest is BaseTest {
     event Fund(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
@@ -26,10 +27,12 @@ contract GrantTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
+        address vault = address(govNFT.idToVault(tokenId));
 
         assertEq(govNFT.totalSupply(), 1);
         assertEq(govNFT.balanceOf(address(recipient)), 1);
         assertEq(govNFT.tokenOfOwnerByIndex(address(recipient), 0), tokenId);
+        assertEq(Vault(vault).token(), address(testToken));
 
         assertEq(govNFT.idToAdmin(tokenId), address(admin));
         assertEq(govNFT.ownerOf(tokenId), address(recipient));
@@ -44,7 +47,8 @@ contract GrantTest is BaseTest {
         assertEq(end, block.timestamp + WEEK * 2);
         assertEq(totalLocked, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(address(govNFT)), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
     }
 
     function testCreateGrantWithDuration() public {
@@ -58,6 +62,7 @@ contract GrantTest is BaseTest {
         emit Fund(1, address(recipient), testToken, TOKEN_100K);
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createGrant(testToken, address(recipient), TOKEN_100K, WEEK * 2, WEEK);
+        address vault = address(govNFT.idToVault(tokenId));
 
         assertEq(govNFT.totalSupply(), 1);
         assertEq(govNFT.balanceOf(address(recipient)), 1);
@@ -76,7 +81,8 @@ contract GrantTest is BaseTest {
         assertEq(end, block.timestamp + WEEK * 2);
         assertEq(totalLocked, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(address(govNFT)), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
     }
 
     function testCannotCreateGrantIfZeroAddress() public {

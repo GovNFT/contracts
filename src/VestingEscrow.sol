@@ -6,7 +6,10 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {Vault} from "./Vault.sol";
 
 import {IVestingEscrow} from "./interfaces/IVestingEscrow.sol";
 
@@ -16,6 +19,8 @@ import {IVestingEscrow} from "./interfaces/IVestingEscrow.sol";
 /// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
 contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
     using SafeERC20 for IERC20;
+
+    mapping(uint256 => IVault) public idToVault;
 
     mapping(uint256 => LockedGrant) public grants;
     mapping(uint256 => address) public idToToken;
@@ -95,12 +100,16 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         idToAdmin[_tokenId] = msg.sender;
         idToToken[_tokenId] = _token;
 
+        IVault _vault = new Vault(_token);
+        idToVault[_tokenId] = _vault;
+
         _mint(_recipient, _tokenId);
 
         grants[_tokenId] = LockedGrant(_amount, _cliffLength, _startTime, _endTime);
         disabledAt[_tokenId] = _endTime;
 
-        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(_token).safeTransferFrom(msg.sender, address(_vault), _amount);
+
         emit Fund(_tokenId, _recipient, _token, _amount);
         return _tokenId;
     }
@@ -123,7 +132,7 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         uint256 _claimable = Math.min(_unclaimed(_tokenId, _claimPeriodEnd), amount);
         totalClaimed[_tokenId] += _claimable;
 
-        IERC20(idToToken[_tokenId]).safeTransfer(beneficiary, _claimable);
+        idToVault[_tokenId].withdraw(beneficiary, _claimable);
         emit Claim(_tokenId, beneficiary, _claimable);
     }
 
@@ -161,7 +170,16 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         disabledAt[_tokenId] = block.timestamp;
         uint256 ruggable = _locked(_tokenId, block.timestamp);
 
-        IERC20(idToToken[_tokenId]).safeTransfer(_admin, ruggable);
+        idToVault[_tokenId].withdraw(_admin, ruggable);
         emit RugPull(_tokenId, _ownerOf(_tokenId), ruggable);
+    }
+
+    /// @inheritdoc IVestingEscrow
+    function delegate(uint256 _tokenId, address delegatee) external {
+        _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
+        if (delegatee == address(0)) revert ZeroAddress();
+
+        idToVault[_tokenId].delegate(delegatee);
+        emit Delegate(_tokenId, delegatee);
     }
 }

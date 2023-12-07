@@ -21,7 +21,8 @@ contract RugPullTest is BaseTest {
         );
         (uint256 totalLocked, , , uint256 end) = govNFT.grants(tokenId);
 
-        assertEq(IERC20(testToken).balanceOf(address(govNFT)), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(address(govNFT.idToVault(tokenId))), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
         assertEq(IERC20(testToken).balanceOf(address(admin)), 0);
         assertEq(govNFT.disabledAt(tokenId), end);

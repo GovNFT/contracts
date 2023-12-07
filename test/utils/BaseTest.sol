@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import "forge-std/console.sol";
 import {Test, console2} from "forge-std/Test.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
+import {MockGovernanceToken} from "test/utils/MockGovernanceToken.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -16,6 +17,7 @@ contract BaseTest is Test {
     VestingEscrow public govNFT;
 
     address public testToken;
+    address public testGovernanceToken;
     TestOwner public admin;
     TestOwner public recipient;
 
@@ -37,7 +39,9 @@ contract BaseTest is Test {
         admin = new TestOwner();
         recipient = new TestOwner();
         testToken = address(new MockERC20("TEST", "TEST", 18));
+        testGovernanceToken = address(new MockGovernanceToken("TESTGOV", "TESTGOV", 18));
         deal(testToken, address(admin), TOKEN_100K);
+        deal(testGovernanceToken, address(admin), TOKEN_100K);
         _setUp();
     }
 

@@ -15,6 +15,7 @@ interface IVestingEscrow {
     event RugPull(uint256 indexed tokenId, address recipient, uint256 rugged);
     event AcceptAdmin(uint256 indexed tokenId, address admin);
     event SetAdmin(uint256 indexed tokenId, address admin);
+    event Delegate(uint256 indexed tokenId, address delegate);
 
     /** Errors **/
     error VestingStartTooOld();
@@ -103,4 +104,9 @@ interface IVestingEscrow {
     /// @notice Disable further flow of tokens from a given Grant and clawback the unvested part to admin
     /// @param _tokenId Grant Token Id to be rug pulled
     function rugPull(uint256 _tokenId) external;
+
+    // @notice Delegates voting power of a given Grant to `delegatee`
+    // @param _tokenId Grant Token Id to be used
+    // @param delegatee Address to delegate voting power to
+    function delegate(uint256 _tokenId, address delegatee) external;
 }
