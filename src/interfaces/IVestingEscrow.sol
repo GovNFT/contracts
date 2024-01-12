@@ -9,7 +9,9 @@ interface IVestingEscrow {
         uint256 end;
     }
 
-    /** Events **/
+    /**
+     * Events *
+     */
     event Fund(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
     event Claim(uint256 indexed tokenId, address indexed recipient, uint256 claimed);
     event RugPull(uint256 indexed tokenId, address recipient, uint256 rugged);
@@ -17,7 +19,9 @@ interface IVestingEscrow {
     event SetAdmin(uint256 indexed tokenId, address admin);
     event Delegate(uint256 indexed tokenId, address delegate);
 
-    /** Errors **/
+    /**
+     * Errors *
+     */
     error VestingStartTooOld();
     error TokenNotDisabled();
     error EndBeforeOrEqual();

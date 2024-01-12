@@ -16,3 +16,7 @@ docs/
 
 # Dependencies
 node_modules
+artifacts/
+cache_hardhat
+deployments
+lcov.info
