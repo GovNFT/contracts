@@ -182,4 +182,30 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         idToVault[_tokenId].delegate(delegatee);
         emit Delegate(_tokenId, delegatee);
     }
+
+    /// @inheritdoc IVestingEscrow
+    function sweep(uint256 _tokenId, address _token, address _recipient) external {
+        sweep(_tokenId, _token, _recipient, type(uint256).max);
+    }
+
+    /// @inheritdoc IVestingEscrow
+    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public {
+        if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
+        _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
+
+        IVault vault = idToVault[_tokenId];
+
+        if (_token == idToToken[_tokenId]) {
+            amount = Math.min(
+                amount,
+                IERC20(_token).balanceOf(address(vault)) - (grants[_tokenId].totalLocked - totalClaimed[_tokenId])
+            );
+        } else {
+            amount = Math.min(amount, IERC20(_token).balanceOf(address(vault)));
+        }
+        if (amount == 0) revert ZeroAmount();
+
+        vault.sweep(_token, _recipient, amount);
+        emit Sweep(_tokenId, _token, _recipient, amount);
+    }
 }

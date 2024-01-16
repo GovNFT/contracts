@@ -18,6 +18,7 @@ interface IVestingEscrow {
     event AcceptAdmin(uint256 indexed tokenId, address admin);
     event SetAdmin(uint256 indexed tokenId, address admin);
     event Delegate(uint256 indexed tokenId, address delegate);
+    event Sweep(uint256 indexed tokenId, address indexed token, address indexed receiver, uint256 amount);
 
     /**
      * Errors *
@@ -113,4 +114,17 @@ interface IVestingEscrow {
     // @param _tokenId Grant Token Id to be used
     // @param delegatee Address to delegate voting power to
     function delegate(uint256 _tokenId, address delegatee) external;
+
+    /// @notice Withdraw all `token`s from the Grant. Can be used to sweep airdropped tokens
+    /// @param _tokenId Grant Token Id to be used
+    /// @param token Address of the `token` to sweep
+    /// @param recipient Address to receive the tokens
+    function sweep(uint256 _tokenId, address token, address recipient) external;
+
+    /// @notice Withdraw `amount` of `token` from the Grant. Can be used to sweep airdropped tokens
+    /// @param _tokenId Grant Token Id to be used
+    /// @param token Address of the `token` to sweep
+    /// @param recipient Address to receive the tokens
+    /// @param amount Amount of tokens to sweep
+    function sweep(uint256 _tokenId, address token, address recipient, uint256 amount) external;
 }

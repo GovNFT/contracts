@@ -29,4 +29,9 @@ contract Vault is IVault, Ownable {
     function delegate(address delegatee) external onlyOwner {
         IVotes(token).delegate(delegatee);
     }
+
+    /// @inheritdoc IVault
+    function sweep(address _token, address recipient, uint256 amount) external onlyOwner {
+        IERC20(_token).safeTransfer(recipient, amount);
+    }
 }

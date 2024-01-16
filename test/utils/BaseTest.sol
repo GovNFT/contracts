@@ -18,8 +18,10 @@ contract BaseTest is Test {
 
     address public testToken;
     address public testGovernanceToken;
+    address public airdropToken;
     TestOwner public admin;
     TestOwner public recipient;
+    TestOwner public airdropper;
 
     uint256 constant TOKEN_1 = 1e18;
     uint256 constant TOKEN_10K = 1e22; // 1e4 = 10K tokens with 18 decimals
@@ -38,8 +40,13 @@ contract BaseTest is Test {
 
         admin = new TestOwner();
         recipient = new TestOwner();
+        airdropper = new TestOwner();
+
         testToken = address(new MockERC20("TEST", "TEST", 18));
         testGovernanceToken = address(new MockGovernanceToken("TESTGOV", "TESTGOV", 18));
+        airdropToken = address(new MockERC20("AIRDROP", "AIRDROP", 18));
+        deal(airdropToken, address(airdropper), TOKEN_100K);
+        deal(testToken, address(airdropper), TOKEN_100K);
         deal(testToken, address(admin), TOKEN_100K);
         deal(testGovernanceToken, address(admin), TOKEN_100K);
         _setUp();
