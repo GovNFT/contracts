@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Libraries } from "hardhat/types";
 import { join } from "path";
 import { writeFile } from "fs/promises";
-import { VestingEscrow } from "../../artifacts/types";
+import { GovNFT } from "../../artifacts/types";
 
 export async function deploy<Type>(
   typeName: string,
@@ -18,19 +18,15 @@ export async function deploy<Type>(
 }
 
 async function main() {
-  const vestingEscrow = await deploy<VestingEscrow>(
-    "VestingEscrow",
-    undefined,
-    [],
-  );
-  console.log(`VestingEscrow deployed to ${vestingEscrow.address}`);
+  const govNFT = await deploy<GovNFT>("GovNFT", undefined, []);
+  console.log(`GovNFT deployed to ${govNFT.address}`);
 
   interface DeployOutput {
-    VestingEscrow: string;
+    GovNFT: string;
   }
 
   const output: DeployOutput = {
-    VestingEscrow: vestingEscrow.address,
+    GovNFT: govNFT.address,
   };
 
   const outputDirectory = "script/constants/output";

@@ -7,10 +7,10 @@ import {IVault} from "./interfaces/IVault.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
-/// @title Velodrome Vault (for VestingEscrow grants)
+/// @title Velodrome Vault (for GovNFT locks)
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
-/// @notice Vault that stores the ERC-20 tokens of a grant.
-/// @notice Funds from each grant are stored in each Vault to allow delegation of locked governance tokens.
+/// @notice Vault that stores the ERC-20 tokens of a lock.
+/// @notice Funds from each lock are stored in each Vault to allow delegation of locked governance tokens.
 contract Vault is IVault, Ownable {
     using SafeERC20 for IERC20;
 

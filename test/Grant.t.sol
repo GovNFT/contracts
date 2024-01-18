@@ -3,13 +3,13 @@ pragma solidity 0.8.20;
 
 import {BaseTest} from "test/utils/BaseTest.sol";
 
-import "src/VestingEscrow.sol";
+import "src/GovNFT.sol";
 import "src/Vault.sol";
 
-contract GrantTest is BaseTest {
-    event Fund(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
+contract LockTest is BaseTest {
+    event Create(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
 
-    function testCreateGrant() public {
+    function testCreateLock() public {
         assertEq(govNFT.totalSupply(), 0);
         assertEq(govNFT.balanceOf(address(recipient)), 0);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -17,9 +17,9 @@ contract GrantTest is BaseTest {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
 
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit Fund(1, address(recipient), testToken, TOKEN_100K);
+        emit Create(1, address(recipient), testToken, TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -34,7 +34,7 @@ contract GrantTest is BaseTest {
 
         assertEq(govNFT.ownerOf(tokenId), address(recipient));
 
-        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(totalClaimed, 0);
 
         (
@@ -49,7 +49,7 @@ contract GrantTest is BaseTest {
             address token,
             address vault,
             address minter
-        ) = govNFT.grants(tokenId);
+        ) = govNFT.locks(tokenId);
 
         assertEq(Vault(vault).token(), address(testToken));
         assertEq(token, address(testToken));
@@ -65,39 +65,32 @@ contract GrantTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
     }
 
-    function testCannotCreateGrantIfZeroAddress() public {
-        vm.expectRevert(IVestingEscrow.ZeroAddress.selector);
-        govNFT.createGrant(address(0), address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+    function testCannotCreateLockIfZeroAddress() public {
+        vm.expectRevert(IGovNFT.ZeroAddress.selector);
+        govNFT.createLock(address(0), address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
 
-        vm.expectRevert(IVestingEscrow.ZeroAddress.selector);
-        govNFT.createGrant(testToken, address(0), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+        vm.expectRevert(IGovNFT.ZeroAddress.selector);
+        govNFT.createLock(testToken, address(0), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
-    function testCannotCreateGrantIfZeroAmount() public {
-        vm.expectRevert(IVestingEscrow.ZeroAmount.selector);
-        govNFT.createGrant(testToken, address(recipient), 0, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+    function testCannotCreateLockIfZeroAmount() public {
+        vm.expectRevert(IGovNFT.ZeroAmount.selector);
+        govNFT.createLock(testToken, address(recipient), 0, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
-    function testCannotCreateGrantIfInvalidCliff() public {
-        vm.expectRevert(IVestingEscrow.InvalidCliff.selector);
-        govNFT.createGrant(testToken, address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK - 1, WEEK);
+    function testCannotCreateLockIfInvalidCliff() public {
+        vm.expectRevert(IGovNFT.InvalidCliff.selector);
+        govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK - 1, WEEK);
     }
 
-    function testCannotCreateGrantWithZeroDuration() public {
-        vm.expectRevert(IVestingEscrow.EndBeforeOrEqualStart.selector);
-        govNFT.createGrant(
-            testToken,
-            address(recipient),
-            TOKEN_1,
-            block.timestamp + WEEK,
-            block.timestamp + WEEK,
-            WEEK
-        );
+    function testCannotCreateLockWithZeroDuration() public {
+        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp + WEEK, block.timestamp + WEEK, WEEK);
     }
 
-    function testCannotCreateGrantIfEndBeforeStart() public {
-        vm.expectRevert(IVestingEscrow.EndBeforeOrEqualStart.selector);
-        govNFT.createGrant(
+    function testCannotCreateLockIfEndBeforeStart() public {
+        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_1,
@@ -106,8 +99,8 @@ contract GrantTest is BaseTest {
             WEEK
         );
 
-        vm.expectRevert(IVestingEscrow.EndBeforeOrEqualStart.selector);
-        govNFT.createGrant(
+        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_1,
@@ -117,9 +110,9 @@ contract GrantTest is BaseTest {
         );
     }
 
-    function testCannotCreateGrantIfStartIsInPast() public {
-        vm.expectRevert(IVestingEscrow.VestingStartTooOld.selector);
-        govNFT.createGrant(
+    function testCannotCreateLockIfStartIsInPast() public {
+        vm.expectRevert(IGovNFT.VestingStartTooOld.selector);
+        govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_1,

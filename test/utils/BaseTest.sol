@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import "forge-std/console.sol";
 import {Test, console} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -11,11 +12,11 @@ import {MockGovernanceToken} from "test/utils/MockGovernanceToken.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IVestingEscrow} from "src/interfaces/IVestingEscrow.sol";
-import "src/VestingEscrow.sol";
+import {IGovNFT} from "src/interfaces/IGovNFT.sol";
+import "src/GovNFT.sol";
 
 contract BaseTest is Test {
-    VestingEscrow public govNFT;
+    GovNFT public govNFT;
 
     address public testToken;
     address public testGovernanceToken;
@@ -39,7 +40,7 @@ contract BaseTest is Test {
     uint256 constant WEEK = 1 weeks;
 
     function setUp() public {
-        govNFT = new VestingEscrow();
+        govNFT = new GovNFT();
 
         admin = new TestOwner();
         admin1 = new TestOwner();
@@ -61,7 +62,7 @@ contract BaseTest is Test {
     /// @dev Implement this if you want a custom configured deployment
     function _setUp() public virtual {}
 
-    function _checkGrantUpdates(
+    function _checkLockUpdates(
         uint256 tokenId,
         uint256 _totalLocked,
         uint256 _initialDeposit,
@@ -71,7 +72,7 @@ contract BaseTest is Test {
     ) internal {
         // Check TokenId's NFT information is equal to the input parameters
         (uint256 totalLocked, uint256 initialDeposit, , , , uint256 cliff, uint256 start, uint256 end, , , ) = govNFT
-            .grants(tokenId);
+            .locks(tokenId);
         assertEq(totalLocked, _totalLocked);
         assertEq(initialDeposit, _initialDeposit);
         assertEq(cliff, _cliffLength);
@@ -91,9 +92,9 @@ contract BaseTest is Test {
         assertEq(govNFT.ownerOf(_from), owner);
         assertEq(govNFT.ownerOf(tokenId), beneficiary);
 
-        (, , uint256 _totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , uint256 _totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
 
-        (, , , uint256 _unclaimedBeforeSplit, uint256 _splitCount, , , , , , ) = govNFT.grants(_from);
+        (, , , uint256 _unclaimedBeforeSplit, uint256 _splitCount, , , , , , ) = govNFT.locks(_from);
         assertEq(_totalClaimed, 0);
         assertEq(_splitCount, splitCount);
         assertEq(govNFT.splitTokensByIndex(_from, 0), tokenId);

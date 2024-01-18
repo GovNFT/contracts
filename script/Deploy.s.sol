@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-import {VestingEscrow} from "src/VestingEscrow.sol";
+import {GovNFT} from "src/GovNFT.sol";
 
 contract Deploy is Script {
     using stdJson for string;
@@ -13,17 +13,17 @@ contract Deploy is Script {
     address public deployerAddress = vm.rememberKey(deployPrivateKey);
     string public outputFilename = vm.envString("OUTPUT_FILENAME");
 
-    VestingEscrow public vestingEscrow;
+    GovNFT public govNFT;
     string public jsonOutput;
 
     function run() public {
         vm.startBroadcast(deployerAddress);
-        vestingEscrow = new VestingEscrow();
+        govNFT = new GovNFT();
         vm.stopBroadcast();
 
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/script/constants/output/");
         path = string.concat(path, outputFilename);
-        vm.writeJson(vm.serializeAddress("", "VestingEscrow", address(vestingEscrow)), path);
+        vm.writeJson(vm.serializeAddress("", "GovNFT", address(govNFT)), path);
     }
 }

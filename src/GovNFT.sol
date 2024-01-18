@@ -9,53 +9,53 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {IVestingEscrow} from "./interfaces/IVestingEscrow.sol";
+import {IGovNFT} from "./interfaces/IGovNFT.sol";
 import {IVault} from "./interfaces/IVault.sol";
 import {Vault} from "./Vault.sol";
 
-/// @title Velodrome VestingEscrow
+/// @title Velodrome GovNFT
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
 /// @notice GovNFT implementation that vests ERC-20 tokens to a given address, in the form of an ERC-721
 /// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
-contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
+contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     using SafeERC20 for IERC20;
 
-    mapping(uint256 => LockedGrant) public grants;
+    mapping(uint256 => Lock) public locks;
 
     mapping(uint256 => mapping(uint256 => uint256)) public splitTokensByIndex;
 
     constructor() ERC721("GovNFT", "GovNFT") {}
 
-    /// @inheritdoc IVestingEscrow
+    /// @inheritdoc IGovNFT
     function unclaimed(uint256 _tokenId) external view returns (uint256) {
         return _unclaimed(_tokenId);
     }
 
     function _unclaimed(uint256 _tokenId) internal view returns (uint256) {
-        return _totalVested(_tokenId) + grants[_tokenId].unclaimedBeforeSplit - grants[_tokenId].totalClaimed;
+        return _totalVested(_tokenId) + locks[_tokenId].unclaimedBeforeSplit - locks[_tokenId].totalClaimed;
     }
 
     function _totalVested(uint256 _tokenId) internal view returns (uint256) {
-        LockedGrant memory grant = grants[_tokenId];
-        uint256 time = Math.min(block.timestamp, grant.end);
+        Lock memory lock = locks[_tokenId];
+        uint256 time = Math.min(block.timestamp, lock.end);
 
-        if (time < grant.start + grant.cliffLength) {
+        if (time < lock.start + lock.cliffLength) {
             return 0;
         }
-        return (grant.totalLocked * (time - grant.start)) / (grant.end - grant.start);
+        return (lock.totalLocked * (time - lock.start)) / (lock.end - lock.start);
     }
 
-    /// @inheritdoc IVestingEscrow
+    /// @inheritdoc IGovNFT
     function locked(uint256 _tokenId) external view returns (uint256) {
         return _locked(_tokenId);
     }
 
     function _locked(uint256 _tokenId) internal view returns (uint256) {
-        return grants[_tokenId].totalLocked - _totalVested(_tokenId);
+        return locks[_tokenId].totalLocked - _totalVested(_tokenId);
     }
 
-    /// @inheritdoc IVestingEscrow
-    function createGrant(
+    /// @inheritdoc IGovNFT
+    function createLock(
         address _token,
         address _recipient,
         uint256 _amount,
@@ -73,35 +73,35 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         address _vault = address(new Vault(_token));
         _tokenId = _createNFT(
             _recipient,
-            LockedGrant(_amount, _amount, 0, 0, 0, _cliffLength, _startTime, _endTime, _token, _vault, msg.sender)
+            Lock(_amount, _amount, 0, 0, 0, _cliffLength, _startTime, _endTime, _token, _vault, msg.sender)
         );
 
         IERC20(_token).safeTransferFrom(msg.sender, _vault, _amount);
 
-        emit Fund(_tokenId, _recipient, _token, _amount);
+        emit Create(_tokenId, _recipient, _token, _amount);
     }
 
-    /// @inheritdoc IVestingEscrow
+    /// @inheritdoc IGovNFT
     function claim(uint256 _tokenId, address _beneficiary, uint256 _amount) external nonReentrant {
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
         if (_beneficiary == address(0)) revert ZeroAddress();
 
         uint256 _claimable = Math.min(_unclaimed(_tokenId), _amount);
 
-        LockedGrant memory grant = grants[_tokenId];
-        if (_claimable >= grant.unclaimedBeforeSplit) {
-            grant.totalClaimed += _claimable - grant.unclaimedBeforeSplit;
-            delete grant.unclaimedBeforeSplit;
+        Lock memory lock = locks[_tokenId];
+        if (_claimable >= lock.unclaimedBeforeSplit) {
+            lock.totalClaimed += _claimable - lock.unclaimedBeforeSplit;
+            delete lock.unclaimedBeforeSplit;
         } else {
-            grant.unclaimedBeforeSplit -= _claimable;
+            lock.unclaimedBeforeSplit -= _claimable;
         }
 
-        IVault(grant.vault).withdraw(_beneficiary, _claimable);
-        grants[_tokenId] = grant;
+        IVault(lock.vault).withdraw(_beneficiary, _claimable);
+        locks[_tokenId] = lock;
         emit Claim(_tokenId, _beneficiary, _claimable);
     }
 
-    /// @inheritdoc IVestingEscrow
+    /// @inheritdoc IGovNFT
     function split(
         address _beneficiary,
         uint256 _from,
@@ -115,109 +115,109 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         if (_amount == 0) revert ZeroAmount();
         if (_beneficiary == address(0)) revert ZeroAddress();
 
-        LockedGrant memory newGrant = grants[_from];
-        uint256 _endOfCliff = newGrant.start + newGrant.cliffLength;
+        Lock memory newLock = locks[_from];
+        uint256 _endOfCliff = newLock.start + newLock.cliffLength;
 
-        if (_end < newGrant.end) revert InvalidEnd();
-        if (_start < newGrant.start || _start < block.timestamp) revert VestingStartTooOld();
+        if (_end < newLock.end) revert InvalidEnd();
+        if (_start < newLock.start || _start < block.timestamp) revert VestingStartTooOld();
         if (_start + _cliff < _endOfCliff || _end - _start < _cliff) revert InvalidCliff();
 
         // Update Original NFT
-        uint256 _newLock = _updateGrantAfterSplit(_from, _amount, _endOfCliff, newGrant);
+        uint256 _newLock = _updateLockAfterSplit(_from, _amount, _endOfCliff, newLock);
 
-        (newGrant.cliffLength, newGrant.start, newGrant.end) = (_cliff, _start, _end);
+        (newLock.cliffLength, newLock.start, newLock.end) = (_cliff, _start, _end);
 
         // Create Split NFT using _amount
-        newGrant.totalLocked = _amount;
-        newGrant.initialDeposit = _amount;
-        delete newGrant.unclaimedBeforeSplit;
-        address parentVault = newGrant.vault;
-        newGrant.vault = address(new Vault(newGrant.token));
-        _tokenId = _createNFT(_beneficiary, newGrant);
+        newLock.totalLocked = _amount;
+        newLock.initialDeposit = _amount;
+        delete newLock.unclaimedBeforeSplit;
+        address parentVault = newLock.vault;
+        newLock.vault = address(new Vault(newLock.token));
+        _tokenId = _createNFT(_beneficiary, newLock);
 
         _addTokenToSplitList(_from, _tokenId);
-        IVault(parentVault).withdraw(newGrant.vault, _amount);
-        emit Split(_from, _tokenId, _beneficiary, _newLock, _amount, newGrant.start, newGrant.end);
+        IVault(parentVault).withdraw(newLock.vault, _amount);
+        emit Split(_from, _tokenId, _beneficiary, _newLock, _amount, newLock.start, newLock.end);
     }
 
-    /// @inheritdoc IVestingEscrow
+    /// @inheritdoc IGovNFT
     function delegate(uint256 _tokenId, address delegatee) external {
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
         if (delegatee == address(0)) revert ZeroAddress();
 
-        IVault(grants[_tokenId].vault).delegate(delegatee);
+        IVault(locks[_tokenId].vault).delegate(delegatee);
         emit Delegate(_tokenId, delegatee);
     }
 
     /// @dev Creates an NFT designed to vest tokens to the given recipient
-    ///      Assumes `_newGrant` is a valid grant
+    ///      Assumes `_newLock` is a valid lock
     /// @param _recipient Address of the user that will receive funds
-    /// @param _newGrant Information of the Grant to be created
+    /// @param _newLock Information of the Lock to be created
     /// @return _tokenId The ID of the recently created NFT
-    function _createNFT(address _recipient, LockedGrant memory _newGrant) private returns (uint256 _tokenId) {
+    function _createNFT(address _recipient, Lock memory _newLock) private returns (uint256 _tokenId) {
         _tokenId = totalSupply() + 1;
 
         _mint(_recipient, _tokenId);
 
-        grants[_tokenId] = _newGrant;
+        locks[_tokenId] = _newLock;
     }
 
-    /// @dev Updates the current Locked Grant information of a Parent NFT after splitting it
-    ///      After execution, the value of the `grant` variable will be updated
+    /// @dev Updates the current Lock information of a Parent NFT after splitting it
+    ///      After execution, the value of the `lock` variable will be updated
     ///      Throws if `_amount` is greater than the Parent NFT's locked balance
     /// @param _from ID of the parent NFT to be updated
     /// @param _amount Amount to be split from Parent NFT's locked balance
     /// @param _endOfCliff End of the Parent NFT's cliff
-    /// @param grant Parent NFT's Locked Grant information to be updated
+    /// @param lock Parent NFT's Lock information to be updated
     /// @return newLock The value of the new Lock for the Parent NFT
-    function _updateGrantAfterSplit(
+    function _updateLockAfterSplit(
         uint256 _from,
         uint256 _amount,
         uint256 _endOfCliff,
-        LockedGrant memory grant
+        Lock memory lock
     ) private returns (uint256 newLock) {
         uint256 totalVested = _totalVested(_from);
-        uint256 _locked_ = grant.totalLocked - totalVested;
+        uint256 _locked_ = lock.totalLocked - totalVested;
         if (_locked_ <= _amount) revert AmountTooBig();
 
         newLock = _locked_ - _amount;
 
-        grant.totalLocked = newLock;
-        if (block.timestamp > grant.start) {
-            grant.start = block.timestamp;
-            grant.cliffLength = block.timestamp < _endOfCliff ? _endOfCliff - block.timestamp : 0;
+        lock.totalLocked = newLock;
+        if (block.timestamp > lock.start) {
+            lock.start = block.timestamp;
+            lock.cliffLength = block.timestamp < _endOfCliff ? _endOfCliff - block.timestamp : 0;
         }
 
         // Update NFT using _locked_ - _amount
-        grant.unclaimedBeforeSplit += totalVested - grant.totalClaimed;
-        delete grant.totalClaimed;
-        grants[_from] = grant;
+        lock.unclaimedBeforeSplit += totalVested - lock.totalClaimed;
+        delete lock.totalClaimed;
+        locks[_from] = lock;
     }
 
     /// @dev Add a Split NFT to the Split index mapping of its parent NFT
     /// @param _from ID of the Parent NFT
     /// @param _tokenId ID of the new Split NFT
     function _addTokenToSplitList(uint256 _from, uint256 _tokenId) private {
-        uint256 length = grants[_from].splitCount;
+        uint256 length = locks[_from].splitCount;
         splitTokensByIndex[_from][length] = _tokenId;
-        grants[_from].splitCount = length + 1;
+        locks[_from].splitCount = length + 1;
     }
 
-    /// @inheritdoc IVestingEscrow
+    /// @inheritdoc IGovNFT
     function sweep(uint256 _tokenId, address _token, address _recipient) external {
         sweep(_tokenId, _token, _recipient, type(uint256).max);
     }
 
-    /// @inheritdoc IVestingEscrow
-    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public nonReentrant {
+    /// @inheritdoc IGovNFT
+    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public {
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
 
-        LockedGrant memory grant = grants[_tokenId];
-        address vault = grant.vault;
+        Lock memory lock = locks[_tokenId];
+        address vault = lock.vault;
 
-        if (_token == grant.token) {
-            amount = Math.min(amount, IERC20(_token).balanceOf(vault) - (grant.totalLocked - grant.totalClaimed));
+        if (_token == lock.token) {
+            amount = Math.min(amount, IERC20(_token).balanceOf(vault) - (lock.totalLocked - lock.totalClaimed));
         } else {
             amount = Math.min(amount, IERC20(_token).balanceOf(vault));
         }

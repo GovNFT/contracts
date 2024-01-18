@@ -10,7 +10,7 @@ contract VaultTest is BaseTest {
     function testVaultOwner() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -19,7 +19,7 @@ contract VaultTest is BaseTest {
             WEEK
         );
 
-        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
+        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
 
         address vaultOwner = Ownable(vault).owner();
         assertEq(vaultOwner, address(govNFT));
@@ -51,7 +51,7 @@ contract VaultTest is BaseTest {
     function testCannotWithdrawIfNotAdmin() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -59,7 +59,7 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
+        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
 
         assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
 
@@ -106,7 +106,7 @@ contract VaultTest is BaseTest {
     function testCannotSweepIfNotAdmin() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -114,7 +114,7 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        (, , , , , , , , , address _vault, ) = govNFT.grants(tokenId);
+        (, , , , , , , , , address _vault, ) = govNFT.locks(tokenId);
         IVault vault = IVault(_vault);
 
         assertEq(IERC20(testToken).balanceOf(_vault), TOKEN_100K);

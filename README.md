@@ -43,11 +43,11 @@ This is a list of all permissions in GovNFT, sorted by the contract they are sto
 
 ### GovNFT
 
-- NFT Recipient and Approved Operators
+- Lock Recipient and Approved Operators
   - can claim vested tokens
   - can delegate the voting power of all unclaimed and locked tokens
   - can sweep airdropped tokens to a recipient
-  - can split its grant to another entity
+  - can split its lock to another entity
 
 ### Vault
 

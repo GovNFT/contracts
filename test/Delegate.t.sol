@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {BaseTest} from "test/utils/BaseTest.sol";
 
-import "src/VestingEscrow.sol";
+import "src/GovNFT.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC721Errors} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
@@ -17,7 +17,7 @@ contract DelegateTest is BaseTest {
         admin.approve(testGovernanceToken, address(govNFT), TOKEN_100K);
         testAddr = makeAddr("alice");
         vm.prank(address(admin));
-        tokenId = govNFT.createGrant(
+        tokenId = govNFT.createLock(
             testGovernanceToken,
             address(recipient),
             TOKEN_100K,
@@ -38,7 +38,7 @@ contract DelegateTest is BaseTest {
         vm.prank(address(recipient));
         govNFT.delegate(tokenId, address(testAddr));
 
-        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
+        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
         assertEq(IVotes(testGovernanceToken).delegates(address(recipient)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(vault), testAddr);
@@ -51,7 +51,7 @@ contract DelegateTest is BaseTest {
         deal(testGovernanceToken, address(admin), TOKEN_100K);
         admin.approve(testGovernanceToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId2 = govNFT.createGrant(
+        uint256 tokenId2 = govNFT.createLock(
             testGovernanceToken,
             recipient2,
             TOKEN_100K,
@@ -89,7 +89,7 @@ contract DelegateTest is BaseTest {
     function testCannotDelegateIfTokenDoesNotSupport() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        tokenId = govNFT.createGrant(
+        tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -109,7 +109,7 @@ contract DelegateTest is BaseTest {
     }
 
     function testCannotDelegateToZeroAddress() public {
-        vm.expectRevert(IVestingEscrow.ZeroAddress.selector);
+        vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(recipient));
         govNFT.delegate(tokenId, address(0));
     }

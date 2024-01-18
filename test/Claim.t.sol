@@ -5,7 +5,7 @@ import {IERC721Errors} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import {BaseTest, IERC20} from "test/utils/BaseTest.sol";
 
-import "src/VestingEscrow.sol";
+import "src/GovNFT.sol";
 
 contract ClaimTest is BaseTest {
     event Claim(uint256 indexed tokenId, address indexed recipient, uint256 claimed);
@@ -13,7 +13,7 @@ contract ClaimTest is BaseTest {
     function testClaimFull() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -22,7 +22,7 @@ contract ClaimTest is BaseTest {
             WEEK
         );
 
-        (uint256 totalLocked, , uint256 totalClaimed, , , , , , , address vault, ) = govNFT.grants(tokenId);
+        (uint256 totalLocked, , uint256 totalClaimed, , , , , , , address vault, ) = govNFT.locks(tokenId);
 
         assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -33,7 +33,7 @@ contract ClaimTest is BaseTest {
 
         skip(WEEK * 2); //skip to the vesting end timestamp
 
-        (, , totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), totalLocked);
         assertEq(totalClaimed, 0);
         assertEq(govNFT.locked(tokenId), 0);
@@ -43,7 +43,7 @@ contract ClaimTest is BaseTest {
         vm.prank(address(recipient));
         govNFT.claim(tokenId, address(recipient), totalLocked);
 
-        (, , totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(govNFT.locked(tokenId), 0);
         assertEq(govNFT.unclaimed(tokenId), 0);
         assertEq(totalClaimed, totalLocked);
@@ -55,7 +55,7 @@ contract ClaimTest is BaseTest {
     function testClaimBeneficiary() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -65,7 +65,7 @@ contract ClaimTest is BaseTest {
         );
         address beneficiary = makeAddr("alice");
 
-        (uint256 totalLocked, , , , , , , , , , ) = govNFT.grants(tokenId);
+        (uint256 totalLocked, , , , , , , , , , ) = govNFT.locks(tokenId);
 
         skip(WEEK * 2);
         vm.prank(address(recipient));
@@ -79,7 +79,7 @@ contract ClaimTest is BaseTest {
     function testClaimLess() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -88,7 +88,7 @@ contract ClaimTest is BaseTest {
             WEEK
         );
 
-        (uint256 totalLocked, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
+        (uint256 totalLocked, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
 
         skip(WEEK * 2);
         assertEq(govNFT.unclaimed(tokenId), totalLocked);
@@ -100,7 +100,7 @@ contract ClaimTest is BaseTest {
         emit Claim(tokenId, beneficiary, totalLocked / 10);
         govNFT.claim(tokenId, beneficiary, totalLocked / 10);
 
-        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), (9 * totalLocked) / 10);
         assertEq(totalClaimed, totalLocked / 10);
         assertEq(IERC20(testToken).balanceOf(beneficiary), totalLocked / 10);
@@ -111,7 +111,7 @@ contract ClaimTest is BaseTest {
         emit Claim(tokenId, beneficiary2, totalLocked / 10);
         govNFT.claim(tokenId, beneficiary2, totalLocked / 10);
 
-        (, , totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), (8 * totalLocked) / 10);
         assertEq(totalClaimed, (2 * totalLocked) / 10);
         assertEq(IERC20(testToken).balanceOf(beneficiary2), totalLocked / 10);
@@ -122,7 +122,7 @@ contract ClaimTest is BaseTest {
         emit Claim(tokenId, address(recipient), (totalLocked / 10) * 8);
         govNFT.claim(tokenId, address(recipient), totalLocked); // claims remaining tokens
 
-        (, , totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), 0);
         assertEq(totalClaimed, totalLocked);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -137,9 +137,9 @@ contract ClaimTest is BaseTest {
         timeskip = bound(timeskip, 0, _end - _start);
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(testToken, address(recipient), TOKEN_100K, _start, _end, 0);
+        uint256 tokenId = govNFT.createLock(testToken, address(recipient), TOKEN_100K, _start, _end, 0);
 
-        (uint256 totalLocked, , , , , , uint256 start, uint256 end, , address vault, ) = govNFT.grants(tokenId);
+        (uint256 totalLocked, , , , , , uint256 start, uint256 end, , address vault, ) = govNFT.locks(tokenId);
 
         skip(timeskip);
 
@@ -147,7 +147,7 @@ contract ClaimTest is BaseTest {
         govNFT.claim(tokenId, address(recipient), totalLocked); // claims available tokens
         uint256 expectedAmount = Math.min((totalLocked * (block.timestamp - start)) / (end - start), totalLocked);
 
-        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(IERC20(testToken).balanceOf(vault), totalLocked - expectedAmount);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), expectedAmount);
@@ -159,7 +159,7 @@ contract ClaimTest is BaseTest {
         vm.assume(_cycles > 0);
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -167,7 +167,7 @@ contract ClaimTest is BaseTest {
             block.timestamp + WEEK * 2,
             0
         );
-        (uint256 totalLocked, , , , , , uint256 start, uint256 end, , address vault, ) = govNFT.grants(tokenId);
+        (uint256 totalLocked, , , , , , uint256 start, uint256 end, , address vault, ) = govNFT.locks(tokenId);
         IERC20 token = IERC20(testToken);
 
         uint256 duration = end - start;
@@ -187,7 +187,7 @@ contract ClaimTest is BaseTest {
                 skip(timeskip);
             }
 
-            (, , uint256 totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+            (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
             govNFT.claim(tokenId, address(recipient), totalLocked); // claims available tokens
             uint256 expectedAmount = ((totalLocked * (block.timestamp - start)) / (end - start)) - totalClaimed;
 
@@ -210,7 +210,7 @@ contract ClaimTest is BaseTest {
     function testNoClaimedRewardsBeforeStart() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -218,7 +218,7 @@ contract ClaimTest is BaseTest {
             block.timestamp + WEEK * 3,
             WEEK
         );
-        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
+        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
 
         skip(WEEK - 5); // still before vesting start
 
@@ -227,14 +227,14 @@ contract ClaimTest is BaseTest {
 
         assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
-        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(totalClaimed, 0);
     }
 
     function testClaimPermissions() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -276,7 +276,7 @@ contract ClaimTest is BaseTest {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         address testUser = makeAddr("alice");
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -306,7 +306,7 @@ contract ClaimTest is BaseTest {
     function testCannotClaimToZeroAddress() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -315,7 +315,7 @@ contract ClaimTest is BaseTest {
             WEEK
         );
 
-        vm.expectRevert(IVestingEscrow.ZeroAddress.selector);
+        vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(recipient));
         govNFT.claim(tokenId, address(0), TOKEN_100K);
     }
@@ -323,7 +323,7 @@ contract ClaimTest is BaseTest {
     function testLockedUnclaimed() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createGrant(
+        uint256 tokenId = govNFT.createLock(
             testToken,
             address(recipient),
             TOKEN_100K,
@@ -331,7 +331,7 @@ contract ClaimTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        (uint256 totalLocked, , , , , uint256 cliffLength, , uint256 end, , , ) = govNFT.grants(tokenId);
+        (uint256 totalLocked, , , , , uint256 cliffLength, , uint256 end, , , ) = govNFT.locks(tokenId);
 
         assertEq(govNFT.locked(tokenId), totalLocked);
         assertEq(govNFT.unclaimed(tokenId), 0);
@@ -347,7 +347,7 @@ contract ClaimTest is BaseTest {
         skip(WEEK); // skip last week of vesting
         assertEq(block.timestamp, end);
         assertEq(govNFT.locked(tokenId), 0);
-        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(totalClaimed, 0);
         assertEq(govNFT.unclaimed(tokenId), totalLocked); // all rewards available
 
@@ -356,7 +356,7 @@ contract ClaimTest is BaseTest {
 
         assertEq(govNFT.locked(tokenId), 0);
         assertEq(govNFT.unclaimed(tokenId), totalLocked / 2);
-        (, , totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(totalClaimed, totalLocked / 2); // half of rewards were claimed
 
         vm.prank(address(recipient));
@@ -364,7 +364,7 @@ contract ClaimTest is BaseTest {
 
         assertEq(govNFT.locked(tokenId), 0);
         assertEq(govNFT.unclaimed(tokenId), 0);
-        (, , totalClaimed, , , , , , , , ) = govNFT.grants(tokenId);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
         assertEq(totalClaimed, totalLocked); // all rewards were claimed
     }
 }

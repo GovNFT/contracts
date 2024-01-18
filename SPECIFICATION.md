@@ -12,7 +12,7 @@ The GovNFT contract is immutable. While new versions can be deployed, existing d
 
 Built upon OpenZeppelin's ERC721, this contract manages the vesting of ERC-20 tokens, represented as NFTs.
 
-#### Create NFT
+#### Create Lock
 
 Enables the creation of an NFT that locks ERC-20 tokens and vests them over time to specified recipients.
 Transfers the specified amount of ERC-20 tokens from the caller to a dedicated Vault and mints an NFT.
@@ -28,9 +28,9 @@ Allows to set parameters like:
 #### Claiming Tokens
 
 Allows recipients to claim vested tokens as they become available.
-Determined by duration, start time, and cliff period, as specified during the NFT creation.
+Determined by duration, start time, and cliff period, as specified during the Lock creation.
 
-#### NFT Splitting
+#### Splitting
 
 The split function takes a parent NFT `from` and splits it into another NFT, that will be referred to as `tokenId`.
 
@@ -52,12 +52,11 @@ Allows recipients to actively participate in governance delegation, even for tok
 Key points:
 
 - Only for ERC-20 tokens that have the `delegate` function implemented.
-- The delegated amount will default to the balance of tokens in the NFT vault
 - The recipient calls the delegate function, specifying the delegatee's address.
 
 #### Sweeping Airdropped Tokens
 
-Airdrop Sweeping is designed to manage tokens that are deposited into the NFT outside the original vesting schedule, typically through airdrops.
+Airdrop Sweeping is designed to manage tokens that are deposited into the Lock outside the original vesting schedule, typically through airdrops.
 The process involves the ability to "sweep" or transfer these additional tokens to a specified recipient.
 
 ### Vault
