@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC721Errors} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract DelegateTest is BaseTest {
-    event Delegate(uint256 indexed tokenId, address delegate);
+    event Delegate(uint256 indexed tokenId, address indexed delegate);
 
     address testAddr;
     uint256 tokenId;
@@ -33,12 +33,12 @@ contract DelegateTest is BaseTest {
 
         assertEq(IVotes(testGovernanceToken).getVotes(address(testAddr)), 0);
 
-        vm.expectEmit(true, false, false, true, address(govNFT));
+        vm.expectEmit(true, true, false, true, address(govNFT));
         emit Delegate(tokenId, testAddr);
         vm.prank(address(recipient));
         govNFT.delegate(tokenId, address(testAddr));
 
-        address vault = address(govNFT.idToVault(tokenId));
+        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
         assertEq(IVotes(testGovernanceToken).delegates(address(recipient)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(vault), testAddr);

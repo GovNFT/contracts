@@ -18,7 +18,10 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        address vaultOwner = Ownable(address(govNFT.idToVault(tokenId))).owner();
+
+        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
+
+        address vaultOwner = Ownable(vault).owner();
         assertEq(vaultOwner, address(govNFT));
     }
 
@@ -56,23 +59,23 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        IVault vault = govNFT.idToVault(tokenId);
+        (, , , , , , , , , address vault, ) = govNFT.grants(tokenId);
 
-        assertEq(IERC20(testToken).balanceOf(address(vault)), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
 
         address testAddr = makeAddr("alice");
 
         vm.prank(testAddr);
         vm.expectRevert();
-        vault.withdraw(testAddr, TOKEN_100K);
+        IVault(vault).withdraw(testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(address(vault)), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(testAddr), 0);
 
         vm.prank(address(govNFT));
-        vault.withdraw(testAddr, TOKEN_100K);
+        IVault(vault).withdraw(testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(address(vault)), 0);
+        assertEq(IERC20(testToken).balanceOf(vault), 0);
         assertEq(IERC20(testToken).balanceOf(testAddr), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(admin)), 0);
     }
@@ -111,9 +114,10 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        IVault vault = govNFT.idToVault(tokenId);
+        (, , , , , , , , , address _vault, ) = govNFT.grants(tokenId);
+        IVault vault = IVault(_vault);
 
-        assertEq(IERC20(testToken).balanceOf(address(vault)), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(_vault), TOKEN_100K);
 
         address testAddr = makeAddr("alice");
 
@@ -121,13 +125,13 @@ contract VaultTest is BaseTest {
         vm.expectRevert();
         vault.sweep(testToken, testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(address(vault)), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(_vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(testAddr), 0);
 
         vm.prank(address(govNFT));
         vault.sweep(testToken, testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(address(vault)), 0);
+        assertEq(IERC20(testToken).balanceOf(_vault), 0);
         assertEq(IERC20(testToken).balanceOf(testAddr), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(admin)), 0);
     }

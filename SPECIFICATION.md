@@ -32,35 +32,19 @@ Determined by duration, start time, and cliff period, as specified during the NF
 
 #### NFT Splitting
 
-These split functions take a parent NFT `from` as an argument and splits it into another NFT, that will be referred to as `tokenId`.
+The split function takes a parent NFT `from` and splits it into another NFT, that will be referred to as `tokenId`.
 
-After each `split(beneficiary, from, amount)`:
+Calling `split` requires the following arguments:
 
-- `from` NFT will have its `locked` value decreased, and will instead only vest `locked - amount` tokens;
-- And `tokenId` NFT will be minted with `amount` locked tokens to vest. This NFT is then transferred `beneficiary`,
-  who will be able to claim any of its vested tokens.
+- Address of the new NFT's beneficiary;
+- ID of the parent NFT to be split;
+- Amount to be vested in the new Split NFT;
+- Timestamp parameters to be set on the Split NFT (i.e.: start, end and cliff length);
 
-Besides the amount to be vested, a split can also change the NFT's vesting timestamps in the following cases:
+After a `split` is performed:
 
-- If the `start` timestamp from the `from` NFT is already older than the current `block.timestamp`, the new NFT will
-  have by default `block.timestamp` as their `start` value, in order to not create any NFTs that started their vesting in the past;
-- If the `cliff` period from the `from` token has already ended (which means that vesting has already started for
-  the parent NFT), the new cliff will be set to 0 on both NFTs, letting them both continue their initial vesting;
-- The `end` timestamp remains the same for both tokens.
-  Note: The `from` token will still contain any unclaimed tokens after being split.
-
-Additionally, there is a second split function `splitTo(beneficiary, from, amount, start, end, cliff)`:
-
-- This behaves similarly to the first one, except that it also accepts timestamp
-  parameters (i.e.: start, end and cliff) to update how the vesting will be performed on `tokenId`,
-  in case its period should be extended. Note that this does not change the timestamps set on parent NFT `from`.
-
-Calling `splitTo` the following are required:
-
-- The `start` timestamp should be greater than or equal to both the `start` on the original `from` NFT
-  and `block.timestamp`;
-- The `end` timestamp should also be greater than or equal to the original `end` on the`from` NFT;
-- The end of the cliff period (`start + cliff`) should always be greater or equal to the end of the original cliff.
+- The `from` NFT will only vest `locked - amount` tokens;
+- `tokenId` NFT will be minted with `amount` locked tokens to be vested to the given `beneficiary`.
 
 #### Delegation
 

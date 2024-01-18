@@ -4,14 +4,14 @@ pragma solidity 0.8.20;
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IVault} from "./interfaces/IVault.sol";
-import {Vault} from "./Vault.sol";
 
 import {IVestingEscrow} from "./interfaces/IVestingEscrow.sol";
+import {IVault} from "./interfaces/IVault.sol";
+import {Vault} from "./Vault.sol";
 
 /// @title Velodrome VestingEscrow
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
@@ -20,54 +20,38 @@ import {IVestingEscrow} from "./interfaces/IVestingEscrow.sol";
 contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
     using SafeERC20 for IERC20;
 
-    mapping(uint256 => IVault) public idToVault;
-
     mapping(uint256 => LockedGrant) public grants;
-    mapping(uint256 => address) public idToToken;
 
-    mapping(uint256 => address) public idToPendingAdmin;
-    mapping(uint256 => address) public idToAdmin;
-
-    mapping(uint256 => uint256) public totalClaimed;
-    mapping(uint256 => uint256) public disabledAt;
+    mapping(uint256 => mapping(uint256 => uint256)) public splitTokensByIndex;
 
     constructor() ERC721("GovNFT", "GovNFT") {}
 
     /// @inheritdoc IVestingEscrow
     function unclaimed(uint256 _tokenId) external view returns (uint256) {
-        return _unclaimed(_tokenId, Math.min(block.timestamp, disabledAt[_tokenId]));
+        return _unclaimed(_tokenId);
     }
 
-    function _unclaimed(uint256 _tokenId, uint256 time) internal view returns (uint256) {
-        return _totalVestedAt(_tokenId, time) - totalClaimed[_tokenId];
+    function _unclaimed(uint256 _tokenId) internal view returns (uint256) {
+        return _totalVested(_tokenId) + grants[_tokenId].unclaimedBeforeSplit - grants[_tokenId].totalClaimed;
     }
 
-    function _totalVestedAt(uint256 _tokenId, uint256 _time) internal view returns (uint256) {
+    function _totalVested(uint256 _tokenId) internal view returns (uint256) {
         LockedGrant memory grant = grants[_tokenId];
-        if (_time < grant.start + grant.cliffLength) {
+        uint256 time = Math.min(block.timestamp, grant.end);
+
+        if (time < grant.start + grant.cliffLength) {
             return 0;
         }
-        return Math.min((grant.totalLocked * (_time - grant.start)) / (grant.end - grant.start), grant.totalLocked);
+        return (grant.totalLocked * (time - grant.start)) / (grant.end - grant.start);
     }
 
     /// @inheritdoc IVestingEscrow
     function locked(uint256 _tokenId) external view returns (uint256) {
-        return _locked(_tokenId, Math.min(block.timestamp, disabledAt[_tokenId]));
+        return _locked(_tokenId);
     }
 
-    function _locked(uint256 _tokenId, uint256 time) internal view returns (uint256) {
-        return grants[_tokenId].totalLocked - _totalVestedAt(_tokenId, time);
-    }
-
-    /// @inheritdoc IVestingEscrow
-    function createGrant(
-        address _token,
-        address _recipient,
-        uint256 _amount,
-        uint256 _duration,
-        uint256 _cliffLength
-    ) external nonReentrant returns (uint256) {
-        return _createGrant(_token, _recipient, _amount, block.timestamp, block.timestamp + _duration, _cliffLength);
+    function _locked(uint256 _tokenId) internal view returns (uint256) {
+        return grants[_tokenId].totalLocked - _totalVested(_tokenId);
     }
 
     /// @inheritdoc IVestingEscrow
@@ -78,100 +62,82 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         uint256 _startTime,
         uint256 _endTime,
         uint256 _cliffLength
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256 _tokenId) {
         if (_startTime < block.timestamp) revert VestingStartTooOld();
-        return _createGrant(_token, _recipient, _amount, _startTime, _endTime, _cliffLength);
-    }
 
-    function _createGrant(
-        address _token,
-        address _recipient,
-        uint256 _amount,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _cliffLength
-    ) internal returns (uint256) {
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         if (_amount == 0) revert ZeroAmount();
-        if (_startTime >= _endTime) revert EndBeforeOrEqual();
+        if (_startTime >= _endTime) revert EndBeforeOrEqualStart();
         if (_endTime - _startTime < _cliffLength) revert InvalidCliff();
 
-        uint256 _tokenId = totalSupply() + 1;
-        idToAdmin[_tokenId] = msg.sender;
-        idToToken[_tokenId] = _token;
+        address _vault = address(new Vault(_token));
+        _tokenId = _createNFT(
+            _recipient,
+            LockedGrant(_amount, _amount, 0, 0, 0, _cliffLength, _startTime, _endTime, _token, _vault, msg.sender)
+        );
 
-        IVault _vault = new Vault(_token);
-        idToVault[_tokenId] = _vault;
-
-        _mint(_recipient, _tokenId);
-
-        grants[_tokenId] = LockedGrant(_amount, _cliffLength, _startTime, _endTime);
-        disabledAt[_tokenId] = _endTime;
-
-        IERC20(_token).safeTransferFrom(msg.sender, address(_vault), _amount);
+        IERC20(_token).safeTransferFrom(msg.sender, _vault, _amount);
 
         emit Fund(_tokenId, _recipient, _token, _amount);
-        return _tokenId;
     }
 
     /// @inheritdoc IVestingEscrow
-    function claim(uint256 _tokenId, address beneficiary, uint256 amount) external nonReentrant {
-        _claim(_tokenId, beneficiary, amount);
-    }
-
-    /// @inheritdoc IVestingEscrow
-    function claim(uint256 _tokenId, address beneficiary) external nonReentrant {
-        _claim(_tokenId, beneficiary, type(uint256).max);
-    }
-
-    function _claim(uint256 _tokenId, address beneficiary, uint256 amount) internal {
+    function claim(uint256 _tokenId, address _beneficiary, uint256 _amount) external nonReentrant {
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
-        if (beneficiary == address(0)) revert ZeroAddress();
+        if (_beneficiary == address(0)) revert ZeroAddress();
 
-        uint256 _claimPeriodEnd = Math.min(block.timestamp, disabledAt[_tokenId]);
-        uint256 _claimable = Math.min(_unclaimed(_tokenId, _claimPeriodEnd), amount);
-        totalClaimed[_tokenId] += _claimable;
+        uint256 _claimable = Math.min(_unclaimed(_tokenId), _amount);
 
-        idToVault[_tokenId].withdraw(beneficiary, _claimable);
-        emit Claim(_tokenId, beneficiary, _claimable);
+        LockedGrant memory grant = grants[_tokenId];
+        if (_claimable >= grant.unclaimedBeforeSplit) {
+            grant.totalClaimed += _claimable - grant.unclaimedBeforeSplit;
+            delete grant.unclaimedBeforeSplit;
+        } else {
+            grant.unclaimedBeforeSplit -= _claimable;
+        }
+
+        IVault(grant.vault).withdraw(_beneficiary, _claimable);
+        grants[_tokenId] = grant;
+        emit Claim(_tokenId, _beneficiary, _claimable);
     }
 
     /// @inheritdoc IVestingEscrow
-    function setAdmin(uint256 _tokenId, address addr) external {
-        if (msg.sender != idToAdmin[_tokenId]) revert NotAdmin();
-        if (addr == address(0)) revert ZeroAddress();
-        idToPendingAdmin[_tokenId] = addr;
-        emit SetAdmin(_tokenId, addr);
-    }
+    function split(
+        address _beneficiary,
+        uint256 _from,
+        uint256 _amount,
+        uint256 _start,
+        uint256 _end,
+        uint256 _cliff
+    ) external nonReentrant returns (uint256 _tokenId) {
+        _checkAuthorized(_ownerOf(_from), msg.sender, _from);
 
-    /// @inheritdoc IVestingEscrow
-    function acceptAdmin(uint256 _tokenId) external {
-        if (msg.sender != idToPendingAdmin[_tokenId]) revert NotPendingAdmin();
-        idToAdmin[_tokenId] = msg.sender;
-        idToPendingAdmin[_tokenId] = address(0);
-        emit AcceptAdmin(_tokenId, msg.sender);
-    }
+        if (_amount == 0) revert ZeroAmount();
+        if (_beneficiary == address(0)) revert ZeroAddress();
 
-    /// @inheritdoc IVestingEscrow
-    function renounceAdmin(uint256 _tokenId) external {
-        if (msg.sender != idToAdmin[_tokenId]) revert NotAdmin();
-        idToPendingAdmin[_tokenId] = address(0);
-        idToAdmin[_tokenId] = address(0);
-        emit AcceptAdmin(_tokenId, address(0));
-    }
+        LockedGrant memory newGrant = grants[_from];
+        uint256 _endOfCliff = newGrant.start + newGrant.cliffLength;
 
-    /// @inheritdoc IVestingEscrow
-    function rugPull(uint256 _tokenId) external nonReentrant {
-        address _admin = idToAdmin[_tokenId];
-        if (msg.sender != _admin) revert NotAdmin();
-        if (disabledAt[_tokenId] <= block.timestamp) revert AlreadyDisabled();
-        // NOTE: Rugging more than once is futile
+        if (_end < newGrant.end) revert InvalidEnd();
+        if (_start < newGrant.start || _start < block.timestamp) revert VestingStartTooOld();
+        if (_start + _cliff < _endOfCliff || _end - _start < _cliff) revert InvalidCliff();
 
-        disabledAt[_tokenId] = block.timestamp;
-        uint256 ruggable = _locked(_tokenId, block.timestamp);
+        // Update Original NFT
+        uint256 _newLock = _updateGrantAfterSplit(_from, _amount, _endOfCliff, newGrant);
 
-        idToVault[_tokenId].withdraw(_admin, ruggable);
-        emit RugPull(_tokenId, _ownerOf(_tokenId), ruggable);
+        (newGrant.cliffLength, newGrant.start, newGrant.end) = (_cliff, _start, _end);
+
+        // Create Split NFT using _amount
+        newGrant.totalLocked = _amount;
+        newGrant.initialDeposit = _amount;
+        delete newGrant.unclaimedBeforeSplit;
+        address parentVault = newGrant.vault;
+        newGrant.vault = address(new Vault(newGrant.token));
+        _tokenId = _createNFT(_beneficiary, newGrant);
+
+        _addTokenToSplitList(_from, _tokenId);
+        IVault(parentVault).withdraw(newGrant.vault, _amount);
+        emit Split(_from, _tokenId, _beneficiary, _newLock, _amount, newGrant.start, newGrant.end);
     }
 
     /// @inheritdoc IVestingEscrow
@@ -179,8 +145,62 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
         if (delegatee == address(0)) revert ZeroAddress();
 
-        idToVault[_tokenId].delegate(delegatee);
+        IVault(grants[_tokenId].vault).delegate(delegatee);
         emit Delegate(_tokenId, delegatee);
+    }
+
+    /// @dev Creates an NFT designed to vest tokens to the given recipient
+    ///      Assumes `_newGrant` is a valid grant
+    /// @param _recipient Address of the user that will receive funds
+    /// @param _newGrant Information of the Grant to be created
+    /// @return _tokenId The ID of the recently created NFT
+    function _createNFT(address _recipient, LockedGrant memory _newGrant) private returns (uint256 _tokenId) {
+        _tokenId = totalSupply() + 1;
+
+        _mint(_recipient, _tokenId);
+
+        grants[_tokenId] = _newGrant;
+    }
+
+    /// @dev Updates the current Locked Grant information of a Parent NFT after splitting it
+    ///      After execution, the value of the `grant` variable will be updated
+    ///      Throws if `_amount` is greater than the Parent NFT's locked balance
+    /// @param _from ID of the parent NFT to be updated
+    /// @param _amount Amount to be split from Parent NFT's locked balance
+    /// @param _endOfCliff End of the Parent NFT's cliff
+    /// @param grant Parent NFT's Locked Grant information to be updated
+    /// @return newLock The value of the new Lock for the Parent NFT
+    function _updateGrantAfterSplit(
+        uint256 _from,
+        uint256 _amount,
+        uint256 _endOfCliff,
+        LockedGrant memory grant
+    ) private returns (uint256 newLock) {
+        uint256 totalVested = _totalVested(_from);
+        uint256 _locked_ = grant.totalLocked - totalVested;
+        if (_locked_ <= _amount) revert AmountTooBig();
+
+        newLock = _locked_ - _amount;
+
+        grant.totalLocked = newLock;
+        if (block.timestamp > grant.start) {
+            grant.start = block.timestamp;
+            grant.cliffLength = block.timestamp < _endOfCliff ? _endOfCliff - block.timestamp : 0;
+        }
+
+        // Update NFT using _locked_ - _amount
+        grant.unclaimedBeforeSplit += totalVested - grant.totalClaimed;
+        delete grant.totalClaimed;
+        grants[_from] = grant;
+    }
+
+    /// @dev Add a Split NFT to the Split index mapping of its parent NFT
+    /// @param _from ID of the Parent NFT
+    /// @param _tokenId ID of the new Split NFT
+    function _addTokenToSplitList(uint256 _from, uint256 _tokenId) private {
+        uint256 length = grants[_from].splitCount;
+        splitTokensByIndex[_from][length] = _tokenId;
+        grants[_from].splitCount = length + 1;
     }
 
     /// @inheritdoc IVestingEscrow
@@ -189,23 +209,21 @@ contract VestingEscrow is IVestingEscrow, ReentrancyGuard, ERC721Enumerable {
     }
 
     /// @inheritdoc IVestingEscrow
-    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public {
+    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public nonReentrant {
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
 
-        IVault vault = idToVault[_tokenId];
+        LockedGrant memory grant = grants[_tokenId];
+        address vault = grant.vault;
 
-        if (_token == idToToken[_tokenId]) {
-            amount = Math.min(
-                amount,
-                IERC20(_token).balanceOf(address(vault)) - (grants[_tokenId].totalLocked - totalClaimed[_tokenId])
-            );
+        if (_token == grant.token) {
+            amount = Math.min(amount, IERC20(_token).balanceOf(vault) - (grant.totalLocked - grant.totalClaimed));
         } else {
-            amount = Math.min(amount, IERC20(_token).balanceOf(address(vault)));
+            amount = Math.min(amount, IERC20(_token).balanceOf(vault));
         }
         if (amount == 0) revert ZeroAmount();
 
-        vault.sweep(_token, _recipient, amount);
+        IVault(vault).sweep(_token, _recipient, amount);
         emit Sweep(_tokenId, _token, _recipient, amount);
     }
 }
