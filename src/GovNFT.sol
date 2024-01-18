@@ -209,7 +209,7 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     }
 
     /// @inheritdoc IGovNFT
-    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public {
+    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public nonReentrant {
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
 
