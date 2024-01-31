@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.20 <0.9.0;
 
 import {MockERC20} from "./MockERC20.sol";
 import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";

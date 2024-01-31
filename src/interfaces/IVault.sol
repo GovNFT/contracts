@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.20 <0.9.0;
 
 interface IVault {
     // @notice Withdraw `amount` of `token` from the Vault
