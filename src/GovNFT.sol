@@ -82,6 +82,7 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
         );
 
         IERC20(_token).safeTransferFrom(msg.sender, _vault, _amount);
+        if (IERC20(_token).balanceOf(_vault) < _amount) revert InsufficientAmount();
 
         emit Create(_tokenId, _recipient, _token, _amount);
     }
@@ -142,6 +143,7 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
 
         _addTokenToSplitList(_from, _tokenId);
         IVault(parentVault).withdraw(newLock.vault, _amount);
+        if (IERC20(newLock.token).balanceOf(newLock.vault) < _amount) revert InsufficientAmount();
         emit Split(_from, _tokenId, _beneficiary, _newLock, _amount, newLock.start, newLock.end);
     }
 

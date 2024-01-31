@@ -2,6 +2,7 @@
 pragma solidity >=0.8.20 <0.9.0;
 
 import {BaseTest} from "test/utils/BaseTest.sol";
+import {MockFeeERC20} from "test/utils/MockFeeERC20.sol";
 
 import "src/GovNFT.sol";
 import "src/Vault.sol";
@@ -86,6 +87,17 @@ contract LockTest is BaseTest {
     function testCannotCreateLockWithZeroDuration() public {
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
         govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp + WEEK, block.timestamp + WEEK, WEEK);
+    }
+
+    function testCannotCreateLockIfNotEnoughTokensTransferred() public {
+        // deploy mock erc-20 with fees, that does not transfer all tokens to recipient
+        address token = address(new MockFeeERC20("TEST", "TEST", 18));
+        deal(token, address(admin), TOKEN_100K);
+
+        vm.startPrank(address(admin));
+        admin.approve(token, address(govNFT), TOKEN_100K);
+        vm.expectRevert(IGovNFT.InsufficientAmount.selector);
+        govNFT.createLock(token, address(recipient), TOKEN_100K, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
     function testCannotCreateLockIfEndBeforeStart() public {

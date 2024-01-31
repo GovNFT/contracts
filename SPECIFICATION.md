@@ -11,6 +11,7 @@ The GovNFT contract is immutable. While new versions can be deployed, existing d
 ### GovNFT
 
 Built upon OpenZeppelin's ERC721, this contract manages the vesting of ERC-20 tokens, represented as NFTs.
+Note: This contract does not support the vesting of ERC-20 tokens that allow fees on transfer.
 
 #### Create Lock
 

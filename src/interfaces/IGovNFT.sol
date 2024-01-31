@@ -34,6 +34,7 @@ interface IGovNFT is IERC721Enumerable {
 
     /// Errors
     error EndBeforeOrEqualStart();
+    error InsufficientAmount();
     error VestingStartTooOld();
     error SplitOutOfBounds();
     error InvalidCliff();
