@@ -89,15 +89,15 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
         uint256 _claimable = Math.min(_unclaimed(_tokenId), _amount);
 
         Lock memory lock = locks[_tokenId];
-        if (_claimable >= lock.unclaimedBeforeSplit) {
+        if (_claimable > lock.unclaimedBeforeSplit) {
             lock.totalClaimed += _claimable - lock.unclaimedBeforeSplit;
             delete lock.unclaimedBeforeSplit;
         } else {
             lock.unclaimedBeforeSplit -= _claimable;
         }
 
-        IVault(lock.vault).withdraw(_beneficiary, _claimable);
         locks[_tokenId] = lock;
+        IVault(lock.vault).withdraw(_beneficiary, _claimable);
         emit Claim(_tokenId, _beneficiary, _claimable);
     }
 

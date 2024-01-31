@@ -347,6 +347,53 @@ contract SplitTest is BaseTest {
         assertEq(totalClaimed, amount);
     }
 
+    function testSplitClaimsAtSplitTimestampWithUnclaimedRewardsAfterCliffEnd() public {
+        skip(WEEK + 2 days); // skip somewhere after cliff ends
+
+        (uint256 totalLocked, , uint256 totalClaimed, uint256 unclaimedBeforeSplit, , , , uint256 end, , , ) = govNFT
+            .locks(from);
+        assertEq(unclaimedBeforeSplit, 0);
+        assertEq(totalClaimed, 0);
+        uint256 lockedBeforeSplit = govNFT.locked(from);
+        uint256 originalUnclaimed = govNFT.unclaimed(from);
+
+        vm.expectEmit(true, true, false, true);
+        emit Split(from, from + 2, address(recipient2), lockedBeforeSplit - amount, amount, block.timestamp, end);
+        vm.prank(address(recipient));
+        uint256 tokenId = govNFT.split(address(recipient2), from, amount, block.timestamp, end, WEEK);
+
+        // previous unclaimed tokens are stored
+        (, , uint256 newTotalClaimed, uint256 newUnclaimedBeforeSplit, , , , , , , ) = govNFT.locks(from);
+        assertEq(newUnclaimedBeforeSplit, originalUnclaimed);
+        assertEq(newTotalClaimed, 0);
+
+        (, , newTotalClaimed, newUnclaimedBeforeSplit, , , , , , , ) = govNFT.locks(tokenId);
+        assertEq(newUnclaimedBeforeSplit, 0);
+        assertEq(newTotalClaimed, 0);
+
+        // the only amount claimable is the originalUnclaimed
+        assertEq(totalLocked, lockedBeforeSplit + originalUnclaimed);
+
+        _checkLockedUnclaimedSplit(from, lockedBeforeSplit - amount, originalUnclaimed, tokenId, amount, 0);
+
+        assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
+        assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
+
+        // assert claims
+        vm.prank(address(recipient));
+        govNFT.claim(from, address(recipient), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(address(recipient)), originalUnclaimed);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(from);
+        assertEq(totalClaimed, 0); // unclaimed before split not included
+
+        // nothing to claim on split token in split timestamp
+        vm.prank(address(recipient2));
+        govNFT.claim(tokenId, address(recipient2), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
+        (, , totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
+        assertEq(totalClaimed, 0);
+    }
+
     function testSplitClaimsWithClaimedRewardsAfterCliffEnd() public {
         skip(WEEK + 2 days); // skip somewhere after cliff ends
 
