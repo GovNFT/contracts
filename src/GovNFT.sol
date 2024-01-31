@@ -20,8 +20,10 @@ import {Vault} from "./Vault.sol";
 contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     using SafeERC20 for IERC20;
 
+    /// @dev tokenId => Lock state
     mapping(uint256 => Lock) public locks;
 
+    /// @dev tokenId => Split child index => Split tokenId
     mapping(uint256 => mapping(uint256 => uint256)) public splitTokensByIndex;
 
     constructor() ERC721("GovNFT", "GovNFT") {}

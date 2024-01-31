@@ -119,9 +119,9 @@ interface IGovNFT is IERC721Enumerable {
         uint256 _cliff
     ) external returns (uint256 _tokenId);
 
-    // @notice Delegates voting power of a given Lock to `delegatee`
-    // @param _tokenId Lock Token Id to be used
-    // @param delegatee Address to delegate voting power to
+    ///  @notice Delegates voting power of a given Lock to `delegatee`
+    ///  @param _tokenId Lock Token Id to be used
+    ///  @param delegatee Address to delegate voting power to
     function delegate(uint256 _tokenId, address delegatee) external;
 
     /// @notice Withdraw all `token`s from the Lock. Can be used to sweep airdropped tokens
