@@ -42,16 +42,33 @@ interface IGovNFT is IERC721Enumerable {
     error ZeroAmount();
     error InvalidEnd();
 
+    /// @notice Current count of minted NFTs
+    /// @return The number of minted NFTs
+    function tokenId() external view returns (uint256);
+
     /// @notice Get the number of unclaimed, vested tokens for a given token ID
     /// @param _tokenId Lock Token Id to be used
+    /// @return The amount of claimable tokens for the given token ID
     function unclaimed(uint256 _tokenId) external view returns (uint256);
 
-    /// @notice Get the number of locked tokens for a given TokenId
+    /// @notice Get the number of locked tokens for a given token ID
     /// @param _tokenId Lock Token Id to be used
+    /// @return The amount of locked tokens of a token ID
     function locked(uint256 _tokenId) external view returns (uint256);
 
-    /// @notice Returns the Locked Lock information for a given TokenId
+    /// @notice Returns the Lock information for a given token ID
     /// @param _tokenId Token Id from which the info will be fetched
+    /// @return totalLocked Total amount being vested in NFT
+    /// @return initialDeposit Amount initially locked, prior to splits
+    /// @return totalClaimed Total amount claimed from Lock
+    /// @return unclaimedBeforeSplit Amount left unclaimed before split
+    /// @return splitCount Number of splits performed on NFT
+    /// @return cliffLength Duration of Locks' cliff period
+    /// @return start Vesting period start
+    /// @return end Vesting period end
+    /// @return token Address of the token being vested
+    /// @return vault Address of the vault storing tokens
+    /// @return minter Address of the minter of the NFT
     function locks(
         uint256 _tokenId
     )
@@ -78,6 +95,7 @@ interface IGovNFT is IERC721Enumerable {
     /// @param _startTime Epoch time at which token distribution starts
     /// @param _endTime Time at which everything should be vested
     /// @param _cliffLength Duration after which the first portion vests
+    /// @return The token ID of the created Lock
     function createLock(
         address _token,
         address _recipient,

@@ -26,6 +26,9 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     /// @dev tokenId => Split child index => Split tokenId
     mapping(uint256 => mapping(uint256 => uint256)) public splitTokensByIndex;
 
+    /// @inheritdoc IGovNFT
+    uint256 public tokenId;
+
     constructor() ERC721("GovNFT", "GovNFT") {}
 
     /// @inheritdoc IGovNFT
@@ -145,7 +148,6 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     /// @inheritdoc IGovNFT
     function delegate(uint256 _tokenId, address delegatee) external nonReentrant {
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
-        if (delegatee == address(0)) revert ZeroAddress();
 
         IVault(locks[_tokenId].vault).delegate(delegatee);
         emit Delegate(_tokenId, delegatee);
@@ -157,7 +159,7 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     /// @param _newLock Information of the Lock to be created
     /// @return _tokenId The ID of the recently created NFT
     function _createNFT(address _recipient, Lock memory _newLock) private returns (uint256 _tokenId) {
-        _tokenId = totalSupply() + 1;
+        _tokenId = ++tokenId;
 
         _mint(_recipient, _tokenId);
 

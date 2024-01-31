@@ -28,21 +28,25 @@ contract DelegateTest is BaseTest {
     }
 
     function testDelegate() public {
-        assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
+        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
         assertEq(IVotes(testGovernanceToken).delegates(address(recipient)), address(0));
+        assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
+        assertEq(IVotes(testGovernanceToken).delegates(vault), address(0));
 
-        assertEq(IVotes(testGovernanceToken).getVotes(address(testAddr)), 0);
+        assertEq(IVotes(testGovernanceToken).getVotes(testAddr), 0);
 
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit Delegate(tokenId, testAddr);
         vm.prank(address(recipient));
-        govNFT.delegate(tokenId, address(testAddr));
+        govNFT.delegate(tokenId, testAddr);
 
-        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
+        assertEq(IVotes(testGovernanceToken).delegates(vault), testAddr);
+
         assertEq(IVotes(testGovernanceToken).delegates(address(recipient)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(vault), testAddr);
-        assertEq(IVotes(testGovernanceToken).getVotes(address(testAddr)), TOKEN_100K);
+
+        assertEq(IVotes(testGovernanceToken).getVotes(testAddr), TOKEN_100K);
     }
 
     function testDelegateCoupleGrantsWithSameToken() public {
@@ -106,11 +110,5 @@ contract DelegateTest is BaseTest {
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, testAddr, tokenId));
         vm.prank(address(testAddr));
         govNFT.delegate(tokenId, testAddr);
-    }
-
-    function testCannotDelegateToZeroAddress() public {
-        vm.expectRevert(IGovNFT.ZeroAddress.selector);
-        vm.prank(address(recipient));
-        govNFT.delegate(tokenId, address(0));
     }
 }
