@@ -8,13 +8,13 @@ import "forge-std/console.sol";
 
 contract SplitFuzzTest is BaseTest {
     event Split(
-        uint256 indexed _from,
-        uint256 indexed _tokenId,
-        address _recipient,
-        uint256 _splitAmount1,
-        uint256 _splitAmount2,
-        uint256 _startTime,
-        uint256 _endTime
+        uint256 indexed from,
+        uint256 indexed tokenId,
+        address recipient,
+        uint256 splitAmount1,
+        uint256 splitAmount2,
+        uint256 startTime,
+        uint256 endTime
     );
 
     function testFuzzSplitBeforeStart(uint128 lockAmount, uint256 amount, uint32 _timeskip) public {

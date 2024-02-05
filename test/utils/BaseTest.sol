@@ -92,10 +92,12 @@ contract BaseTest is Test {
         assertEq(govNFT.ownerOf(_from), owner);
         assertEq(govNFT.ownerOf(tokenId), beneficiary);
 
-        (, , uint256 _totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
+        (, , uint256 _totalClaimed, , , , , , address splitToken, , address minter) = govNFT.locks(tokenId);
 
-        (, , , uint256 _unclaimedBeforeSplit, uint256 _splitCount, , , , , , ) = govNFT.locks(_from);
+        (, , , uint256 _unclaimedBeforeSplit, uint256 _splitCount, , , , address token, , ) = govNFT.locks(_from);
+        assertEq(owner, minter);
         assertEq(_totalClaimed, 0);
+        assertEq(token, splitToken);
         assertEq(_splitCount, splitCount);
         assertEq(govNFT.splitTokensByIndex(_from, 0), tokenId);
         assertEq(_unclaimedBeforeSplit, unclaimedBeforeSplit);

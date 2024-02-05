@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
-interface IGovNFT is IERC721Enumerable {
+interface IGovNFT is IERC721Enumerable, IERC4906 {
     struct Lock {
         uint256 totalLocked;
         uint256 initialDeposit;
@@ -23,20 +24,20 @@ interface IGovNFT is IERC721Enumerable {
     event Claim(uint256 indexed tokenId, address indexed recipient, uint256 claimed);
     event Delegate(uint256 indexed tokenId, address indexed delegate);
     event Split(
-        uint256 indexed _from,
-        uint256 indexed _tokenId,
-        address _recipient,
-        uint256 _splitAmount1,
-        uint256 _splitAmount2,
-        uint256 _startTime,
-        uint256 _endTime
+        uint256 indexed from,
+        uint256 indexed tokenId,
+        address recipient,
+        uint256 splitAmount1,
+        uint256 splitAmount2,
+        uint256 startTime,
+        uint256 endTime
     );
 
     /// Errors
     error EndBeforeOrEqualStart();
     error InsufficientAmount();
-    error VestingStartTooOld();
     error SplitOutOfBounds();
+    error InvalidStart();
     error InvalidCliff();
     error AmountTooBig();
     error ZeroAddress();

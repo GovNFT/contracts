@@ -123,7 +123,7 @@ contract LockTest is BaseTest {
     }
 
     function testCannotCreateLockIfStartIsInPast() public {
-        vm.expectRevert(IGovNFT.VestingStartTooOld.selector);
+        vm.expectRevert(IGovNFT.InvalidStart.selector);
         govNFT.createLock(
             testToken,
             address(recipient),

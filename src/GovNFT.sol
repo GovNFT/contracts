@@ -68,12 +68,8 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
         uint256 _endTime,
         uint256 _cliffLength
     ) external nonReentrant returns (uint256 _tokenId) {
-        if (_startTime < block.timestamp) revert VestingStartTooOld();
-
-        if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
-        if (_amount == 0) revert ZeroAmount();
-        if (_startTime >= _endTime) revert EndBeforeOrEqualStart();
-        if (_endTime - _startTime < _cliffLength) revert InvalidCliff();
+        if (_token == address(0)) revert ZeroAddress();
+        _createLockChecks(_recipient, _amount, _startTime, _endTime, _cliffLength);
 
         address _vault = address(new Vault(_token));
         _tokenId = _createNFT(
@@ -117,34 +113,38 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
         uint256 _cliff
     ) external nonReentrant returns (uint256 _tokenId) {
         _checkAuthorized(_ownerOf(_from), msg.sender, _from);
+        _createLockChecks(_beneficiary, _amount, _start, _end, _cliff);
 
-        if (_amount == 0) revert ZeroAmount();
-        if (_beneficiary == address(0)) revert ZeroAddress();
-
-        Lock memory newLock = locks[_from];
-        uint256 _endOfCliff = newLock.start + newLock.cliffLength;
-
-        if (_end < newLock.end) revert InvalidEnd();
-        if (_start < newLock.start || _start < block.timestamp) revert VestingStartTooOld();
-        if (_start + _cliff < _endOfCliff || _end - _start < _cliff) revert InvalidCliff();
-
-        // Update Original NFT
-        uint256 _newLock = _updateLockAfterSplit(_from, _amount, _endOfCliff, newLock);
-
-        (newLock.cliffLength, newLock.start, newLock.end) = (_cliff, _start, _end);
+        Lock memory parentLock = locks[_from];
+        if (_end < parentLock.end) revert InvalidEnd();
+        if (_start < parentLock.start) revert InvalidStart();
+        uint256 _endOfCliff = parentLock.start + parentLock.cliffLength;
+        if (_start + _cliff < _endOfCliff) revert InvalidCliff();
 
         // Create Split NFT using _amount
-        newLock.totalLocked = _amount;
-        newLock.initialDeposit = _amount;
-        delete newLock.unclaimedBeforeSplit;
-        address parentVault = newLock.vault;
-        newLock.vault = address(new Vault(newLock.token));
-        _tokenId = _createNFT(_beneficiary, newLock);
+        Lock memory splitLock = Lock({
+            totalLocked: _amount,
+            initialDeposit: _amount,
+            totalClaimed: 0,
+            unclaimedBeforeSplit: 0,
+            splitCount: 0,
+            cliffLength: _cliff,
+            start: _start,
+            end: _end,
+            token: parentLock.token,
+            vault: address(new Vault(parentLock.token)),
+            minter: msg.sender
+        });
+        _tokenId = _createNFT(_beneficiary, splitLock);
+
+        // Update Original NFT
+        _updateLockAfterSplit(_from, _amount, _endOfCliff, parentLock);
 
         _addTokenToSplitList(_from, _tokenId);
-        IVault(parentVault).withdraw(newLock.vault, _amount);
-        if (IERC20(newLock.token).balanceOf(newLock.vault) < _amount) revert InsufficientAmount();
-        emit Split(_from, _tokenId, _beneficiary, _newLock, _amount, newLock.start, newLock.end);
+        IVault(parentLock.vault).withdraw(splitLock.vault, _amount);
+        if (IERC20(splitLock.token).balanceOf(splitLock.vault) < _amount) revert InsufficientAmount();
+        emit Split(_from, _tokenId, _beneficiary, parentLock.totalLocked, _amount, _start, _end);
+        emit MetadataUpdate(_from);
     }
 
     /// @inheritdoc IGovNFT
@@ -163,9 +163,30 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     function _createNFT(address _recipient, Lock memory _newLock) private returns (uint256 _tokenId) {
         _tokenId = ++tokenId;
 
-        _mint(_recipient, _tokenId);
+        _safeMint(_recipient, _tokenId);
 
         locks[_tokenId] = _newLock;
+    }
+
+    /// @dev Checks if the parameters used to create a Lock are valid
+    /// @param _recipient Address to vest tokens for
+    /// @param _amount Amount of tokens to be vested for `recipient`
+    /// @param _startTime Epoch time at which token distribution starts
+    /// @param _endTime Time at which everything should be vested
+    /// @param _cliff Duration after which the first portion vests
+    function _createLockChecks(
+        address _recipient,
+        uint256 _amount,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _cliff
+    ) internal view {
+        if (_startTime < block.timestamp) revert InvalidStart();
+        if (_recipient == address(0)) revert ZeroAddress();
+        if (_amount == 0) revert ZeroAmount();
+
+        if (_startTime >= _endTime) revert EndBeforeOrEqualStart();
+        if (_endTime - _startTime < _cliff) revert InvalidCliff();
     }
 
     /// @dev Updates the current Lock information of a Parent NFT after splitting it
@@ -175,20 +196,14 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     /// @param _amount Amount to be split from Parent NFT's locked balance
     /// @param _endOfCliff End of the Parent NFT's cliff
     /// @param lock Parent NFT's Lock information to be updated
-    /// @return newLock The value of the new Lock for the Parent NFT
-    function _updateLockAfterSplit(
-        uint256 _from,
-        uint256 _amount,
-        uint256 _endOfCliff,
-        Lock memory lock
-    ) private returns (uint256 newLock) {
+    function _updateLockAfterSplit(uint256 _from, uint256 _amount, uint256 _endOfCliff, Lock memory lock) private {
         uint256 totalVested = _totalVested(_from);
         uint256 _locked_ = lock.totalLocked - totalVested;
         if (_locked_ <= _amount) revert AmountTooBig();
 
-        newLock = _locked_ - _amount;
+        uint256 lockAmount = _locked_ - _amount;
 
-        lock.totalLocked = newLock;
+        lock.totalLocked = lockAmount;
         if (block.timestamp > lock.start) {
             lock.start = block.timestamp;
             lock.cliffLength = block.timestamp < _endOfCliff ? _endOfCliff - block.timestamp : 0;
