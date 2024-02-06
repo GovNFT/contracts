@@ -18,6 +18,15 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         address minter;
     }
 
+    struct SplitParams {
+        address beneficiary;
+        uint256 from;
+        uint256 amount;
+        uint256 start;
+        uint256 end;
+        uint256 cliff;
+    }
+
     /// Events
     event Create(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
     event Sweep(uint256 indexed tokenId, address indexed token, address indexed receiver, uint256 amount);
@@ -120,24 +129,18 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// - The second NFT will also use the new recipient, cliff and start and end timestamps
     /// @dev     Callable by owner and approved operators
     ///          Unclaimed tokens vested on the old `_from` NFT are still claimable after split
-    ///          `_start` cannot be lower than old start or block.timestamp
-    ///          `_end` cannot be lower than the old end
-    ///          `_cliff` has to end at the same time or after the old cliff
-    /// @param _beneficiary Address of the user to receive tokens vested from split
-    /// @param _from Lock Token Id that will be split
-    /// @param _amount Amount of tokens to be vested in the new Lock
-    /// @param _start Epoch time at which token distribution starts
-    /// @param _end Time at which everything should be vested
-    /// @param _cliff Duration after which the first portion vests
+    ///          `_params.start` cannot be lower than old start or block.timestamp
+    ///          `_params.end` cannot be lower than the old end
+    ///          `_params.cliff` has to end at the same time or after the old cliff
+    /// @param _params SplitParams struct containing all the parameters needed to split a lock
+    /// @dev    _params.beneficiary Address of the user to receive tokens vested from split
+    ///         _params.from Lock Token Id that will be split
+    ///         _params.amount Amount of tokens to be vested in the new Lock
+    ///         _params.start Epoch time at which token distribution starts
+    ///         _params.end Time at which everything should be vested
+    ///         _params.cliff Duration after which the first portion vests
     /// @return _tokenId Return tokenId of new Split Lock with `_amount`.
-    function split(
-        address _beneficiary,
-        uint256 _from,
-        uint256 _amount,
-        uint256 _start,
-        uint256 _end,
-        uint256 _cliff
-    ) external returns (uint256 _tokenId);
+    function split(SplitParams calldata _params) external returns (uint256 _tokenId);
 
     ///  @notice Delegates voting power of a given Lock to `delegatee`
     ///  @param _tokenId Lock Token Id to be used
