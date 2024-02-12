@@ -1,0 +1,397 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity >=0.8.20 <0.9.0;
+
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
+
+import "test/utils/BaseTest.sol";
+
+contract BatchSplitTest is BaseTest {
+    uint256 public from;
+    uint256 public amount;
+
+    function _setUp() public override {
+        deal(testToken, address(admin), TOKEN_10M);
+        admin.approve(testToken, address(govNFT), TOKEN_10M);
+        vm.prank(address(admin));
+        from = govNFT.createLock(
+            testToken,
+            address(recipient),
+            TOKEN_10M,
+            block.timestamp,
+            block.timestamp + WEEK * 3,
+            WEEK
+        );
+        amount = TOKEN_10K * 3;
+
+        // no prior splits or unclaimed rewards
+        (, , , uint256 unclaimedBeforeSplit, uint256 splitCount, , , , , , ) = govNFT.locks(from);
+        assertEq(unclaimedBeforeSplit, 0);
+        assertEq(splitCount, 0);
+    }
+
+    function test_BatchSplitBeforeStart() public {
+        (uint256 totalLocked, , , , , uint256 cliffLength, uint256 start, uint256 end, , address vault, ) = govNFT
+            .locks(from);
+        assertEq(totalLocked, govNFT.locked(from)); // no tokens have been vested before splitting
+        assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
+
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](5);
+        // same timestamps as parent token
+        // split timestamps can be the same as parent token because vesting has not started
+        paramsList[0] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount,
+            start: start,
+            end: end,
+            cliff: cliffLength
+        });
+        // extending end timestamp
+        paramsList[1] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount * 2,
+            start: start,
+            end: end + 3 * WEEK,
+            cliff: cliffLength
+        });
+        // extending start timestamp
+        paramsList[2] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount + amount / 2,
+            start: start + WEEK / 2,
+            end: end,
+            cliff: cliffLength
+        });
+        // extending cliff period
+        paramsList[3] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount / 2,
+            start: start,
+            end: end,
+            cliff: cliffLength * 2
+        });
+        // extending start and decreasing cliff
+        paramsList[4] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount * 3,
+            start: start + WEEK / 2,
+            end: end,
+            cliff: cliffLength - WEEK / 2
+        });
+
+        uint256 splitLockAmounts;
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // each split decreases the parent's `totalLocked` value by `amount`
+            splitLockAmounts += paramsList[i].amount;
+            vm.expectEmit(true, true, false, true);
+            emit IGovNFT.Split({
+                from: from,
+                tokenId: from + (i + 1),
+                recipient: paramsList[i].beneficiary,
+                splitAmount1: totalLocked - splitLockAmounts,
+                splitAmount2: paramsList[i].amount,
+                startTime: paramsList[i].start,
+                endTime: paramsList[i].end
+            });
+        }
+        vm.expectEmit(false, false, false, true, address(govNFT));
+        emit IERC4906.MetadataUpdate(from);
+
+        uint256 oldSupply = govNFT.totalSupply();
+
+        vm.prank(address(recipient));
+        uint256[] memory tokenIds = govNFT.split(from, paramsList);
+
+        assertEq(tokenIds.length, paramsList.length);
+        assertEq(govNFT.totalSupply(), oldSupply + paramsList.length);
+
+        // check updates on parent lock
+        _checkLockUpdates({
+            tokenId: from,
+            _totalLocked: totalLocked - splitLockAmounts,
+            _initialDeposit: totalLocked,
+            _cliffLength: cliffLength,
+            _start: start,
+            _end: end
+        });
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // check split info and lock updates on all split locks
+            _checkBatchSplitInfo({
+                _from: from,
+                tokenId: tokenIds[i],
+                owner: address(recipient),
+                beneficiary: paramsList[i].beneficiary,
+                unclaimedBeforeSplit: 0,
+                splitCount: paramsList.length,
+                splitIndex: i
+            });
+            _checkLockUpdates({
+                tokenId: tokenIds[i],
+                _totalLocked: paramsList[i].amount,
+                _initialDeposit: paramsList[i].amount,
+                _cliffLength: paramsList[i].cliff,
+                _start: paramsList[i].start,
+                _end: paramsList[i].end
+            });
+        }
+    }
+
+    function test_BatchSplitBeforeCliffEnd() public {
+        skip(2 days); // skip somewhere before cliff ends
+
+        (uint256 totalLocked, , , , , uint256 cliffLength, uint256 start, uint256 end, , address vault, ) = govNFT
+            .locks(from);
+        assertEq(totalLocked, govNFT.locked(from)); // still on cliff, no tokens vested
+        assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
+
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](5);
+        // same timestamps as parent token
+        // `start` has to be greater than `block.timestamp` since vest has already started
+        paramsList[0] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount,
+            start: block.timestamp,
+            end: end,
+            cliff: cliffLength - 2 days
+        });
+        // extending end timestamp
+        paramsList[1] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount / 2,
+            start: block.timestamp,
+            end: end + 3 * WEEK,
+            cliff: cliffLength - 2 days
+        });
+        // extending start timestamp
+        paramsList[2] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount + amount / 2,
+            start: block.timestamp + WEEK / 2,
+            end: end,
+            cliff: cliffLength - 2 days
+        });
+        // extending cliff period
+        paramsList[3] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount,
+            start: block.timestamp,
+            end: end,
+            cliff: (cliffLength - 2 days) * 2
+        });
+        // extending start and decreasing cliff
+        paramsList[4] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount * 3,
+            start: block.timestamp + 2 days,
+            end: end,
+            cliff: cliffLength - 4 days
+        });
+
+        uint256 splitLockAmounts;
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // each split decreases the parent's `totalLocked` value by `amount`
+            splitLockAmounts += paramsList[i].amount;
+            vm.expectEmit(true, true, false, true);
+            emit IGovNFT.Split({
+                from: from,
+                tokenId: from + (i + 1),
+                recipient: paramsList[i].beneficiary,
+                splitAmount1: totalLocked - splitLockAmounts,
+                splitAmount2: paramsList[i].amount,
+                startTime: paramsList[i].start,
+                endTime: paramsList[i].end
+            });
+        }
+        vm.expectEmit(false, false, false, true, address(govNFT));
+        emit IERC4906.MetadataUpdate(from);
+
+        uint256 oldSupply = govNFT.totalSupply();
+
+        vm.prank(address(recipient));
+        uint256[] memory tokenIds = govNFT.split(from, paramsList);
+
+        assertEq(tokenIds.length, paramsList.length);
+        assertEq(govNFT.totalSupply(), oldSupply + paramsList.length);
+
+        // original NFT assertions
+        uint256 remainingCliff = (start + cliffLength) - block.timestamp;
+        assertEq(remainingCliff, WEEK - 2 days);
+        // since still on cliff and vesting has started, the split cliff length will be
+        // the remaining cliff period and the new start will be the current timestamp
+        _checkLockUpdates({
+            tokenId: from,
+            _totalLocked: totalLocked - splitLockAmounts,
+            _initialDeposit: totalLocked,
+            _cliffLength: remainingCliff,
+            _start: block.timestamp,
+            _end: end
+        });
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // check split info and lock updates on all split locks
+            _checkBatchSplitInfo({
+                _from: from,
+                tokenId: tokenIds[i],
+                owner: address(recipient),
+                beneficiary: paramsList[i].beneficiary,
+                unclaimedBeforeSplit: 0,
+                splitCount: paramsList.length,
+                splitIndex: i
+            });
+            _checkLockUpdates({
+                tokenId: tokenIds[i],
+                _totalLocked: paramsList[i].amount,
+                _initialDeposit: paramsList[i].amount,
+                _cliffLength: paramsList[i].cliff,
+                _start: paramsList[i].start,
+                _end: paramsList[i].end
+            });
+        }
+    }
+
+    function test_BatchSplitAfterCliffEnd() public {
+        skip(WEEK + 2 days); // skip somewhere after cliff ends
+
+        (uint256 totalLocked, , , , , , , uint256 end, , address vault, ) = govNFT.locks(from);
+        uint256 lockedBeforeSplit = govNFT.locked(from);
+        uint256 originalUnclaimed = govNFT.unclaimed(from);
+        assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
+
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](5);
+        // same timestamps as parent token
+        // no cliff since vesting has already started
+        paramsList[0] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount,
+            start: block.timestamp,
+            end: end,
+            cliff: 0
+        });
+        // extending end timestamp
+        paramsList[1] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount / 2,
+            start: block.timestamp,
+            end: end + 3 * WEEK,
+            cliff: 0
+        });
+        // extending start timestamp
+        paramsList[2] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount + amount / 2,
+            start: block.timestamp + WEEK / 2,
+            end: end,
+            cliff: 0
+        });
+        // extending cliff period
+        paramsList[3] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount,
+            start: block.timestamp,
+            end: end,
+            cliff: WEEK / 2
+        });
+        // extending start and cliff
+        paramsList[4] = IGovNFT.SplitParams({
+            beneficiary: address(recipient),
+            amount: amount * 3,
+            start: block.timestamp + WEEK,
+            end: end,
+            cliff: WEEK / 2
+        });
+
+        uint256 splitLockAmounts;
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // each split decreases the parent's `locked` value by `amount`
+            splitLockAmounts += paramsList[i].amount;
+            vm.expectEmit(true, true, false, true);
+            emit IGovNFT.Split({
+                from: from,
+                tokenId: from + (i + 1),
+                recipient: paramsList[i].beneficiary,
+                splitAmount1: lockedBeforeSplit - splitLockAmounts,
+                splitAmount2: paramsList[i].amount,
+                startTime: paramsList[i].start,
+                endTime: paramsList[i].end
+            });
+        }
+        vm.expectEmit(false, false, false, true, address(govNFT));
+        emit IERC4906.MetadataUpdate(from);
+
+        uint256 oldSupply = govNFT.totalSupply();
+
+        vm.prank(address(recipient));
+        uint256[] memory tokenIds = govNFT.split(from, paramsList);
+
+        assertEq(tokenIds.length, paramsList.length);
+        assertEq(govNFT.totalSupply(), oldSupply + paramsList.length);
+
+        // original NFT assertions
+        (uint256 totalLockedSplit, , , , , , , , , , ) = govNFT.locks(from);
+
+        // no cliff since vesting has already started
+        _checkLockUpdates({
+            tokenId: from,
+            _totalLocked: lockedBeforeSplit - splitLockAmounts,
+            _initialDeposit: totalLocked,
+            _cliffLength: 0,
+            _start: block.timestamp,
+            _end: end
+        });
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // check split info and lock updates on all split locks
+            _checkBatchSplitInfo({
+                _from: from,
+                tokenId: tokenIds[i],
+                owner: address(recipient),
+                beneficiary: paramsList[i].beneficiary,
+                unclaimedBeforeSplit: originalUnclaimed,
+                splitCount: paramsList.length,
+                splitIndex: i
+            });
+            _checkLockUpdates({
+                tokenId: tokenIds[i],
+                _totalLocked: paramsList[i].amount,
+                _initialDeposit: paramsList[i].amount,
+                _cliffLength: paramsList[i].cliff,
+                _start: paramsList[i].start,
+                _end: paramsList[i].end
+            });
+        }
+        assertEq(govNFT.locked(from), totalLockedSplit);
+    }
+
+    function test_RevertIf_BatchSplitSumIsGreaterThanParentLock() public {
+        (uint256 totalLocked, , , , , uint256 cliffLength, uint256 start, uint256 end, , , ) = govNFT.locks(from);
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](5);
+        for (uint256 i = 0; i < paramsList.length; i++) {
+            // reverts when sum of amounts is greater than total locked
+            paramsList[i] = IGovNFT.SplitParams({
+                beneficiary: address(recipient),
+                amount: (totalLocked + TOKEN_1) / paramsList.length,
+                start: start,
+                end: end,
+                cliff: cliffLength
+            });
+        }
+        vm.expectRevert(IGovNFT.AmountTooBig.selector);
+        vm.prank(address(recipient));
+        govNFT.split(from, paramsList);
+    }
+
+    function test_RevertIf_BatchSplitWithNoParameters() public {
+        IGovNFT.SplitParams[] memory paramsList;
+        assertEq(paramsList.length, 0);
+
+        vm.expectRevert(IGovNFT.InvalidParameters.selector);
+        vm.prank(address(recipient));
+        govNFT.split(from, paramsList);
+    }
+
+    function test_RevertIf_BatchSplitWithUninitializedParameters() public {
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](2);
+        assertEq(paramsList.length, 2);
+
+        vm.expectRevert(IGovNFT.InvalidStart.selector);
+        vm.prank(address(recipient));
+        govNFT.split(from, paramsList);
+    }
+}

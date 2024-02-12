@@ -104,49 +104,69 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     }
 
     /// @inheritdoc IGovNFT
-    function split(SplitParams calldata _params) external virtual nonReentrant returns (uint256 _tokenId) {
-        _checkAuthorized(_ownerOf(_params.from), msg.sender, _params.from);
-        _createLockChecks(_params.beneficiary, _params.amount, _params.start, _params.end, _params.cliff);
+    function split(
+        uint256 _from,
+        SplitParams[] calldata _paramsList
+    ) external virtual nonReentrant returns (uint256[] memory _splitTokenIds) {
+        return _split(_from, _paramsList);
+    }
 
-        Lock memory parentLock = locks[_params.from];
-        if (_params.end < parentLock.end) revert InvalidEnd();
-        if (_params.start < parentLock.start) revert InvalidStart();
-        uint256 _endOfCliff = parentLock.start + parentLock.cliffLength;
-        if (_params.start + _params.cliff < _endOfCliff) revert InvalidCliff();
+    function _split(
+        uint256 _from,
+        SplitParams[] calldata _paramsList
+    ) internal virtual returns (uint256[] memory _splitTokenIds) {
+        uint256 length = _paramsList.length;
+        if (length == 0) revert InvalidParameters();
+        _checkAuthorized({owner: _ownerOf(_from), spender: msg.sender, tokenId: _from});
 
-        // Create Split NFT using _params.amount
-        Lock memory splitLock = Lock({
-            totalLocked: _params.amount,
-            initialDeposit: _params.amount,
-            totalClaimed: 0,
-            unclaimedBeforeSplit: 0,
-            splitCount: 0,
-            cliffLength: _params.cliff,
-            start: _params.start,
-            end: _params.end,
-            token: parentLock.token,
-            vault: address(new Vault(parentLock.token)),
-            minter: msg.sender
-        });
-        _tokenId = _createNFT(_params.beneficiary, splitLock);
+        // Fetch Parent Lock
+        Lock memory parentLock = locks[_from];
+        uint256 totalVested = _totalVested(_from);
+        uint256 endOfCliff = parentLock.start + parentLock.cliffLength;
+        uint256 parentLockedAmount = parentLock.totalLocked - totalVested;
 
-        // Update Original NFT
-        _updateLockAfterSplit(_params.from, _params.amount, _endOfCliff, parentLock);
-        locks[_params.from] = parentLock;
+        uint256 sum;
+        for (uint256 i = 0; i < length; i++) {
+            sum += _paramsList[i].amount;
+        }
+        if (parentLockedAmount < sum) revert AmountTooBig();
 
-        _addTokenToSplitList(_params.from, _tokenId);
-        IVault(parentLock.vault).withdraw(splitLock.vault, _params.amount);
-        if (IERC20(splitLock.token).balanceOf(splitLock.vault) < _params.amount) revert InsufficientAmount();
-        emit Split(
-            _params.from,
-            _tokenId,
-            _params.beneficiary,
-            parentLock.totalLocked,
-            _params.amount,
-            _params.start,
-            _params.end
-        );
-        emit MetadataUpdate(_params.from);
+        SplitParams memory params;
+        _splitTokenIds = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            params = _paramsList[i];
+            _createLockChecks({
+                _recipient: params.beneficiary,
+                _amount: params.amount,
+                _startTime: params.start,
+                _endTime: params.end,
+                _cliff: params.cliff
+            });
+
+            if (params.end < parentLock.end) revert InvalidEnd();
+            if (params.start < parentLock.start) revert InvalidStart();
+            if (params.start + params.cliff < endOfCliff) revert InvalidCliff();
+            parentLockedAmount -= params.amount;
+
+            // @dev This call implicitly updates `parentLock.splitCount`
+            _splitTokenIds[i] = _createSplitNFT({
+                _from: _from,
+                _parentLockedAmount: parentLockedAmount,
+                _parentLock: parentLock,
+                _params: params
+            });
+        }
+        // Update Parent NFT using updated `parentLockedAmount`
+        parentLock.totalLocked = parentLockedAmount;
+        if (block.timestamp > parentLock.start) {
+            parentLock.start = block.timestamp;
+            parentLock.cliffLength = block.timestamp < endOfCliff ? endOfCliff - block.timestamp : 0;
+        }
+
+        parentLock.unclaimedBeforeSplit += (totalVested - parentLock.totalClaimed);
+        delete parentLock.totalClaimed;
+        locks[_from] = parentLock;
+        emit MetadataUpdate(_from);
     }
 
     /// @inheritdoc IGovNFT
@@ -170,6 +190,52 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
         locks[_tokenId] = _newLock;
     }
 
+    /// @dev Creates a new Split NFT from the given Parent NFT
+    ///      Assumes that the given Split Parameters are valid
+    /// @param _from ID of the Parent NFT to be split
+    /// @param _parentLockedAmount Amount of tokens still locked in Parent Lock
+    /// @param _parentLock Parent NFT's lock information
+    /// @param _params Parameters to be used to create the new Split NFT
+    /// @return _tokenId Returns the token ID of the new Split NFT
+    function _createSplitNFT(
+        uint256 _from,
+        uint256 _parentLockedAmount,
+        Lock memory _parentLock,
+        SplitParams memory _params
+    ) internal virtual returns (uint256 _tokenId) {
+        // Create Split NFT using params.amount
+        Lock memory splitLock = Lock({
+            totalLocked: _params.amount,
+            initialDeposit: _params.amount,
+            totalClaimed: 0,
+            unclaimedBeforeSplit: 0,
+            splitCount: 0,
+            cliffLength: _params.cliff,
+            start: _params.start,
+            end: _params.end,
+            token: _parentLock.token,
+            vault: address(new Vault(_parentLock.token)),
+            minter: msg.sender
+        });
+        _tokenId = _createNFT({_recipient: _params.beneficiary, _newLock: splitLock});
+
+        // Update Parent NFT's Split Token List
+        splitTokensByIndex[_from][_parentLock.splitCount++] = _tokenId;
+
+        // Transfer Split Amount from Parent Vault to new Split Vault
+        IVault(_parentLock.vault).withdraw({_receiver: splitLock.vault, _amount: _params.amount});
+        if (IERC20(splitLock.token).balanceOf(splitLock.vault) < _params.amount) revert InsufficientAmount();
+        emit Split({
+            from: _from,
+            tokenId: _tokenId,
+            recipient: _params.beneficiary,
+            splitAmount1: _parentLockedAmount,
+            splitAmount2: _params.amount,
+            startTime: _params.start,
+            endTime: _params.end
+        });
+    }
+
     /// @dev Checks if the parameters used to create a Lock are valid
     /// @param _recipient Address to vest tokens for
     /// @param _amount Amount of tokens to be vested for `recipient`
@@ -189,45 +255,6 @@ contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
 
         if (_startTime >= _endTime) revert EndBeforeOrEqualStart();
         if (_endTime - _startTime < _cliff) revert InvalidCliff();
-    }
-
-    /// @dev Updates the current Lock information of a Parent NFT after splitting it
-    ///      After execution, the value of the `lock` variable will be updated
-    ///      Throws if `_amount` is greater than the Parent NFT's locked balance
-    /// @param _from ID of the parent NFT to be updated
-    /// @param _amount Amount to be split from Parent NFT's locked balance
-    /// @param _endOfCliff End of the Parent NFT's cliff
-    /// @param lock Parent NFT's Lock information to be updated
-    function _updateLockAfterSplit(
-        uint256 _from,
-        uint256 _amount,
-        uint256 _endOfCliff,
-        Lock memory lock
-    ) internal view {
-        uint256 totalVested = _totalVested(_from);
-        uint256 _locked_ = lock.totalLocked - totalVested;
-        if (_locked_ <= _amount) revert AmountTooBig();
-
-        uint256 lockAmount = _locked_ - _amount;
-
-        lock.totalLocked = lockAmount;
-        if (block.timestamp > lock.start) {
-            lock.start = block.timestamp;
-            lock.cliffLength = block.timestamp < _endOfCliff ? _endOfCliff - block.timestamp : 0;
-        }
-
-        // Update NFT using _locked_ - _amount
-        lock.unclaimedBeforeSplit += totalVested - lock.totalClaimed;
-        delete lock.totalClaimed;
-    }
-
-    /// @dev Add a Split NFT to the Split index mapping of its parent NFT
-    /// @param _from ID of the Parent NFT
-    /// @param _tokenId ID of the new Split NFT
-    function _addTokenToSplitList(uint256 _from, uint256 _tokenId) internal {
-        uint256 length = locks[_from].splitCount;
-        splitTokensByIndex[_from][length] = _tokenId;
-        locks[_from].splitCount = length + 1;
     }
 
     /// @inheritdoc IGovNFT

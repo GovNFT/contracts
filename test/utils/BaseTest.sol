@@ -89,17 +89,30 @@ contract BaseTest is Test {
         uint256 splitCount
     ) internal {
         // Asserts that information retrieved from tokens involved in split is equal to given parameters
+        _checkBatchSplitInfo(_from, tokenId, owner, beneficiary, unclaimedBeforeSplit, splitCount, 0);
+    }
+
+    function _checkBatchSplitInfo(
+        uint256 _from,
+        uint256 tokenId,
+        address owner,
+        address beneficiary,
+        uint256 unclaimedBeforeSplit,
+        uint256 splitCount,
+        uint256 splitIndex
+    ) internal {
+        // Asserts that information retrieved from tokens involved in split is equal to given parameters
         assertEq(govNFT.ownerOf(_from), owner);
         assertEq(govNFT.ownerOf(tokenId), beneficiary);
 
         (, , uint256 _totalClaimed, , , , , , address splitToken, , address minter) = govNFT.locks(tokenId);
 
         (, , , uint256 _unclaimedBeforeSplit, uint256 _splitCount, , , , address token, , ) = govNFT.locks(_from);
-        assertEq(owner, minter);
+        assertEq(minter, owner);
         assertEq(_totalClaimed, 0);
         assertEq(token, splitToken);
         assertEq(_splitCount, splitCount);
-        assertEq(govNFT.splitTokensByIndex(_from, 0), tokenId);
+        assertEq(govNFT.splitTokensByIndex(_from, splitIndex), tokenId);
         assertEq(_unclaimedBeforeSplit, unclaimedBeforeSplit);
     }
 

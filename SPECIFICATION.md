@@ -33,7 +33,7 @@ Determined by duration, start time, and cliff period, as specified during the Lo
 
 #### Splitting
 
-The split function takes a parent NFT `from` and splits it into another NFT, that will be referred to as `tokenId`.
+The split function takes a parent NFT `from` and splits it into another NFT, that will be referred to as `to`.
 
 Calling `split` requires the following arguments:
 
@@ -45,7 +45,9 @@ Calling `split` requires the following arguments:
 After a `split` is performed:
 
 - The `from` NFT will only vest `locked - amount` tokens;
-- `tokenId` NFT will be minted with `amount` locked tokens to be vested to the given `beneficiary`.
+- The `to` NFT will be minted with `amount` locked tokens to be vested to the given `beneficiary`.
+
+Additionally, there is the option to batch split the parent NFT `from` into several `to` NFTs, providing an array of split parameters.
 
 #### Delegation
 
