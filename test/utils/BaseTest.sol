@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import "forge-std/console.sol";
-import {Test, console} from "forge-std/Test.sol";
 import {Test, console} from "forge-std/Test.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
@@ -12,11 +10,13 @@ import {MockGovernanceToken} from "test/utils/MockGovernanceToken.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {IGovNFTTimelock} from "src/interfaces/IGovNFTTimelock.sol";
 import {IGovNFT} from "src/interfaces/IGovNFT.sol";
-import "src/GovNFT.sol";
+import "src/extensions/GovNFTTimelock.sol";
+import "src/extensions/GovNFTSplit.sol";
 
 contract BaseTest is Test {
-    GovNFT public govNFT;
+    GovNFTSplit public govNFT;
 
     address public testToken;
     address public testGovernanceToken;
@@ -40,7 +40,7 @@ contract BaseTest is Test {
     uint256 constant WEEK = 1 weeks;
 
     function setUp() public {
-        govNFT = new GovNFT();
+        govNFT = new GovNFTSplit();
 
         admin = new TestOwner();
         admin1 = new TestOwner();

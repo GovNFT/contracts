@@ -4,7 +4,7 @@ pragma solidity >=0.8.20 <0.9.0;
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
-import {GovNFT} from "src/GovNFT.sol";
+import {GovNFTSplit} from "src/extensions/GovNFTSplit.sol";
 
 contract Deploy is Script {
     using stdJson for string;
@@ -13,12 +13,12 @@ contract Deploy is Script {
     address public deployerAddress = vm.rememberKey(deployPrivateKey);
     string public outputFilename = vm.envString("OUTPUT_FILENAME");
 
-    GovNFT public govNFT;
+    GovNFTSplit public govNFT;
     string public jsonOutput;
 
     function run() public {
         vm.startBroadcast(deployerAddress);
-        govNFT = new GovNFT();
+        govNFT = new GovNFTSplit();
         vm.stopBroadcast();
 
         string memory root = vm.projectRoot();
