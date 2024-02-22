@@ -2,13 +2,16 @@
 pragma solidity >=0.8.20 <0.9.0;
 
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
+import {IArtProxy} from "./interfaces/IArtProxy.sol";
 import {IGovNFT} from "./interfaces/IGovNFT.sol";
 import {IVault} from "./interfaces/IVault.sol";
 import {Vault} from "./Vault.sol";
@@ -19,7 +22,7 @@ import {Vault} from "./Vault.sol";
 /// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
 /// @dev    Contract not intended to be used standalone. Should inherit Splitting functionality
 ///         from one of the available Split modules instead.
-abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
+abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable {
     using SafeERC20 for IERC20;
 
     /// @dev tokenId => Lock state
@@ -31,7 +34,43 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
     /// @inheritdoc IGovNFT
     uint256 public tokenId;
 
-    constructor() ERC721("GovNFT", "GovNFT") {}
+    /// @dev ArtProxy address
+    address public immutable artProxy;
+
+    /// @dev IGovNFTFactory address
+    address public immutable factory;
+
+    constructor(
+        address _owner,
+        address _artProxy,
+        string memory _name,
+        string memory _symbol
+    ) ERC721(_name, _symbol) Ownable(_owner) {
+        artProxy = _artProxy;
+        factory = msg.sender;
+    }
+
+    /**
+     * @dev Throws if owner is not the sender nor the factory.
+     * @dev Used in onlyOwner modifier.
+     */
+    function _checkOwner() internal view override(Ownable) {
+        address _owner = owner();
+        if (_owner != _msgSender() && _owner != factory) {
+            revert OwnableUnauthorizedAccount(_msgSender());
+        }
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner. Prevents transferring ownership to the factory
+     */
+    function transferOwnership(address newOwner) public virtual override onlyOwner {
+        if (newOwner == address(0) || newOwner == factory) {
+            revert OwnableInvalidOwner(newOwner);
+        }
+        _transferOwnership(newOwner);
+    }
 
     /// @inheritdoc IGovNFT
     function unclaimed(uint256 _tokenId) external view returns (uint256) {
@@ -69,7 +108,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
         uint256 _startTime,
         uint256 _endTime,
         uint256 _cliffLength
-    ) external nonReentrant returns (uint256 _tokenId) {
+    ) external nonReentrant onlyOwner returns (uint256 _tokenId) {
         if (_token == address(0)) revert ZeroAddress();
         _createLockChecks(_recipient, _amount, _startTime, _endTime, _cliffLength);
 
@@ -295,5 +334,11 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable {
 
         IVault(vault).sweep(_token, _recipient, amount);
         emit Sweep(_tokenId, _token, _recipient, amount);
+    }
+
+    /// @inheritdoc IERC721Metadata
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
+        if (_ownerOf(_tokenId) == address(0)) revert TokenNotFound();
+        return IArtProxy(artProxy).tokenURI(_tokenId);
     }
 }

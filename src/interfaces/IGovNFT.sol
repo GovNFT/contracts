@@ -63,6 +63,7 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     error EndBeforeOrEqualStart();
     error InsufficientAmount();
     error InvalidParameters();
+    error TokenNotFound();
     error InvalidStart();
     error InvalidCliff();
     error AmountTooBig();
@@ -73,6 +74,12 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @notice Current count of minted NFTs
     /// @return The number of minted NFTs
     function tokenId() external view returns (uint256);
+
+    /// @notice Address of art proxy used for on-chain art generation
+    function artProxy() external view returns (address);
+
+    /// @notice Address of the factory that deployed this contract
+    function factory() external view returns (address);
 
     /// @notice Get the number of unclaimed, vested tokens for a given token ID
     /// @param _tokenId Lock Token Id to be used

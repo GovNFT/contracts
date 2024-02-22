@@ -68,24 +68,29 @@ contract LockTest is BaseTest {
 
     function testCannotCreateLockIfZeroAddress() public {
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
+        vm.prank(address(admin));
         govNFT.createLock(address(0), address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
 
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
+        vm.prank(address(admin));
         govNFT.createLock(testToken, address(0), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
     function testCannotCreateLockIfZeroAmount() public {
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
+        vm.prank(address(admin));
         govNFT.createLock(testToken, address(recipient), 0, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
     function testCannotCreateLockIfInvalidCliff() public {
         vm.expectRevert(IGovNFT.InvalidCliff.selector);
+        vm.prank(address(admin));
         govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK - 1, WEEK);
     }
 
     function testCannotCreateLockWithZeroDuration() public {
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.prank(address(admin));
         govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp + WEEK, block.timestamp + WEEK, WEEK);
     }
 
@@ -102,6 +107,7 @@ contract LockTest is BaseTest {
 
     function testCannotCreateLockIfEndBeforeStart() public {
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.prank(address(admin));
         govNFT.createLock(
             testToken,
             address(recipient),
@@ -112,6 +118,7 @@ contract LockTest is BaseTest {
         );
 
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.prank(address(admin));
         govNFT.createLock(
             testToken,
             address(recipient),
@@ -124,6 +131,7 @@ contract LockTest is BaseTest {
 
     function testCannotCreateLockIfStartIsInPast() public {
         vm.expectRevert(IGovNFT.InvalidStart.selector);
+        vm.prank(address(admin));
         govNFT.createLock(
             testToken,
             address(recipient),

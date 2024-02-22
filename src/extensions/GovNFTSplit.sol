@@ -10,6 +10,13 @@ import {GovNFT} from "../GovNFT.sol";
 /// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
 /// @dev    This contract extends the original GovNFT implementation to include Splitting functionality
 contract GovNFTSplit is GovNFT, IGovNFTSplit {
+    constructor(
+        address _owner,
+        address _artProxy,
+        string memory _name,
+        string memory _symbol
+    ) GovNFT(_owner, _artProxy, _name, _symbol) {}
+
     /// @inheritdoc IGovNFTSplit
     function split(uint256 _from, SplitParams[] calldata _paramsList) external nonReentrant returns (uint256[] memory) {
         _checkAuthorized({owner: _ownerOf(_from), spender: msg.sender, tokenId: _from});

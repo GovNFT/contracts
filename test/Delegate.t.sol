@@ -14,8 +14,8 @@ contract DelegateTest is BaseTest {
     uint256 tokenId;
 
     function _setUp() public override {
-        admin.approve(testGovernanceToken, address(govNFT), TOKEN_100K);
         testAddr = makeAddr("alice");
+        admin.approve(testGovernanceToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
         tokenId = govNFT.createLock(
             testGovernanceToken,

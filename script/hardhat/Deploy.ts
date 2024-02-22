@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Libraries } from "hardhat/types";
 import { join } from "path";
 import { writeFile } from "fs/promises";
-import { GovNFT } from "../../artifacts/types";
+import { GovNFTFactory } from "../../artifacts/types";
 
 export async function deploy<Type>(
   typeName: string,
@@ -18,15 +18,21 @@ export async function deploy<Type>(
 }
 
 async function main() {
-  const govNFT = await deploy<GovNFT>("GovNFT", undefined, []);
-  console.log(`GovNFT deployed to ${govNFT.address}`);
+  const govNFTFactory = await deploy<GovNFTFactory>(
+    "GovNFTFactory",
+    undefined,
+    "0x0000000000000000000000000000000000000000", //TODO veArtProxy contract address
+    "GovNFT",
+    "GovNFT",
+  );
+  console.log(`GovNFTFactory deployed to ${govNFTFactory.address}`);
 
   interface DeployOutput {
-    GovNFT: string;
+    GovNFTFactory: string;
   }
 
   const output: DeployOutput = {
-    GovNFT: govNFT.address,
+    GovNFTFactory: govNFTFactory.address,
   };
 
   const outputDirectory = "script/constants/output";

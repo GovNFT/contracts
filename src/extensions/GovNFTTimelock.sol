@@ -17,7 +17,13 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
     /// @dev tokenId => SplitProposal Proposed Split information
     mapping(uint256 => SplitProposal) internal _proposedSplits;
 
-    constructor(uint256 _timelock) GovNFT() {
+    constructor(
+        address _owner,
+        address _artProxy,
+        string memory _name,
+        string memory _symbol,
+        uint256 _timelock
+    ) GovNFT(_owner, _artProxy, _name, _symbol) {
         timelock = _timelock;
     }
 

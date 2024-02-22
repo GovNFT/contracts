@@ -4,10 +4,10 @@ out = "out"
 libs = ["lib"]
 solc_version = "0.8.23"
 
+fs_permissions = [{ access = "read-write", path = "./"}]
+
 [fuzz]
 runs = 5000
-
-fs_permissions = [{ access = "read-write", path = "./"}]
 
 [rpc_endpoints]
 optimism = "${OPTIMISM_RPC_URL}"

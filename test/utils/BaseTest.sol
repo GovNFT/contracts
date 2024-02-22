@@ -22,10 +22,10 @@ contract BaseTest is Test {
     address public testGovernanceToken;
     address public airdropToken;
     TestOwner public admin;
-    TestOwner public admin1;
     TestOwner public recipient;
     TestOwner public recipient2;
     TestOwner public airdropper;
+    TestOwner public notAdmin;
 
     uint256 constant TOKEN_1 = 1e18;
     uint256 constant TOKEN_10K = 1e22; // 1e4 = 10K tokens with 18 decimals
@@ -40,13 +40,14 @@ contract BaseTest is Test {
     uint256 constant WEEK = 1 weeks;
 
     function setUp() public {
-        govNFT = new GovNFTSplit();
-
         admin = new TestOwner();
-        admin1 = new TestOwner();
+        notAdmin = new TestOwner();
         recipient = new TestOwner();
         recipient2 = new TestOwner();
         airdropper = new TestOwner();
+
+        vm.prank(address(admin));
+        govNFT = new GovNFTSplit(address(admin), address(0), "GovNFT", "GovNFT");
 
         testToken = address(new MockERC20("TEST", "TEST", 18));
         testGovernanceToken = address(new MockGovernanceToken("TESTGOV", "TESTGOV", 18));
@@ -54,7 +55,7 @@ contract BaseTest is Test {
         deal(airdropToken, address(airdropper), TOKEN_100K);
         deal(testToken, address(airdropper), TOKEN_100K);
         deal(testToken, address(admin), TOKEN_100K);
-        deal(testToken, address(admin1), TOKEN_100K);
+        deal(testToken, address(notAdmin), TOKEN_100K);
         deal(testGovernanceToken, address(admin), TOKEN_100K);
         _setUp();
     }

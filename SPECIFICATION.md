@@ -26,6 +26,8 @@ Allows to set parameters like:
 - start time
 - end time
 
+Creating a lock is only allowed by the contract's owner, unless the GovNFT contract is owned by the factory (in that case anyone can create a lock).
+
 #### Claiming Tokens
 
 Allows recipients to claim vested tokens as they become available.
@@ -69,3 +71,13 @@ Each NFT is an exclusive owner of a Vault (where the ERC-20 tokens are actually 
 - allowing the GovNFT to withdraw vested tokens to the recipient
 - delegate their voting rights while tokens are locked, if the stored tokens possess governance capabilities
 - sweeping airdropped from the vault to a specified receiver.
+
+### GovNFTFactory
+
+Facilitates the creation and tracking of deployed GovNFTs. Creating a GovNFT requires the following arguments:
+
+- owner who will be allowed to create locks
+- address of the artProxy to be used for the token URI
+- name and symbol
+
+Upon the deployment of the factory, a single permissionless GovNFT is created and owned by the factory (anyone can create a lock in this case).
