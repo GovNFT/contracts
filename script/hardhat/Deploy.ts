@@ -22,8 +22,8 @@ async function main() {
     "GovNFTFactory",
     undefined,
     "0x0000000000000000000000000000000000000000", //TODO veArtProxy contract address
-    "GovNFT",
-    "GovNFT",
+    "GovNFT: NFT for vested distribution of (governance) tokens",
+    "GOVNFT",
   );
   console.log(`GovNFTFactory deployed to ${govNFTFactory.address}`);
 

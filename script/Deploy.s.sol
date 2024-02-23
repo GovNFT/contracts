@@ -19,7 +19,11 @@ contract Deploy is Script {
     function run() public {
         vm.startBroadcast(deployerAddress);
         //TODO choose veartproxy
-        govNFTFactory = new GovNFTFactory(address(0), "GovNFT", "GovNFT");
+        govNFTFactory = new GovNFTFactory(
+            address(0),
+            "GovNFT: NFT for vested distribution of (governance) tokens",
+            "GOVNFT"
+        );
         vm.stopBroadcast();
 
         string memory root = vm.projectRoot();

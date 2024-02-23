@@ -13,7 +13,7 @@ contract CommitSplitTest is BaseTest {
     GovNFTTimelock public govNFTLock;
 
     function _setUp() public override {
-        govNFTLock = new GovNFTTimelock(address(admin), address(0), "GovNFTTimelock", "GovNFT", timelockDelay);
+        govNFTLock = new GovNFTTimelock(address(admin), address(0), "GovNFTTimelock", SYMBOL, timelockDelay);
         // reassigning govNFT to use in helper functions
         govNFT = GovNFTSplit(address(govNFTLock));
 

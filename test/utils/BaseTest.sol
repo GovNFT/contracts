@@ -39,6 +39,9 @@ contract BaseTest is Test {
     uint256 constant DURATION = 7 days;
     uint256 constant WEEK = 1 weeks;
 
+    string constant NAME = "GovNFT: NFT for vested distribution of (governance) tokens";
+    string constant SYMBOL = "GOVNFT";
+
     function setUp() public {
         admin = new TestOwner();
         notAdmin = new TestOwner();
@@ -47,7 +50,7 @@ contract BaseTest is Test {
         airdropper = new TestOwner();
 
         vm.prank(address(admin));
-        govNFT = new GovNFTSplit(address(admin), address(0), "GovNFT", "GovNFT");
+        govNFT = new GovNFTSplit(address(admin), address(0), NAME, SYMBOL);
 
         testToken = address(new MockERC20("TEST", "TEST", 18));
         testGovernanceToken = address(new MockGovernanceToken("TESTGOV", "TESTGOV", 18));

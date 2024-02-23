@@ -35,8 +35,8 @@ contract TestDeploy is BaseTest {
 
         IGovNFT govNFT = IGovNFT(factory.govNFT());
         assertTrue(govNFT.artProxy() == address(0)); //TODO change once we set art proxy
-        assertEq(ERC721(address(govNFT)).name(), "GovNFT");
-        assertEq(ERC721(address(govNFT)).symbol(), "GovNFT");
+        assertEq(ERC721(address(govNFT)).name(), NAME);
+        assertEq(ERC721(address(govNFT)).symbol(), SYMBOL);
         assertTrue(Ownable(address(govNFT)).owner() == address(factory));
         assertTrue(factory.govNFTsLength() == 1);
         assertTrue(factory.isGovNFT(address(govNFT)));

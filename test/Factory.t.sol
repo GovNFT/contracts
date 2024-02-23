@@ -14,7 +14,7 @@ contract FactoryTest is BaseTest {
     address public artProxy = vm.addr(0x12345);
 
     function _setUp() public override {
-        factory = new GovNFTFactory(artProxy, "GovNFT", "GovNFT");
+        factory = new GovNFTFactory(artProxy, NAME, SYMBOL);
     }
 
     function testSetup() public {
@@ -25,14 +25,14 @@ contract FactoryTest is BaseTest {
         address _govNFT = govNFTs[0];
         assertEq(govNFTs.length, 1);
         assertEq(_govNFT, factory.govNFT());
-        assertEq(ERC721(_govNFT).name(), "GovNFT");
-        assertEq(ERC721(_govNFT).symbol(), "GovNFT");
+        assertEq(ERC721(_govNFT).name(), NAME);
+        assertEq(ERC721(_govNFT).symbol(), SYMBOL);
         assertEq(Ownable(_govNFT).owner(), address(factory));
     }
 
     function testCannotCreateWithFactoryAsAdmin() public {
         vm.expectRevert(IGovNFTFactory.NotAuthorized.selector);
-        factory.createGovNFT(address(factory), address(0), "GovNFT", "GovNFT");
+        factory.createGovNFT(address(factory), address(0), NAME, SYMBOL);
     }
 
     function testCreateGovNFT() public {
@@ -75,7 +75,7 @@ contract FactoryTest is BaseTest {
     }
 
     function testCannotCreateLockIfNotOwner() public {
-        IGovNFT _govNFT = IGovNFT(factory.createGovNFT(address(admin), artProxy, "GovNFT", "GovNFT"));
+        IGovNFT _govNFT = IGovNFT(factory.createGovNFT(address(admin), artProxy, NAME, SYMBOL));
 
         admin.approve(testToken, address(_govNFT), TOKEN_100K);
         vm.prank(address(admin));
