@@ -74,30 +74,29 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
 
     /// @inheritdoc IGovNFT
     function unclaimed(uint256 _tokenId) external view returns (uint256) {
-        return _unclaimed(_tokenId);
+        return _unclaimed(locks[_tokenId]);
     }
 
-    function _unclaimed(uint256 _tokenId) internal view returns (uint256) {
-        return _totalVested(_tokenId) + locks[_tokenId].unclaimedBeforeSplit - locks[_tokenId].totalClaimed;
+    function _unclaimed(Lock storage _lock) internal view returns (uint256) {
+        return _totalVested(_lock) + _lock.unclaimedBeforeSplit - _lock.totalClaimed;
     }
 
-    function _totalVested(uint256 _tokenId) internal view returns (uint256) {
-        Lock memory lock = locks[_tokenId];
-        uint256 time = Math.min(block.timestamp, lock.end);
+    function _totalVested(Lock storage _lock) internal view returns (uint256) {
+        uint256 time = Math.min(block.timestamp, _lock.end);
 
-        if (time < lock.start + lock.cliffLength) {
+        if (time < _lock.start + _lock.cliffLength) {
             return 0;
         }
-        return (lock.totalLocked * (time - lock.start)) / (lock.end - lock.start);
+        return (_lock.totalLocked * (time - _lock.start)) / (_lock.end - _lock.start);
     }
 
     /// @inheritdoc IGovNFT
     function locked(uint256 _tokenId) external view returns (uint256) {
-        return _locked(_tokenId);
+        return _locked(locks[_tokenId]);
     }
 
-    function _locked(uint256 _tokenId) internal view returns (uint256) {
-        return locks[_tokenId].totalLocked - _totalVested(_tokenId);
+    function _locked(Lock storage _lock) internal view returns (uint256) {
+        return _lock.totalLocked - _totalVested(_lock);
     }
 
     /// @inheritdoc IGovNFT
@@ -129,9 +128,9 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
         if (_beneficiary == address(0)) revert ZeroAddress();
 
-        uint256 _claimable = Math.min(_unclaimed(_tokenId), _amount);
+        Lock storage lock = locks[_tokenId];
+        uint256 _claimable = Math.min(_unclaimed(lock), _amount);
 
-        Lock memory lock = locks[_tokenId];
         if (_claimable > lock.unclaimedBeforeSplit) {
             lock.totalClaimed += _claimable - lock.unclaimedBeforeSplit;
             delete lock.unclaimedBeforeSplit;
@@ -139,7 +138,6 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
             lock.unclaimedBeforeSplit -= _claimable;
         }
 
-        locks[_tokenId] = lock;
         IVault(lock.vault).withdraw(_beneficiary, _claimable);
         emit Claim(_tokenId, _beneficiary, _claimable);
     }
@@ -175,7 +173,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
     function _split(
         uint256 _from,
         uint256 _parentTotalVested,
-        Lock memory _parentLock,
+        Lock storage _parentLock,
         SplitParams[] memory _paramsList
     ) internal returns (uint256[] memory _splitTokenIds) {
         SplitParams memory params;
@@ -204,7 +202,6 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
 
         _parentLock.unclaimedBeforeSplit += (_parentTotalVested - _parentLock.totalClaimed);
         delete _parentLock.totalClaimed;
-        locks[_from] = _parentLock;
         emit MetadataUpdate(_from);
     }
 
@@ -218,7 +215,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
     function _createSplitNFT(
         uint256 _from,
         uint256 _parentLockedAmount,
-        Lock memory _parentLock,
+        Lock storage _parentLock,
         SplitParams memory _params
     ) internal virtual returns (uint256 _tokenId) {
         // Create Split NFT using params.amount
@@ -259,7 +256,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
     /// @param _parentTotalVested Number of tokens vested in Parent Lock
     /// @param _paramsList Array of Parameters to be used to create the new Split NFTs
     function _validateSplitParams(
-        Lock memory _parentLock,
+        Lock storage _parentLock,
         uint256 _parentTotalVested,
         SplitParams[] memory _paramsList
     ) internal view {
@@ -322,7 +319,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
 
-        Lock memory lock = locks[_tokenId];
+        Lock storage lock = locks[_tokenId];
         address vault = lock.vault;
 
         if (_token == lock.token) {

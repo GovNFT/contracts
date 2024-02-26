@@ -37,8 +37,8 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
         _checkAuthorized({owner: _ownerOf(_from), spender: msg.sender, tokenId: _from});
 
         // Fetch Parent Lock
-        Lock memory parentLock = locks[_from];
-        uint256 totalVested = _totalVested(_from);
+        Lock storage parentLock = locks[_from];
+        uint256 totalVested = _totalVested(parentLock);
         _validateSplitParams({_parentLock: parentLock, _parentTotalVested: totalVested, _paramsList: _paramsList});
 
         // Clear any previously proposed Splits
@@ -86,8 +86,8 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
         }
 
         // Fetch Parent Lock
-        Lock memory parentLock = locks[_from];
-        uint256 totalVested = _totalVested(_from);
+        Lock storage parentLock = locks[_from];
+        uint256 totalVested = _totalVested(parentLock);
         if (parentLock.totalLocked - totalVested < sum) revert AmountTooBig();
 
         // Execute all proposed Splits for `_from`
