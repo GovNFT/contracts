@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-interface IGovNFTFactory {
+interface IGovNFTTimelockFactory {
     /// Events
-    event GovNFTCreated(
+    event GovNFTTimelockCreated(
         address indexed owner,
         address indexed artProxy,
         string name,
         string symbol,
+        uint256 timelock,
         address indexed govNFT,
         uint256 govNFTCount
     );
@@ -24,12 +25,14 @@ interface IGovNFTFactory {
     /// @param _artProxy Address of the art proxy
     /// @param _name Name of the GovNFT
     /// @param _symbol Symbol of the GovNFT
+    /// @param _timelock Timelock for the GovNFT
     /// @return _govNFT Address of the created GovNFT
     function createGovNFT(
         address _owner,
         address _artProxy,
         string memory _name,
-        string memory _symbol
+        string memory _symbol,
+        uint256 _timelock
     ) external returns (address _govNFT);
 
     /// @notice View all created GovNFTs

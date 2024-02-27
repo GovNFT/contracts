@@ -4,22 +4,23 @@ pragma solidity >=0.8.20 <0.9.0;
 import "src/GovNFT.sol";
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
-import "../script/Deploy.s.sol";
+import "../script/DeployWithTimelock.s.sol";
 import {BaseTest} from "test/utils/BaseTest.sol";
-import {IGovNFTFactory} from "src/interfaces/IGovNFTFactory.sol";
+import {IGovNFTTimelockFactory} from "src/interfaces/IGovNFTTimelockFactory.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IGovNFTTimelock} from "src/interfaces/IGovNFTTimelock.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract DeployTest is BaseTest {
+contract DeployWithTimelockTest is BaseTest {
     using stdJson for string;
     using stdStorage for StdStorage;
 
     address public constant testDeployer = address(1);
 
-    Deploy deploy;
+    DeployWithTimelock deploy;
 
     function _setUp() public override {
-        deploy = new Deploy();
+        deploy = new DeployWithTimelock();
 
         // Use test account for deployment
         stdstore.target(address(deploy)).sig("deployerAddress()").checked_write(testDeployer);
@@ -29,7 +30,7 @@ contract DeployTest is BaseTest {
     function testDeployScript() public {
         deploy.run();
 
-        IGovNFTFactory factory = deploy.govNFTFactory();
+        IGovNFTTimelockFactory factory = deploy.govNFTTimelockFactory();
         assertTrue(address(factory) != address(0));
         assertTrue(factory.govNFT() != address(0));
 
@@ -41,6 +42,7 @@ contract DeployTest is BaseTest {
         assertTrue(factory.govNFTsLength() == 1);
         assertTrue(factory.isGovNFT(address(govNFT)));
         assertTrue(govNFT.factory() == address(factory));
+        assertEq(IGovNFTTimelock(address(govNFT)).timelock(), 0);
         address[] memory govNFTs = factory.govNFTs();
         assertTrue(govNFTs.length == 1);
         assertTrue(govNFTs[0] == address(govNFT));

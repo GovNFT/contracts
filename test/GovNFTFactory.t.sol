@@ -9,7 +9,7 @@ import "src/GovNFTFactory.sol";
 import "src/interfaces/IGovNFT.sol";
 import "src/interfaces/IGovNFTFactory.sol";
 
-contract FactoryTest is BaseTest {
+contract GovNFTFactoryTest is BaseTest {
     IGovNFTFactory factory;
     address public artProxy = vm.addr(0x12345);
 

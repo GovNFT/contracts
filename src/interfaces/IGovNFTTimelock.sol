@@ -23,6 +23,9 @@ interface IGovNFTTimelock is IGovNFT {
         SplitParams[] pendingSplits;
     }
 
+    /// @notice Returns the timelock for the Split
+    function timelock() external view returns (uint256);
+
     /// @notice Returns the Split Proposal information for the given `_tokenId`
     /// @param _tokenId Lock Token Id with pending Split Proposal
     /// @return Split Proposal information to be used to finalize the Split

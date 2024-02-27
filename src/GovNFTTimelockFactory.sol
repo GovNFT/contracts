@@ -1,70 +1,87 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {GovNFTSplit} from "./extensions/GovNFTSplit.sol";
-import {IGovNFTFactory} from "./interfaces/IGovNFTFactory.sol";
+import {GovNFTTimelock} from "./extensions/GovNFTTimelock.sol";
+import {IGovNFTTimelockFactory} from "./interfaces/IGovNFTTimelockFactory.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-/// @title Velodrome GovNFTFactory
+/// @title Velodrome GovNFTTimelockFactory
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
-/// @notice GovNFTFactory contract to create and keep track of GovNFTs
-contract GovNFTFactory is IGovNFTFactory {
+/// @notice GovNFTFactoryTimelock contract to create and keep track of GovNFTs with timelock
+contract GovNFTTimelockFactory is IGovNFTTimelockFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @dev Array of deployed govNFTs
     EnumerableSet.AddressSet internal _registry;
 
-    /// @inheritdoc IGovNFTFactory
+    /// @inheritdoc IGovNFTTimelockFactory
     address public immutable govNFT;
 
-    constructor(address _artProxy, string memory _name, string memory _symbol) {
+    constructor(address _artProxy, string memory _name, string memory _symbol, uint256 _timelock) {
         // Create permissionless GovNFT
         govNFT = address(
-            new GovNFTSplit({_owner: address(this), _artProxy: _artProxy, _name: _name, _symbol: _symbol})
+            new GovNFTTimelock({
+                _owner: address(this),
+                _artProxy: _artProxy,
+                _name: _name,
+                _symbol: _symbol,
+                _timelock: _timelock
+            })
         );
         _registry.add(address(govNFT));
-        emit GovNFTCreated({
+        emit GovNFTTimelockCreated({
             owner: address(this),
             artProxy: _artProxy,
             name: _name,
             symbol: _symbol,
+            timelock: _timelock,
             govNFT: govNFT,
             govNFTCount: _registry.length()
         });
     }
 
-    /// @inheritdoc IGovNFTFactory
+    /// @inheritdoc IGovNFTTimelockFactory
     function createGovNFT(
         address _owner,
         address _artProxy,
         string memory _name,
-        string memory _symbol
+        string memory _symbol,
+        uint256 _timelock
     ) external returns (address _govNFT) {
         if (_owner == address(this)) revert NotAuthorized();
         if (_artProxy == address(0)) revert ZeroAddress();
-        _govNFT = address(new GovNFTSplit({_owner: _owner, _artProxy: _artProxy, _name: _name, _symbol: _symbol}));
+        _govNFT = address(
+            new GovNFTTimelock({
+                _owner: _owner,
+                _artProxy: _artProxy,
+                _name: _name,
+                _symbol: _symbol,
+                _timelock: _timelock
+            })
+        );
         _registry.add(_govNFT);
-        emit GovNFTCreated({
+        emit GovNFTTimelockCreated({
             owner: _owner,
             artProxy: _artProxy,
             name: _name,
             symbol: _symbol,
+            timelock: _timelock,
             govNFT: _govNFT,
             govNFTCount: _registry.length()
         });
     }
 
-    /// @inheritdoc IGovNFTFactory
+    /// @inheritdoc IGovNFTTimelockFactory
     function govNFTs() external view returns (address[] memory) {
         return _registry.values();
     }
 
-    /// @inheritdoc IGovNFTFactory
+    /// @inheritdoc IGovNFTTimelockFactory
     function isGovNFT(address _govNFT) external view returns (bool) {
         return _registry.contains(_govNFT);
     }
 
-    /// @inheritdoc IGovNFTFactory
+    /// @inheritdoc IGovNFTTimelockFactory
     function govNFTsLength() external view returns (uint256) {
         return _registry.length();
     }
