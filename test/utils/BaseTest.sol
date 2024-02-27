@@ -1,19 +1,29 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {Test, console} from "forge-std/Test.sol";
-import {MockERC20} from "test/utils/MockERC20.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
+import {MockERC20} from "test/utils/MockERC20.sol";
+import {MockFeeERC20} from "test/utils/MockFeeERC20.sol";
+import {Test, stdStorage, console} from "forge-std/Test.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockGovernanceToken} from "test/utils/MockGovernanceToken.sol";
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IGovNFTTimelock} from "src/interfaces/IGovNFTTimelock.sol";
+import {GovNFTTimelockFactory, IGovNFTTimelockFactory} from "src/GovNFTTimelockFactory.sol";
+import {GovNFTTimelock, IGovNFTTimelock} from "src/extensions/GovNFTTimelock.sol";
+
+import {GovNFTSplit, IGovNFTSplit} from "src/extensions/GovNFTSplit.sol";
+import {GovNFTFactory, IGovNFTFactory} from "src/GovNFTFactory.sol";
+
 import {IGovNFT} from "src/interfaces/IGovNFT.sol";
-import "src/extensions/GovNFTTimelock.sol";
-import "src/extensions/GovNFTSplit.sol";
+
+import {Vault, IVault} from "src/Vault.sol";
 
 contract BaseTest is Test {
     GovNFTSplit public govNFT;
@@ -75,13 +85,12 @@ contract BaseTest is Test {
         uint256 _end
     ) internal {
         // Check TokenId's NFT information is equal to the input parameters
-        (uint256 totalLocked, uint256 initialDeposit, , , , uint256 cliff, uint256 start, uint256 end, , , ) = govNFT
-            .locks(tokenId);
-        assertEq(totalLocked, _totalLocked);
-        assertEq(initialDeposit, _initialDeposit);
-        assertEq(cliff, _cliffLength);
-        assertEq(start, _start);
-        assertEq(end, _end);
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
+        assertEq(lock.totalLocked, _totalLocked);
+        assertEq(lock.initialDeposit, _initialDeposit);
+        assertEq(lock.cliffLength, _cliffLength);
+        assertEq(lock.start, _start);
+        assertEq(lock.end, _end);
     }
 
     function _checkSplitInfo(
@@ -109,15 +118,15 @@ contract BaseTest is Test {
         assertEq(govNFT.ownerOf(_from), owner);
         assertEq(govNFT.ownerOf(tokenId), beneficiary);
 
-        (, , uint256 _totalClaimed, , , , , , address splitToken, , address minter) = govNFT.locks(tokenId);
+        IGovNFT.Lock memory splitLock = govNFT.locks(tokenId);
 
-        (, , , uint256 _unclaimedBeforeSplit, uint256 _splitCount, , , , address token, , ) = govNFT.locks(_from);
-        assertEq(minter, owner);
-        assertEq(_totalClaimed, 0);
-        assertEq(token, splitToken);
-        assertEq(_splitCount, splitCount);
+        IGovNFT.Lock memory parentLock = govNFT.locks(_from);
+        assertEq(splitLock.minter, owner);
+        assertEq(splitLock.totalClaimed, 0);
+        assertEq(parentLock.token, splitLock.token);
+        assertEq(parentLock.splitCount, splitCount);
         assertEq(govNFT.splitTokensByIndex(_from, splitIndex), tokenId);
-        assertEq(_unclaimedBeforeSplit, unclaimedBeforeSplit);
+        assertEq(parentLock.unclaimedBeforeSplit, unclaimedBeforeSplit);
     }
 
     function _checkLockedUnclaimedSplit(

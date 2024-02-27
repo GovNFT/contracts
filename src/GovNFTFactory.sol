@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {GovNFTSplit} from "./extensions/GovNFTSplit.sol";
-import {IGovNFTFactory} from "./interfaces/IGovNFTFactory.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
+import {IGovNFTFactory} from "./interfaces/IGovNFTFactory.sol";
+import {GovNFTSplit} from "./extensions/GovNFTSplit.sol";
 
 /// @title Velodrome GovNFTFactory
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
@@ -22,7 +23,7 @@ contract GovNFTFactory is IGovNFTFactory {
         govNFT = address(
             new GovNFTSplit({_owner: address(this), _artProxy: _artProxy, _name: _name, _symbol: _symbol})
         );
-        _registry.add(address(govNFT));
+        _registry.add(govNFT);
         emit GovNFTCreated({
             owner: address(this),
             artProxy: _artProxy,

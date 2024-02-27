@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {GovNFTTimelock} from "./extensions/GovNFTTimelock.sol";
-import {IGovNFTTimelockFactory} from "./interfaces/IGovNFTTimelockFactory.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
+import {IGovNFTTimelockFactory} from "./interfaces/IGovNFTTimelockFactory.sol";
+import {GovNFTTimelock} from "./extensions/GovNFTTimelock.sol";
 
 /// @title Velodrome GovNFTTimelockFactory
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
@@ -28,7 +29,7 @@ contract GovNFTTimelockFactory is IGovNFTTimelockFactory {
                 _timelock: _timelock
             })
         );
-        _registry.add(address(govNFT));
+        _registry.add(govNFT);
         emit GovNFTTimelockCreated({
             owner: address(this),
             artProxy: _artProxy,

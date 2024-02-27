@@ -26,7 +26,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
     using SafeERC20 for IERC20;
 
     /// @dev tokenId => Lock state
-    mapping(uint256 => Lock) public locks;
+    mapping(uint256 => Lock) internal _locks;
 
     /// @dev tokenId => Split child index => Split tokenId
     mapping(uint256 => mapping(uint256 => uint256)) public splitTokensByIndex;
@@ -73,8 +73,13 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
     }
 
     /// @inheritdoc IGovNFT
+    function locks(uint256 _tokenId) external view returns (Lock memory) {
+        return _locks[_tokenId];
+    }
+
+    /// @inheritdoc IGovNFT
     function unclaimed(uint256 _tokenId) external view returns (uint256) {
-        return _unclaimed(locks[_tokenId]);
+        return _unclaimed(_locks[_tokenId]);
     }
 
     function _unclaimed(Lock storage _lock) internal view returns (uint256) {
@@ -92,7 +97,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
 
     /// @inheritdoc IGovNFT
     function locked(uint256 _tokenId) external view returns (uint256) {
-        return _locked(locks[_tokenId]);
+        return _locked(_locks[_tokenId]);
     }
 
     function _locked(Lock storage _lock) internal view returns (uint256) {
@@ -128,7 +133,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
         if (_beneficiary == address(0)) revert ZeroAddress();
 
-        Lock storage lock = locks[_tokenId];
+        Lock storage lock = _locks[_tokenId];
         uint256 _claimable = Math.min(_unclaimed(lock), _amount);
 
         if (_claimable > lock.unclaimedBeforeSplit) {
@@ -146,7 +151,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
     function delegate(uint256 _tokenId, address delegatee) external nonReentrant {
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
 
-        IVault(locks[_tokenId].vault).delegate(delegatee);
+        IVault(_locks[_tokenId].vault).delegate(delegatee);
         emit Delegate(_tokenId, delegatee);
     }
 
@@ -160,7 +165,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
 
         _safeMint(_recipient, _tokenId);
 
-        locks[_tokenId] = _newLock;
+        _locks[_tokenId] = _newLock;
     }
 
     /// @dev Creates Split NFTs from the given Parent NFT
@@ -319,7 +324,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
 
-        Lock storage lock = locks[_tokenId];
+        Lock storage lock = _locks[_tokenId];
         address vault = lock.vault;
 
         if (_token == lock.token) {

@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {BaseTest} from "test/utils/BaseTest.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-import "src/Vault.sol";
+import "test/utils/BaseTest.sol";
 
 contract VaultTest is BaseTest {
-    function testVaultOwner() public {
+    function test_VaultOwner() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createLock(
@@ -19,13 +16,13 @@ contract VaultTest is BaseTest {
             WEEK
         );
 
-        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
-        address vaultOwner = Ownable(vault).owner();
+        address vaultOwner = Ownable(lock.vault).owner();
         assertEq(vaultOwner, address(govNFT));
     }
 
-    function testWithdraw() public {
+    function test_Withdraw() public {
         Vault vault = new Vault(testToken);
 
         assertEq(IERC20(testToken).balanceOf(address(vault)), 0);
@@ -48,7 +45,7 @@ contract VaultTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(testAddr), 5 * TOKEN_10K);
     }
 
-    function testCannotWithdrawIfNotAdmin() public {
+    function test_RevertIf_WithdrawIfNotAdmin() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createLock(
@@ -59,28 +56,28 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
-        assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
 
         address testAddr = makeAddr("alice");
 
         vm.prank(testAddr);
         vm.expectRevert();
-        IVault(vault).withdraw(testAddr, TOKEN_100K);
+        IVault(lock.vault).withdraw(testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(testAddr), 0);
 
         vm.prank(address(govNFT));
-        IVault(vault).withdraw(testAddr, TOKEN_100K);
+        IVault(lock.vault).withdraw(testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(vault), 0);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), 0);
         assertEq(IERC20(testToken).balanceOf(testAddr), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(admin)), 0);
     }
 
-    function testSweep() public {
+    function test_Sweep() public {
         Vault vault = new Vault(testToken);
 
         assertEq(IERC20(testToken).balanceOf(address(vault)), 0);
@@ -103,7 +100,7 @@ contract VaultTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(testAddr), 5 * TOKEN_10K);
     }
 
-    function testCannotSweepIfNotAdmin() public {
+    function test_RevertIf_SweepIfNotAdmin() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createLock(
@@ -114,10 +111,10 @@ contract VaultTest is BaseTest {
             block.timestamp + WEEK * 2,
             WEEK
         );
-        (, , , , , , , , , address _vault, ) = govNFT.locks(tokenId);
-        IVault vault = IVault(_vault);
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
+        IVault vault = IVault(lock.vault);
 
-        assertEq(IERC20(testToken).balanceOf(_vault), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
 
         address testAddr = makeAddr("alice");
 
@@ -125,13 +122,13 @@ contract VaultTest is BaseTest {
         vm.expectRevert();
         vault.sweep(testToken, testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(_vault), TOKEN_100K);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(testAddr), 0);
 
         vm.prank(address(govNFT));
         vault.sweep(testToken, testAddr, TOKEN_100K);
 
-        assertEq(IERC20(testToken).balanceOf(_vault), 0);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), 0);
         assertEq(IERC20(testToken).balanceOf(testAddr), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(admin)), 0);
     }

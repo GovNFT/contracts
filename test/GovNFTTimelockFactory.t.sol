@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "test/utils/BaseTest.sol";
-import "src/GovNFTTimelockFactory.sol";
-import "src/interfaces/IGovNFT.sol";
-import "src/interfaces/IGovNFTTimelock.sol";
-import "src/interfaces/IGovNFTTimelockFactory.sol";
 
 contract GovNFTTimelockFactoryTest is BaseTest {
     IGovNFTTimelockFactory factory;
@@ -19,47 +12,59 @@ contract GovNFTTimelockFactoryTest is BaseTest {
         factory = new GovNFTTimelockFactory(artProxy, NAME, SYMBOL, timelock);
     }
 
-    function testSetup() public {
+    function test_Setup() public {
         assertFalse(factory.govNFT() == address(0));
         assertEq(factory.govNFTsLength(), 1);
         assertTrue(factory.isGovNFT(factory.govNFT()));
+
         address[] memory govNFTs = factory.govNFTs();
-        address _govNFT = govNFTs[0];
+        GovNFTTimelock _govNFT = GovNFTTimelock(govNFTs[0]);
         assertEq(govNFTs.length, 1);
-        assertEq(_govNFT, factory.govNFT());
-        assertEq(ERC721(_govNFT).name(), NAME);
-        assertEq(ERC721(_govNFT).symbol(), SYMBOL);
-        assertEq(Ownable(_govNFT).owner(), address(factory));
-        assertEq(IGovNFTTimelock(_govNFT).timelock(), timelock);
+        assertEq(address(_govNFT), factory.govNFT());
+
+        assertEq(_govNFT.name(), NAME);
+        assertEq(_govNFT.symbol(), SYMBOL);
+        assertEq(_govNFT.owner(), address(factory));
+        assertEq(_govNFT.timelock(), timelock);
     }
 
-    function testCannotCreateWithFactoryAsAdmin() public {
+    function test_RevertIf_CreateWithFactoryAsAdmin() public {
         vm.expectRevert(IGovNFTTimelockFactory.NotAuthorized.selector);
-        factory.createGovNFT(address(factory), address(0), NAME, SYMBOL, timelock);
+        factory.createGovNFT({
+            _owner: address(factory),
+            _artProxy: address(0),
+            _name: NAME,
+            _symbol: SYMBOL,
+            _timelock: timelock
+        });
     }
 
-    function testCreateGovNFT() public {
+    function test_CreateGovNFT() public {
         address customArtProxy = vm.addr(0x54321);
         assertEq(factory.govNFTsLength(), 1);
-        address _govNFT = factory.createGovNFT(
-            address(admin),
-            customArtProxy,
-            "CustomGovNFTTimelock",
-            "CustomGovNFT",
-            timelock
+
+        GovNFTTimelock _govNFT = GovNFTTimelock(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: customArtProxy,
+                _name: "CustomGovNFTTimelock",
+                _symbol: "CustomGovNFT",
+                _timelock: timelock
+            })
         );
         assertEq(factory.govNFTsLength(), 2);
         address[] memory govNFTs = factory.govNFTs();
         assertEq(govNFTs.length, 2);
-        assertTrue(govNFTs[1] == _govNFT);
-        assertEq(ERC721(_govNFT).name(), "CustomGovNFTTimelock");
-        assertEq(ERC721(_govNFT).symbol(), "CustomGovNFT");
-        assertEq(Ownable(_govNFT).owner(), address(admin));
-        assertEq(IGovNFT(_govNFT).artProxy(), customArtProxy);
-        assertEq(IGovNFTTimelock(_govNFT).timelock(), timelock);
+        assertTrue(govNFTs[1] == address(_govNFT));
+
+        assertEq(_govNFT.name(), "CustomGovNFTTimelock");
+        assertEq(_govNFT.symbol(), "CustomGovNFT");
+        assertEq(_govNFT.owner(), address(admin));
+        assertEq(_govNFT.artProxy(), customArtProxy);
+        assertEq(_govNFT.timelock(), timelock);
     }
 
-    function testCanCreateLockIfNotOwnerInPermissionlessGovNFT() public {
+    function test_CanCreateLockIfNotOwnerInPermissionlessGovNFT() public {
         IGovNFT _govNFT = IGovNFT(factory.govNFT());
 
         admin.approve(testToken, address(_govNFT), TOKEN_100K);
@@ -84,8 +89,16 @@ contract GovNFTTimelockFactoryTest is BaseTest {
         );
     }
 
-    function testCannotCreateLockIfNotOwner() public {
-        IGovNFT _govNFT = IGovNFT(factory.createGovNFT(address(admin), artProxy, NAME, SYMBOL, timelock));
+    function test_RevertIf_CreateLockIfNotOwner() public {
+        IGovNFT _govNFT = IGovNFT(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: artProxy,
+                _name: NAME,
+                _symbol: SYMBOL,
+                _timelock: timelock
+            })
+        );
 
         admin.approve(testToken, address(_govNFT), TOKEN_100K);
         vm.prank(address(admin));

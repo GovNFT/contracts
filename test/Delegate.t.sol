@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {BaseTest} from "test/utils/BaseTest.sol";
-
-import "src/GovNFT.sol";
-import "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import {IERC721Errors} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "test/utils/BaseTest.sol";
 
 contract DelegateTest is BaseTest {
-    event Delegate(uint256 indexed tokenId, address indexed delegate);
-
-    address testAddr;
-    uint256 tokenId;
+    address public testAddr;
+    uint256 public tokenId;
 
     function _setUp() public override {
         testAddr = makeAddr("alice");
@@ -27,29 +21,29 @@ contract DelegateTest is BaseTest {
         );
     }
 
-    function testDelegate() public {
-        (, , , , , , , , , address vault, ) = govNFT.locks(tokenId);
+    function test_Delegate() public {
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
         assertEq(IVotes(testGovernanceToken).delegates(address(recipient)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
-        assertEq(IVotes(testGovernanceToken).delegates(vault), address(0));
+        assertEq(IVotes(testGovernanceToken).delegates(lock.vault), address(0));
 
         assertEq(IVotes(testGovernanceToken).getVotes(testAddr), 0);
 
         vm.expectEmit(true, true, false, true, address(govNFT));
-        emit Delegate(tokenId, testAddr);
+        emit IGovNFT.Delegate({tokenId: tokenId, delegate: testAddr});
         vm.prank(address(recipient));
         govNFT.delegate(tokenId, testAddr);
 
-        assertEq(IVotes(testGovernanceToken).delegates(vault), testAddr);
+        assertEq(IVotes(testGovernanceToken).delegates(lock.vault), testAddr);
 
         assertEq(IVotes(testGovernanceToken).delegates(address(recipient)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
-        assertEq(IVotes(testGovernanceToken).delegates(vault), testAddr);
+        assertEq(IVotes(testGovernanceToken).delegates(lock.vault), testAddr);
 
         assertEq(IVotes(testGovernanceToken).getVotes(testAddr), TOKEN_100K);
     }
 
-    function testDelegateCoupleGrantsWithSameToken() public {
+    function test_DelegateCoupleGrantsWithSameToken() public {
         address recipient1 = address(recipient);
         address recipient2 = makeAddr("recipient2");
         deal(testGovernanceToken, address(admin), TOKEN_100K);
@@ -90,7 +84,7 @@ contract DelegateTest is BaseTest {
         assertEq(IVotes(testGovernanceToken).getVotes(recipient2), 2 * TOKEN_100K);
     }
 
-    function testCannotDelegateIfTokenDoesNotSupport() public {
+    function test_RevertIf_DelegateWithTokenNotSupported() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
         tokenId = govNFT.createLock(
@@ -106,7 +100,7 @@ contract DelegateTest is BaseTest {
         govNFT.delegate(tokenId, testAddr);
     }
 
-    function testCannotDelegateIfNotRecipient() public {
+    function test_RevertIf_DelegateIfNotRecipient() public {
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, testAddr, tokenId));
         vm.prank(address(testAddr));
         govNFT.delegate(tokenId, testAddr);

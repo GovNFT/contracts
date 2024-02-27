@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import {BaseTest} from "test/utils/BaseTest.sol";
-import {MockFeeERC20} from "test/utils/MockFeeERC20.sol";
-
-import "src/GovNFT.sol";
-import "src/Vault.sol";
+import "test/utils/BaseTest.sol";
 
 contract LockTest is BaseTest {
-    event Create(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
-
-    function testCreateLock() public {
+    function test_CreateLock() public {
         assertEq(govNFT.totalSupply(), 0);
         assertEq(govNFT.balanceOf(address(recipient)), 0);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -18,7 +12,7 @@ contract LockTest is BaseTest {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
 
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit Create(1, address(recipient), testToken, TOKEN_100K);
+        emit IGovNFT.Create({tokenId: 1, recipient: address(recipient), token: testToken, amount: TOKEN_100K});
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createLock(
             testToken,
@@ -35,38 +29,25 @@ contract LockTest is BaseTest {
 
         assertEq(govNFT.ownerOf(tokenId), address(recipient));
 
-        (, , uint256 totalClaimed, , , , , , , , ) = govNFT.locks(tokenId);
-        assertEq(totalClaimed, 0);
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
-        (
-            uint256 totalLocked,
-            uint256 deposited,
-            ,
-            ,
-            ,
-            uint256 cliffLength,
-            uint256 start,
-            uint256 end,
-            address token,
-            address vault,
-            address minter
-        ) = govNFT.locks(tokenId);
+        assertEq(lock.cliffLength, WEEK);
+        assertEq(lock.start, block.timestamp);
+        assertEq(lock.end, block.timestamp + WEEK * 2);
 
-        assertEq(Vault(vault).token(), address(testToken));
-        assertEq(token, address(testToken));
+        assertEq(lock.totalClaimed, 0);
+        assertEq(lock.totalLocked, TOKEN_100K);
+        assertEq(lock.initialDeposit, TOKEN_100K);
 
-        assertEq(cliffLength, WEEK);
-        assertEq(start, block.timestamp);
-        assertEq(end, block.timestamp + WEEK * 2);
-        assertEq(totalLocked, TOKEN_100K);
-        assertEq(deposited, TOKEN_100K);
-        assertEq(minter, address(admin));
+        assertEq(Vault(lock.vault).token(), address(testToken));
+        assertEq(lock.token, address(testToken));
+        assertEq(lock.minter, address(admin));
 
-        assertEq(IERC20(testToken).balanceOf(vault), totalLocked);
+        assertEq(IERC20(testToken).balanceOf(lock.vault), lock.totalLocked);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
     }
 
-    function testCannotCreateLockIfZeroAddress() public {
+    function test_RevertIf_CreateLockToZeroAddress() public {
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(admin));
         govNFT.createLock(address(0), address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
@@ -76,25 +57,25 @@ contract LockTest is BaseTest {
         govNFT.createLock(testToken, address(0), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
-    function testCannotCreateLockIfZeroAmount() public {
+    function test_RevertIf_CreateLockWithZeroAmount() public {
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
         vm.prank(address(admin));
         govNFT.createLock(testToken, address(recipient), 0, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
-    function testCannotCreateLockIfInvalidCliff() public {
+    function test_RevertIf_CreateLockWithInvalidCliff() public {
         vm.expectRevert(IGovNFT.InvalidCliff.selector);
         vm.prank(address(admin));
         govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK - 1, WEEK);
     }
 
-    function testCannotCreateLockWithZeroDuration() public {
+    function test_RevertIf_CreateLockWithZeroDuration() public {
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
         vm.prank(address(admin));
         govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp + WEEK, block.timestamp + WEEK, WEEK);
     }
 
-    function testCannotCreateLockIfNotEnoughTokensTransferred() public {
+    function test_RevertIf_CreateLockIfNotEnoughTokensTransferred() public {
         // deploy mock erc-20 with fees, that does not transfer all tokens to recipient
         address token = address(new MockFeeERC20("TEST", "TEST", 18));
         deal(token, address(admin), TOKEN_100K);
@@ -105,7 +86,7 @@ contract LockTest is BaseTest {
         govNFT.createLock(token, address(recipient), TOKEN_100K, block.timestamp, block.timestamp + WEEK * 2, WEEK);
     }
 
-    function testCannotCreateLockIfEndBeforeStart() public {
+    function test_RevertIf_CreateLockWithEndBeforeStart() public {
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
         vm.prank(address(admin));
         govNFT.createLock(
@@ -129,7 +110,7 @@ contract LockTest is BaseTest {
         );
     }
 
-    function testCannotCreateLockIfStartIsInPast() public {
+    function test_RevertIf_CreateLockWhenStartIsInPast() public {
         vm.expectRevert(IGovNFT.InvalidStart.selector);
         vm.prank(address(admin));
         govNFT.createLock(

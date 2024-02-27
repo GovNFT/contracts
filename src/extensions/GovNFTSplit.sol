@@ -22,7 +22,7 @@ contract GovNFTSplit is GovNFT, IGovNFTSplit {
         _checkAuthorized({owner: _ownerOf(_from), spender: msg.sender, tokenId: _from});
 
         // Fetch Parent Lock
-        Lock storage parentLock = locks[_from];
+        Lock storage parentLock = _locks[_from];
         uint256 totalVested = _totalVested(parentLock);
         _validateSplitParams({_parentLock: parentLock, _parentTotalVested: totalVested, _paramsList: _paramsList});
 

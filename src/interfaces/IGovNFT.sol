@@ -93,35 +93,8 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
 
     /// @notice Returns the Lock information for a given token ID
     /// @param _tokenId Token Id from which the info will be fetched
-    /// @return totalLocked Total amount being vested in NFT
-    /// @return initialDeposit Amount initially locked, prior to splits
-    /// @return totalClaimed Total amount claimed from Lock
-    /// @return unclaimedBeforeSplit Amount left unclaimed before split
-    /// @return splitCount Number of splits performed on NFT
-    /// @return cliffLength Duration of Locks' cliff period
-    /// @return start Vesting period start
-    /// @return end Vesting period end
-    /// @return token Address of the token being vested
-    /// @return vault Address of the vault storing tokens
-    /// @return minter Address of the minter of the NFT
-    function locks(
-        uint256 _tokenId
-    )
-        external
-        view
-        returns (
-            uint256 totalLocked,
-            uint256 initialDeposit,
-            uint256 totalClaimed,
-            uint256 unclaimedBeforeSplit,
-            uint256 splitCount,
-            uint256 cliffLength,
-            uint256 start,
-            uint256 end,
-            address token,
-            address vault,
-            address minter
-        );
+    /// @return Lock Information for the given token ID
+    function locks(uint256 _tokenId) external view returns (Lock memory);
 
     /// @notice Get the Split NFT ID from the Split Lock list of `_tokenId` at the given `_index`
     /// @param _tokenId Lock Token Id from which to fetch the Split list
