@@ -98,7 +98,7 @@ contract LockTest is BaseTest {
     }
 
     function test_RevertIf_CreateLockWithZeroDuration() public {
-        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.expectRevert(IGovNFT.InvalidParameters.selector);
         vm.prank(address(admin));
         govNFT.createLock(
             testToken,
@@ -129,7 +129,7 @@ contract LockTest is BaseTest {
     }
 
     function test_RevertIf_CreateLockWithEndBeforeStart() public {
-        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.expectRevert(stdError.arithmeticError);
         vm.prank(address(admin));
         govNFT.createLock(
             testToken,
@@ -140,16 +140,16 @@ contract LockTest is BaseTest {
             WEEK
         );
 
-        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.expectRevert(stdError.arithmeticError);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_1,
-            uint40(block.timestamp) + WEEK + 1,
-            uint40(block.timestamp) + WEEK,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp) + WEEK + 1,
+            _endTime: uint40(block.timestamp) + WEEK,
+            _cliffLength: WEEK
+        });
     }
 
     function test_RevertIf_CreateLockWhenStartIsInPast() public {

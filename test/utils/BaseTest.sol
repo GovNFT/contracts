@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
+import {stdError} from "forge-std/StdError.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 import {MockFeeERC20} from "test/utils/MockFeeERC20.sol";

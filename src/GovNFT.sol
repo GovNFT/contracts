@@ -322,7 +322,7 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         if (_recipient == address(0)) revert ZeroAddress();
         if (_amount == 0) revert ZeroAmount();
 
-        if (_startTime >= _endTime) revert EndBeforeOrEqualStart();
+        if (_endTime == _startTime) revert InvalidParameters();
         if (_endTime - _startTime < _cliff) revert InvalidCliff();
     }
 

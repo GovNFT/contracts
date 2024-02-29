@@ -1314,7 +1314,7 @@ contract SplitTest is BaseTest {
         IGovNFT.Lock memory lock = govNFT.locks(from);
 
         vm.prank(address(recipient));
-        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.expectRevert(stdError.arithmeticError);
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
@@ -1326,7 +1326,7 @@ contract SplitTest is BaseTest {
         govNFT.split(from, paramsList);
 
         vm.prank(address(recipient));
-        vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
+        vm.expectRevert(IGovNFT.InvalidParameters.selector);
         paramsList = new IGovNFT.SplitParams[](1);
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),

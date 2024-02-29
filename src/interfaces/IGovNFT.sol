@@ -60,7 +60,6 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     );
 
     /// Errors
-    error EndBeforeOrEqualStart();
     error InsufficientAmount();
     error InvalidParameters();
     error TokenNotFound();
