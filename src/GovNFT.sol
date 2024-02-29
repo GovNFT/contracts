@@ -22,7 +22,7 @@ import {Vault} from "./Vault.sol";
 /// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
 /// @dev    Contract not intended to be used standalone. Should inherit Splitting functionality
 ///         from one of the available Split modules instead.
-abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable {
+abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     /// @dev tokenId => Lock state
@@ -109,9 +109,9 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         address _token,
         address _recipient,
         uint256 _amount,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _cliffLength
+        uint40 _startTime,
+        uint40 _endTime,
+        uint40 _cliffLength
     ) external nonReentrant onlyOwner returns (uint256 _tokenId) {
         if (_token == address(0)) revert ZeroAddress();
         _createLockChecks(_recipient, _amount, _startTime, _endTime, _cliffLength);
@@ -119,7 +119,19 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         address _vault = address(new Vault(_token));
         _tokenId = _createNFT(
             _recipient,
-            Lock(_amount, _amount, 0, 0, 0, _cliffLength, _startTime, _endTime, _token, _vault, msg.sender)
+            Lock({
+                totalLocked: _amount,
+                initialDeposit: _amount,
+                totalClaimed: 0,
+                unclaimedBeforeSplit: 0,
+                token: _token,
+                splitCount: 0,
+                cliffLength: _cliffLength,
+                start: _startTime,
+                end: _endTime,
+                vault: _vault,
+                minter: msg.sender
+            })
         );
 
         IERC20(_token).safeTransferFrom(msg.sender, _vault, _amount);
@@ -200,9 +212,9 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
         // Update Parent NFT using updated `parentLockedAmount`
         _parentLock.totalLocked = parentLockedAmount;
         if (block.timestamp > _parentLock.start) {
-            uint256 parentCliffEnd = _parentLock.start + _parentLock.cliffLength;
-            _parentLock.start = block.timestamp;
-            _parentLock.cliffLength = block.timestamp < parentCliffEnd ? parentCliffEnd - block.timestamp : 0;
+            uint40 parentCliffEnd = _parentLock.start + _parentLock.cliffLength;
+            _parentLock.start = uint40(block.timestamp);
+            _parentLock.cliffLength = uint40(block.timestamp < parentCliffEnd ? parentCliffEnd - block.timestamp : 0);
         }
 
         _parentLock.unclaimedBeforeSplit += (_parentTotalVested - _parentLock.totalClaimed);
@@ -270,7 +282,7 @@ abstract contract GovNFT is IGovNFT, ReentrancyGuard, ERC721Enumerable, Ownable 
 
         uint256 sum;
         SplitParams memory params;
-        uint256 parentCliffEnd = _parentLock.start + _parentLock.cliffLength;
+        uint40 parentCliffEnd = _parentLock.start + _parentLock.cliffLength;
         for (uint256 i = 0; i < length; i++) {
             params = _paramsList[i];
 

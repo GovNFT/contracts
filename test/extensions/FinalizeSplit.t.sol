@@ -6,7 +6,7 @@ import "test/utils/BaseTest.sol";
 contract FinalizeSplitTest is BaseTest {
     uint256 public from;
     uint256 public amount;
-    uint256 public timelockDelay = 1 days;
+    uint40 public timelockDelay = 1 days;
     GovNFTTimelock public govNFTLock;
 
     function _setUp() public override {
@@ -20,8 +20,8 @@ contract FinalizeSplitTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 3,
             WEEK
         );
         amount = TOKEN_10K * 4;
@@ -54,7 +54,7 @@ contract FinalizeSplitTest is BaseTest {
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         skip(timelockDelay);
 
@@ -175,7 +175,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: WEEK - 5 days
         });
@@ -185,14 +185,14 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         skip(timelockDelay);
 
@@ -202,7 +202,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFTLock));
@@ -214,15 +214,22 @@ contract FinalizeSplitTest is BaseTest {
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 0);
 
         // original NFT assertions
-        uint256 remainingCliff = (lock.start + lock.cliffLength) - block.timestamp;
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
         // since still on cliff and vesting has started, the split cliff length will be
         // the remaining cliff period and the new start will be the current timestamp
-        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, remainingCliff, block.timestamp, lock.end);
+        _checkLockUpdates(
+            from,
+            lock.totalLocked - amount,
+            lock.totalLocked,
+            remainingCliff,
+            uint40(block.timestamp),
+            lock.end
+        );
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), 0, 1);
         assertEq(remainingCliff, WEEK - (5 days + timelockDelay));
 
         // split NFT assertions
-        _checkLockUpdates(tokenId, amount, amount, remainingCliff, block.timestamp, lock.end);
+        _checkLockUpdates(tokenId, amount, amount, remainingCliff, uint40(block.timestamp), lock.end);
     }
 
     function test_FinalizeSplitClaimsBeforeCliffEnd() public {
@@ -235,7 +242,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: WEEK - 5 days
         });
@@ -245,7 +252,7 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
@@ -259,7 +266,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFTLock));
@@ -301,7 +308,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -310,14 +317,14 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         skip(timelockDelay);
 
@@ -331,7 +338,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -346,13 +353,13 @@ contract FinalizeSplitTest is BaseTest {
 
         // original NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(from, lockedBeforeSplit - amount, lock.totalLocked, 0, block.timestamp, lock.end);
+        _checkLockUpdates(from, lockedBeforeSplit - amount, lock.totalLocked, 0, uint40(block.timestamp), lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), originalUnclaimed, 1);
         assertEq(govNFT.locked(from), govNFT.locks(from).totalLocked);
 
         // split NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(tokenId, amount, amount, 0, block.timestamp, lock.end);
+        _checkLockUpdates(tokenId, amount, amount, 0, uint40(block.timestamp), lock.end);
 
         assertEq(govNFT.locked(tokenId), govNFT.locks(tokenId).totalLocked);
     }
@@ -375,7 +382,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -384,14 +391,14 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         skip(timelockDelay);
 
@@ -405,7 +412,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -420,13 +427,13 @@ contract FinalizeSplitTest is BaseTest {
 
         // original NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(from, lockedBeforeSplit - amount, lock.totalLocked, 0, block.timestamp, lock.end);
+        _checkLockUpdates(from, lockedBeforeSplit - amount, lock.totalLocked, 0, uint40(block.timestamp), lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), originalUnclaimed, 1);
         assertEq(govNFT.locked(from), govNFT.locks(from).totalLocked);
 
         // split NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(tokenId, amount, amount, 0, block.timestamp, lock.end);
+        _checkLockUpdates(tokenId, amount, amount, 0, uint40(block.timestamp), lock.end);
         assertEq(govNFT.locked(tokenId), govNFT.locks(tokenId).totalLocked);
     }
 
@@ -445,7 +452,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: splitAmount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -454,14 +461,14 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: splitAmount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         skip(timelockDelay + delay);
 
@@ -475,7 +482,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - splitAmount,
             splitAmount2: splitAmount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -490,13 +497,20 @@ contract FinalizeSplitTest is BaseTest {
 
         // original NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(from, lockedBeforeSplit - splitAmount, lock.totalLocked, 0, block.timestamp, lock.end);
+        _checkLockUpdates(
+            from,
+            lockedBeforeSplit - splitAmount,
+            lock.totalLocked,
+            0,
+            uint40(block.timestamp),
+            lock.end
+        );
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), originalUnclaimed, 1);
         assertEq(govNFT.locked(from), govNFT.locks(from).totalLocked);
 
         // split NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(tokenId, splitAmount, splitAmount, 0, block.timestamp, lock.end);
+        _checkLockUpdates(tokenId, splitAmount, splitAmount, 0, uint40(block.timestamp), lock.end);
 
         assertEq(govNFT.locked(tokenId), govNFT.locks(tokenId).totalLocked);
     }
@@ -512,7 +526,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -521,7 +535,7 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
@@ -539,7 +553,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -592,7 +606,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: splitAmount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -601,7 +615,7 @@ contract FinalizeSplitTest is BaseTest {
             from: from,
             recipient: address(recipient2),
             splitAmount: splitAmount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.startPrank(address(recipient));
@@ -619,7 +633,7 @@ contract FinalizeSplitTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - splitAmount,
             splitAmount2: splitAmount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -678,7 +692,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: lockedAmount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
@@ -707,14 +721,14 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: lockedAmount / 2,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
         paramsList[1] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: lockedAmount / 2,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
@@ -746,7 +760,7 @@ contract FinalizeSplitTest is BaseTest {
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         skip(timelockDelay);
 
@@ -775,7 +789,7 @@ contract FinalizeSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: TOKEN_1 * 1000,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end + WEEK,
             cliff: 0
         });
@@ -783,7 +797,7 @@ contract FinalizeSplitTest is BaseTest {
         govNFTLock.commitSplit(from, paramsList);
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         // this skip reaches `parentLock.end`, vesting all of the parenLock's tokens
         skip(timelockDelay);

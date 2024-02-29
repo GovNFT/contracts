@@ -15,8 +15,8 @@ contract BatchSplitTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_10M,
-            block.timestamp,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 3,
             WEEK
         );
         amount = TOKEN_10K * 3;
@@ -118,7 +118,7 @@ contract BatchSplitTest is BaseTest {
                 owner: address(recipient),
                 beneficiary: paramsList[i].beneficiary,
                 unclaimedBeforeSplit: 0,
-                splitCount: paramsList.length,
+                splitCount: uint40(paramsList.length),
                 splitIndex: i
             });
             _checkLockUpdates({
@@ -142,10 +142,11 @@ contract BatchSplitTest is BaseTest {
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](5);
         // same timestamps as parent token
         // `start` has to be greater than `block.timestamp` since vest has already started
+        uint40 timestamp = uint40(block.timestamp);
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient),
             amount: amount,
-            start: block.timestamp,
+            start: timestamp,
             end: lock.end,
             cliff: lock.cliffLength - 2 days
         });
@@ -153,7 +154,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[1] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount / 2,
-            start: block.timestamp,
+            start: timestamp,
             end: lock.end + 3 * WEEK,
             cliff: lock.cliffLength - 2 days
         });
@@ -161,7 +162,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[2] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount + amount / 2,
-            start: block.timestamp + WEEK / 2,
+            start: timestamp + WEEK / 2,
             end: lock.end,
             cliff: lock.cliffLength - 2 days
         });
@@ -169,7 +170,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[3] = IGovNFT.SplitParams({
             beneficiary: address(recipient),
             amount: amount,
-            start: block.timestamp,
+            start: timestamp,
             end: lock.end,
             cliff: (lock.cliffLength - 2 days) * 2
         });
@@ -177,7 +178,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[4] = IGovNFT.SplitParams({
             beneficiary: address(recipient),
             amount: amount * 3,
-            start: block.timestamp + 2 days,
+            start: timestamp + 2 days,
             end: lock.end,
             cliff: lock.cliffLength - 4 days
         });
@@ -209,7 +210,7 @@ contract BatchSplitTest is BaseTest {
         assertEq(govNFT.totalSupply(), oldSupply + paramsList.length);
 
         // original NFT assertions
-        uint256 remainingCliff = (lock.start + lock.cliffLength) - block.timestamp;
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
         assertEq(remainingCliff, WEEK - 2 days);
         // since still on cliff and vesting has started, the split cliff length will be
         // the remaining cliff period and the new start will be the current timestamp
@@ -218,7 +219,7 @@ contract BatchSplitTest is BaseTest {
             _totalLocked: lock.totalLocked - splitLockAmounts,
             _initialDeposit: lock.totalLocked,
             _cliffLength: remainingCliff,
-            _start: block.timestamp,
+            _start: uint40(block.timestamp),
             _end: lock.end
         });
         for (uint256 i = 0; i < paramsList.length; i++) {
@@ -229,7 +230,7 @@ contract BatchSplitTest is BaseTest {
                 owner: address(recipient),
                 beneficiary: paramsList[i].beneficiary,
                 unclaimedBeforeSplit: 0,
-                splitCount: paramsList.length,
+                splitCount: uint40(paramsList.length),
                 splitIndex: i
             });
             _checkLockUpdates({
@@ -254,10 +255,11 @@ contract BatchSplitTest is BaseTest {
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](5);
         // same timestamps as parent token
         // no cliff since vesting has already started
+        uint40 timestamp = uint40(block.timestamp);
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient),
             amount: amount,
-            start: block.timestamp,
+            start: timestamp,
             end: lock.end,
             cliff: 0
         });
@@ -265,7 +267,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[1] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount / 2,
-            start: block.timestamp,
+            start: timestamp,
             end: lock.end + 3 * WEEK,
             cliff: 0
         });
@@ -273,7 +275,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[2] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount + amount / 2,
-            start: block.timestamp + WEEK / 2,
+            start: timestamp + WEEK / 2,
             end: lock.end,
             cliff: 0
         });
@@ -281,7 +283,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[3] = IGovNFT.SplitParams({
             beneficiary: address(recipient),
             amount: amount,
-            start: block.timestamp,
+            start: timestamp,
             end: lock.end,
             cliff: WEEK / 2
         });
@@ -289,7 +291,7 @@ contract BatchSplitTest is BaseTest {
         paramsList[4] = IGovNFT.SplitParams({
             beneficiary: address(recipient),
             amount: amount * 3,
-            start: block.timestamp + WEEK,
+            start: timestamp + WEEK,
             end: lock.end,
             cliff: WEEK / 2
         });
@@ -327,7 +329,7 @@ contract BatchSplitTest is BaseTest {
             _totalLocked: lockedBeforeSplit - splitLockAmounts,
             _initialDeposit: lock.totalLocked,
             _cliffLength: 0,
-            _start: block.timestamp,
+            _start: uint40(block.timestamp),
             _end: lock.end
         });
         for (uint256 i = 0; i < paramsList.length; i++) {
@@ -338,7 +340,7 @@ contract BatchSplitTest is BaseTest {
                 owner: address(recipient),
                 beneficiary: paramsList[i].beneficiary,
                 unclaimedBeforeSplit: originalUnclaimed,
-                splitCount: paramsList.length,
+                splitCount: uint40(paramsList.length),
                 splitIndex: i
             });
             _checkLockUpdates({

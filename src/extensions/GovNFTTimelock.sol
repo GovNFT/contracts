@@ -69,7 +69,7 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
         if (block.timestamp < splitProposal.timestamp + timelock) revert SplitTooSoon();
 
         uint256 sum;
-        uint256 splitCliffEnd;
+        uint40 splitCliffEnd;
         SplitParams memory params;
         uint256 length = splitProposal.pendingSplits.length;
         _splitTokenIds = new uint256[](length);
@@ -79,8 +79,8 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
             // Update Split Proposal's timestamps if proposed `start` is in past
             if (block.timestamp > params.start) {
                 splitCliffEnd = params.start + params.cliff;
-                params.start = block.timestamp;
-                params.cliff = block.timestamp < splitCliffEnd ? splitCliffEnd - block.timestamp : 0;
+                params.start = uint40(block.timestamp);
+                params.cliff = uint40(block.timestamp < splitCliffEnd ? splitCliffEnd - block.timestamp : 0);
             }
             sum += params.amount;
         }

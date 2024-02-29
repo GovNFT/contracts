@@ -16,8 +16,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             lockAmount,
-            block.timestamp + WEEK * 2,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp) + WEEK * 2,
+            uint40(block.timestamp) + WEEK * 3,
             WEEK
         );
         IGovNFT.Lock memory lock = govNFT.locks(from);
@@ -70,8 +70,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             lockAmount,
-            block.timestamp + WEEK * 2,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp) + WEEK * 2,
+            uint40(block.timestamp) + WEEK * 3,
             WEEK
         );
 
@@ -132,8 +132,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             uint256(lockAmount),
-            block.timestamp,
-            block.timestamp + WEEK * 4,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 4,
             WEEK * 3
         );
 
@@ -151,7 +151,7 @@ contract SplitFuzzTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.prank(address(recipient));
@@ -159,20 +159,27 @@ contract SplitFuzzTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength - timeskip
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
         // original NFT assertions
-        uint256 remainingCliff = (lock.start + lock.cliffLength) - block.timestamp;
-        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, remainingCliff, block.timestamp, lock.end);
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
+        _checkLockUpdates(
+            from,
+            lock.totalLocked - amount,
+            lock.totalLocked,
+            remainingCliff,
+            uint40(block.timestamp),
+            lock.end
+        );
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), 0, 1);
         assertEq(remainingCliff, lock.cliffLength - timeskip);
 
         // split NFT assertions
-        _checkLockUpdates(tokenId, amount, amount, remainingCliff, block.timestamp, lock.end);
+        _checkLockUpdates(tokenId, amount, amount, remainingCliff, uint40(block.timestamp), lock.end);
     }
 
     function testFuzz_SplitClaimsBeforeCliffEnd(uint128 lockAmount, uint256 amount, uint32 timeskip) public {
@@ -187,8 +194,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             uint256(lockAmount),
-            block.timestamp,
-            block.timestamp + WEEK * 4,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 4,
             WEEK * 3
         );
 
@@ -206,7 +213,7 @@ contract SplitFuzzTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.prank(address(recipient));
@@ -214,7 +221,7 @@ contract SplitFuzzTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: WEEK * 3 - timeskip
         });
@@ -247,8 +254,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             uint256(lockAmount),
-            block.timestamp,
-            block.timestamp + WEEK * 6,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 6,
             WEEK
         );
 
@@ -273,7 +280,7 @@ contract SplitFuzzTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.prank(address(recipient));
@@ -281,7 +288,7 @@ contract SplitFuzzTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -294,7 +301,7 @@ contract SplitFuzzTest is BaseTest {
 
         // original NFT assertions
         // no cliff since vesting has already started
-        _checkLockUpdates(from, lockedBeforeSplit - amount, lock.totalLocked, 0, block.timestamp, lock.end);
+        _checkLockUpdates(from, lockedBeforeSplit - amount, lock.totalLocked, 0, uint40(block.timestamp), lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), originalUnclaimedBeforeSplit, 1);
         assertEq(govNFT.locked(from), govNFT.locks(from).totalLocked);
 
@@ -302,7 +309,7 @@ contract SplitFuzzTest is BaseTest {
         assertEq(govNFT.locked(tokenId), govNFT.locks(tokenId).totalLocked);
 
         // no cliff since vesting has already started
-        _checkLockUpdates(tokenId, amount, amount, 0, block.timestamp, lock.end);
+        _checkLockUpdates(tokenId, amount, amount, 0, uint40(block.timestamp), lock.end);
     }
 
     function testFuzz_SplitClaimsAfterCliffEnd(uint128 lockAmount, uint256 amount, uint32 timeskip) public {
@@ -316,8 +323,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             uint256(lockAmount),
-            block.timestamp,
-            block.timestamp + WEEK * 6,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 6,
             WEEK
         );
 
@@ -342,7 +349,7 @@ contract SplitFuzzTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.prank(address(recipient));
@@ -351,7 +358,7 @@ contract SplitFuzzTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });
@@ -398,8 +405,8 @@ contract SplitFuzzTest is BaseTest {
             testToken,
             address(recipient),
             uint256(lockAmount),
-            block.timestamp,
-            block.timestamp + WEEK * 6,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 6,
             WEEK
         );
 
@@ -424,7 +431,7 @@ contract SplitFuzzTest is BaseTest {
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
-            startTime: block.timestamp,
+            startTime: uint40(block.timestamp),
             endTime: lock.end
         });
         vm.prank(address(recipient));
@@ -432,7 +439,7 @@ contract SplitFuzzTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: 0
         });

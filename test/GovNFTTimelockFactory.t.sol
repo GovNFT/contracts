@@ -73,8 +73,8 @@ contract GovNFTTimelockFactoryTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
         notAdmin.approve(testToken, address(_govNFT), TOKEN_100K);
@@ -83,8 +83,8 @@ contract GovNFTTimelockFactoryTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
     }
@@ -106,8 +106,8 @@ contract GovNFTTimelockFactoryTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
         notAdmin.approve(testToken, address(_govNFT), TOKEN_100K);
@@ -117,8 +117,8 @@ contract GovNFTTimelockFactoryTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
     }

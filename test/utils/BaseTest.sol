@@ -47,7 +47,7 @@ contract BaseTest is Test {
     uint256 constant POOL_1 = 1e9;
 
     uint256 constant DURATION = 7 days;
-    uint256 constant WEEK = 1 weeks;
+    uint40 constant WEEK = 1 weeks;
 
     string constant NAME = "GovNFT: NFT for vested distribution of (governance) tokens";
     string constant SYMBOL = "GOVNFT";
@@ -80,9 +80,9 @@ contract BaseTest is Test {
         uint256 tokenId,
         uint256 _totalLocked,
         uint256 _initialDeposit,
-        uint256 _cliffLength,
-        uint256 _start,
-        uint256 _end
+        uint40 _cliffLength,
+        uint40 _start,
+        uint40 _end
     ) internal {
         // Check TokenId's NFT information is equal to the input parameters
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -99,7 +99,7 @@ contract BaseTest is Test {
         address owner,
         address beneficiary,
         uint256 unclaimedBeforeSplit,
-        uint256 splitCount
+        uint40 splitCount
     ) internal {
         // Asserts that information retrieved from tokens involved in split is equal to given parameters
         _checkBatchSplitInfo(_from, tokenId, owner, beneficiary, unclaimedBeforeSplit, splitCount, 0);
@@ -111,7 +111,7 @@ contract BaseTest is Test {
         address owner,
         address beneficiary,
         uint256 unclaimedBeforeSplit,
-        uint256 splitCount,
+        uint40 splitCount,
         uint256 splitIndex
     ) internal {
         // Asserts that information retrieved from tokens involved in split is equal to given parameters

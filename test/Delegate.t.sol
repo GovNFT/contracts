@@ -15,8 +15,8 @@ contract DelegateTest is BaseTest {
             testGovernanceToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
     }
@@ -53,8 +53,8 @@ contract DelegateTest is BaseTest {
             testGovernanceToken,
             recipient2,
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -91,8 +91,8 @@ contract DelegateTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
         vm.expectRevert();

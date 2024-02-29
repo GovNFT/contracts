@@ -11,8 +11,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -53,8 +53,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
         address beneficiary = makeAddr("alice");
@@ -77,8 +77,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -124,11 +124,10 @@ contract ClaimTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), (8 * lock.totalLocked) / 10);
     }
 
-    function testFuzz_ClaimPartial(uint32 _timeskip) public {
-        uint256 _start = block.timestamp;
-        uint256 _end = _start + WEEK * 6;
-        uint256 timeskip = uint256(_timeskip);
-        timeskip = bound(timeskip, 0, _end - _start);
+    function testFuzz_ClaimPartial(uint40 timeskip) public {
+        uint40 _start = uint40(block.timestamp);
+        uint40 _end = _start + WEEK * 6;
+        timeskip = uint40(bound(timeskip, 0, _end - _start));
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createLock(testToken, address(recipient), TOKEN_100K, _start, _end, 0);
@@ -140,7 +139,7 @@ contract ClaimTest is BaseTest {
         vm.prank(address(recipient));
         govNFT.claim(tokenId, address(recipient), lock.totalLocked); // claims available tokens
         uint256 expectedAmount = Math.min(
-            (lock.totalLocked * (block.timestamp - lock.start)) / (lock.end - lock.start),
+            (lock.totalLocked * (uint40(block.timestamp) - lock.start)) / (lock.end - lock.start),
             lock.totalLocked
         );
 
@@ -160,8 +159,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             0
         );
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -186,8 +185,8 @@ contract ClaimTest is BaseTest {
 
             lock = govNFT.locks(tokenId);
             govNFT.claim(tokenId, address(recipient), lock.totalLocked); // claims available tokens
-            uint256 expectedAmount = ((lock.totalLocked * (block.timestamp - lock.start)) / (lock.end - lock.start)) -
-                lock.totalClaimed;
+            uint256 expectedAmount = ((lock.totalLocked * (uint40(block.timestamp) - lock.start)) /
+                (lock.end - lock.start)) - lock.totalClaimed;
 
             // assert balance transferred from govnft
             uint256 newBalance = token.balanceOf(lock.vault);
@@ -212,8 +211,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp + WEEK,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp) + WEEK,
+            uint40(block.timestamp) + WEEK * 3,
             WEEK
         );
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -236,8 +235,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp + WEEK,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp) + WEEK,
+            uint40(block.timestamp) + WEEK * 3,
             WEEK * 2
         );
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -269,8 +268,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -311,8 +310,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -341,8 +340,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -358,8 +357,8 @@ contract ClaimTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -376,7 +375,7 @@ contract ClaimTest is BaseTest {
         assertEq(govNFT.unclaimed(tokenId), lock.totalLocked / 2); // one out of two weeks have passed, half of rewards available
 
         skip(WEEK); // skip last week of vesting
-        assertEq(block.timestamp, lock.end);
+        assertEq(uint40(block.timestamp), lock.end);
         assertEq(govNFT.locked(tokenId), 0);
         lock = govNFT.locks(tokenId);
         assertEq(lock.totalClaimed, 0);

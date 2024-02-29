@@ -21,27 +21,27 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         uint256 initialDeposit;
         uint256 totalClaimed;
         uint256 unclaimedBeforeSplit;
-        uint256 splitCount;
-        uint256 cliffLength;
-        uint256 start;
-        uint256 end;
         address token;
+        uint40 splitCount;
+        uint40 cliffLength;
+        uint40 start;
+        uint40 end;
         address vault;
         address minter;
     }
 
     /// @dev Parameters necessary to perform a Split:
     ///      `beneficiary` Address of the user to receive tokens vested from split
-    ///      `amount` Amount of tokens to be vested in the new Lock
     ///      `start` Epoch time at which token distribution starts
     ///      `end` Time at which everything should be vested
     ///      `cliff` Duration after which the first portion vests
+    ///      `amount` Amount of tokens to be vested in the new Lock
     struct SplitParams {
         address beneficiary;
+        uint40 start;
+        uint40 end;
+        uint40 cliff;
         uint256 amount;
-        uint256 start;
-        uint256 end;
-        uint256 cliff;
     }
 
     /// Events
@@ -55,8 +55,8 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         address recipient,
         uint256 splitAmount1,
         uint256 splitAmount2,
-        uint256 startTime,
-        uint256 endTime
+        uint40 startTime,
+        uint40 endTime
     );
 
     /// Errors
@@ -114,9 +114,9 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         address _token,
         address _recipient,
         uint256 _amount,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _cliffLength
+        uint40 _startTime,
+        uint40 _endTime,
+        uint40 _cliffLength
     ) external returns (uint256);
 
     /// @notice Claim tokens which have vested in the amount specified

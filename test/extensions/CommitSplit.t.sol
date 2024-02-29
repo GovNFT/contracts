@@ -20,8 +20,8 @@ contract CommitSplitTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 3,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 3,
             WEEK
         );
         amount = TOKEN_10K * 4;
@@ -64,20 +64,20 @@ contract CommitSplitTest is BaseTest {
 
         _checkProposedSplit(from, 0, params);
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
     }
 
     function testFuzz_CommitSplit(uint40 deltaStart, uint40 deltaEnd, uint40 cliff) public {
         deltaStart = uint40(bound(deltaStart, 0, WEEK * 9));
         IGovNFT.Lock memory lock = govNFTLock.locks(from);
-        uint256 newStart = lock.start + deltaStart;
+        uint40 newStart = lock.start + deltaStart;
 
         deltaEnd = uint40(bound(deltaEnd, Math.max(newStart, lock.end), WEEK * 9));
 
-        uint256 newEnd = lock.end + deltaEnd;
+        uint40 newEnd = lock.end + deltaEnd;
 
-        uint256 duration = newEnd - newStart;
-        uint256 remainingCliff = deltaStart <= lock.cliffLength ? lock.cliffLength - deltaStart : 0;
+        uint40 duration = newEnd - newStart;
+        uint40 remainingCliff = deltaStart <= lock.cliffLength ? lock.cliffLength - deltaStart : 0;
         cliff = uint40(bound(cliff, remainingCliff, Math.min(duration, newEnd)));
 
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 0);
@@ -104,7 +104,7 @@ contract CommitSplitTest is BaseTest {
 
         _checkProposedSplit(from, 0, params);
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
     }
 
     function test_BatchCommitSplit() public {
@@ -170,7 +170,7 @@ contract CommitSplitTest is BaseTest {
         govNFTLock.commitSplit(from, paramsList);
 
         uint256 splitLength = paramsList.length;
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, splitLength);
 
         for (uint256 i = 0; i < splitLength; i++) {
@@ -205,7 +205,7 @@ contract CommitSplitTest is BaseTest {
 
         _checkProposedSplit(from, 0, params);
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
 
         params = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
@@ -220,7 +220,7 @@ contract CommitSplitTest is BaseTest {
 
         _checkProposedSplit(from, 0, params);
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 1);
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
     }
 
     function test_BatchCommitSplitOverridesPreviousCommit() public {
@@ -286,7 +286,7 @@ contract CommitSplitTest is BaseTest {
         govNFTLock.commitSplit(from, paramsList);
 
         uint256 splitLength = paramsList.length;
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, splitLength);
 
         for (uint256 i = 0; i < splitLength; i++) {
@@ -343,7 +343,7 @@ contract CommitSplitTest is BaseTest {
 
         // Split length has decreased because second `paramsList` is smaller
         splitLength = paramsList.length;
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, splitLength);
 
         for (uint256 i = 0; i < splitLength; i++) {
@@ -414,7 +414,7 @@ contract CommitSplitTest is BaseTest {
         govNFTLock.commitSplit(from, paramsList);
 
         uint256 splitLength = paramsList.length;
-        assertEq(govNFTLock.proposedSplits(from).timestamp, block.timestamp);
+        assertEq(govNFTLock.proposedSplits(from).timestamp, uint40(block.timestamp));
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, splitLength);
 
         for (uint256 i = 0; i < splitLength; i++) {
@@ -452,8 +452,8 @@ contract CommitSplitTest is BaseTest {
         IGovNFT.SplitParams memory params = IGovNFT.SplitParams({
             beneficiary: approvedUser,
             amount: TOKEN_1,
-            start: block.timestamp,
-            end: block.timestamp + 3 * WEEK,
+            start: uint40(block.timestamp),
+            end: uint40(block.timestamp) + 3 * WEEK,
             cliff: WEEK
         });
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -479,8 +479,8 @@ contract CommitSplitTest is BaseTest {
         params = IGovNFT.SplitParams({
             beneficiary: approvedForAllUser,
             amount: TOKEN_1,
-            start: block.timestamp,
-            end: block.timestamp + 3 * WEEK,
+            start: uint40(block.timestamp),
+            end: uint40(block.timestamp) + 3 * WEEK,
             cliff: WEEK
         });
         paramsList[0] = params;
@@ -495,8 +495,8 @@ contract CommitSplitTest is BaseTest {
         IGovNFT.SplitParams memory params = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: TOKEN_1,
-            start: block.timestamp,
-            end: block.timestamp + 3 * WEEK,
+            start: uint40(block.timestamp),
+            end: uint40(block.timestamp) + 3 * WEEK,
             cliff: WEEK
         });
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -523,8 +523,8 @@ contract CommitSplitTest is BaseTest {
         IGovNFT.SplitParams memory params = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: 0,
-            start: block.timestamp,
-            end: block.timestamp + 3 * WEEK,
+            start: uint40(block.timestamp),
+            end: uint40(block.timestamp) + 3 * WEEK,
             cliff: WEEK
         });
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -569,7 +569,7 @@ contract CommitSplitTest is BaseTest {
         params = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp - 1,
+            start: uint40(block.timestamp) - 1,
             end: lock.end,
             cliff: lock.cliffLength
         });
@@ -584,7 +584,7 @@ contract CommitSplitTest is BaseTest {
         IGovNFT.SplitParams memory params = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end - 1,
             cliff: lock.cliffLength
         });
@@ -604,7 +604,7 @@ contract CommitSplitTest is BaseTest {
         IGovNFT.SplitParams memory params = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: lock.totalLocked + 1,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
@@ -621,7 +621,7 @@ contract CommitSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: TOKEN_1,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end + WEEK,
             cliff: lock.cliffLength
         });
@@ -638,14 +638,14 @@ contract CommitSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: (lock.totalLocked + TOKEN_1) / 2,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
         paramsList[1] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: (lock.totalLocked + TOKEN_1) / 2,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
@@ -662,14 +662,14 @@ contract CommitSplitTest is BaseTest {
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: (lockedAmount + TOKEN_1) / 2,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });
         paramsList[1] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: (lockedAmount + TOKEN_1) / 2,
-            start: block.timestamp,
+            start: uint40(block.timestamp),
             end: lock.end,
             cliff: lock.cliffLength
         });

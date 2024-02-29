@@ -14,8 +14,8 @@ contract SweepTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -111,7 +111,7 @@ contract SweepTest is BaseTest {
         uint32 _timeskip,
         uint8 cycles
     ) public {
-        uint256 _start = block.timestamp;
+        uint256 _start = uint40(block.timestamp);
         uint256 _end = _start + WEEK * 6;
         uint256 timeskip = uint256(_timeskip);
         timeskip = bound(timeskip, 0, _end - _start);
@@ -127,7 +127,7 @@ contract SweepTest is BaseTest {
             airdropper.transfer(testToken, vault, TOKEN_100K);
             skip(timeskip);
             expectedClaim = Math.min(
-                (lock.totalLocked * (block.timestamp - lock.start)) / (lock.end - lock.start),
+                (lock.totalLocked * (uint40(block.timestamp) - lock.start)) / (lock.end - lock.start),
                 lock.totalLocked
             );
 
@@ -156,7 +156,7 @@ contract SweepTest is BaseTest {
         amount = bound(amount, 1, TOKEN_100K);
         //airdrop amount
         airdropper.transfer(testToken, vault, TOKEN_100K);
-        uint256 _start = block.timestamp;
+        uint256 _start = uint40(block.timestamp);
         uint256 _end = _start + WEEK * 6;
         uint256 timeskip = uint256(_timeskip);
         timeskip = bound(timeskip, 0, _end - _start);
@@ -165,7 +165,7 @@ contract SweepTest is BaseTest {
 
         skip(timeskip + lock.cliffLength);
         uint256 expectedClaim = Math.min(
-            (lock.totalLocked * (block.timestamp - lock.start)) / (lock.end - lock.start),
+            (lock.totalLocked * (uint40(block.timestamp) - lock.start)) / (lock.end - lock.start),
             lock.totalLocked
         );
 

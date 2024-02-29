@@ -18,8 +18,8 @@ contract LockTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_100K,
-            block.timestamp,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
 
@@ -32,8 +32,8 @@ contract LockTest is BaseTest {
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
         assertEq(lock.cliffLength, WEEK);
-        assertEq(lock.start, block.timestamp);
-        assertEq(lock.end, block.timestamp + WEEK * 2);
+        assertEq(lock.start, uint40(block.timestamp));
+        assertEq(lock.end, uint40(block.timestamp) + WEEK * 2);
 
         assertEq(lock.totalClaimed, 0);
         assertEq(lock.totalLocked, TOKEN_100K);
@@ -50,29 +50,64 @@ contract LockTest is BaseTest {
     function test_RevertIf_CreateLockToZeroAddress() public {
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(admin));
-        govNFT.createLock(address(0), address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+        govNFT.createLock(
+            address(0),
+            address(recipient),
+            TOKEN_1,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
+            WEEK
+        );
 
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(admin));
-        govNFT.createLock(testToken, address(0), TOKEN_1, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+        govNFT.createLock(
+            testToken,
+            address(0),
+            TOKEN_1,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
+            WEEK
+        );
     }
 
     function test_RevertIf_CreateLockWithZeroAmount() public {
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
         vm.prank(address(admin));
-        govNFT.createLock(testToken, address(recipient), 0, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+        govNFT.createLock(
+            testToken,
+            address(recipient),
+            0,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
+            WEEK
+        );
     }
 
     function test_RevertIf_CreateLockWithInvalidCliff() public {
         vm.expectRevert(IGovNFT.InvalidCliff.selector);
         vm.prank(address(admin));
-        govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp, block.timestamp + WEEK - 1, WEEK);
+        govNFT.createLock(
+            testToken,
+            address(recipient),
+            TOKEN_1,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK - 1,
+            WEEK
+        );
     }
 
     function test_RevertIf_CreateLockWithZeroDuration() public {
         vm.expectRevert(IGovNFT.EndBeforeOrEqualStart.selector);
         vm.prank(address(admin));
-        govNFT.createLock(testToken, address(recipient), TOKEN_1, block.timestamp + WEEK, block.timestamp + WEEK, WEEK);
+        govNFT.createLock(
+            testToken,
+            address(recipient),
+            TOKEN_1,
+            uint40(block.timestamp) + WEEK,
+            uint40(block.timestamp) + WEEK,
+            WEEK
+        );
     }
 
     function test_RevertIf_CreateLockIfNotEnoughTokensTransferred() public {
@@ -83,7 +118,14 @@ contract LockTest is BaseTest {
         vm.startPrank(address(admin));
         admin.approve(token, address(govNFT), TOKEN_100K);
         vm.expectRevert(IGovNFT.InsufficientAmount.selector);
-        govNFT.createLock(token, address(recipient), TOKEN_100K, block.timestamp, block.timestamp + WEEK * 2, WEEK);
+        govNFT.createLock(
+            token,
+            address(recipient),
+            TOKEN_100K,
+            uint40(block.timestamp),
+            uint40(block.timestamp) + WEEK * 2,
+            WEEK
+        );
     }
 
     function test_RevertIf_CreateLockWithEndBeforeStart() public {
@@ -93,8 +135,8 @@ contract LockTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_1,
-            block.timestamp + WEEK * 2,
-            block.timestamp + WEEK,
+            uint40(block.timestamp) + WEEK * 2,
+            uint40(block.timestamp) + WEEK,
             WEEK
         );
 
@@ -104,8 +146,8 @@ contract LockTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_1,
-            block.timestamp + WEEK + 1,
-            block.timestamp + WEEK,
+            uint40(block.timestamp) + WEEK + 1,
+            uint40(block.timestamp) + WEEK,
             WEEK
         );
     }
@@ -117,8 +159,8 @@ contract LockTest is BaseTest {
             testToken,
             address(recipient),
             TOKEN_1,
-            block.timestamp - 1,
-            block.timestamp + WEEK * 2,
+            uint40(block.timestamp) - 1,
+            uint40(block.timestamp) + WEEK * 2,
             WEEK
         );
     }
