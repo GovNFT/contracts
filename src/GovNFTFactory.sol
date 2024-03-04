@@ -20,8 +20,15 @@ contract GovNFTFactory is IGovNFTFactory {
 
     constructor(address _artProxy, string memory _name, string memory _symbol) {
         // Create permissionless GovNFT
+        // @dev Permissionless GovNFT cannot Sweep Lock's tokens prior to Lock expiry
         govNFT = address(
-            new GovNFTSplit({_owner: address(this), _artProxy: _artProxy, _name: _name, _symbol: _symbol})
+            new GovNFTSplit({
+                _owner: address(this),
+                _artProxy: _artProxy,
+                _name: _name,
+                _symbol: _symbol,
+                _earlySweepLockToken: false
+            })
         );
         _registry.add(govNFT);
         emit GovNFTCreated({
@@ -39,11 +46,20 @@ contract GovNFTFactory is IGovNFTFactory {
         address _owner,
         address _artProxy,
         string memory _name,
-        string memory _symbol
+        string memory _symbol,
+        bool _earlySweepLockToken
     ) external returns (address _govNFT) {
         if (_owner == address(this)) revert NotAuthorized();
         if (_artProxy == address(0)) revert ZeroAddress();
-        _govNFT = address(new GovNFTSplit({_owner: _owner, _artProxy: _artProxy, _name: _name, _symbol: _symbol}));
+        _govNFT = address(
+            new GovNFTSplit({
+                _owner: _owner,
+                _artProxy: _artProxy,
+                _name: _name,
+                _symbol: _symbol,
+                _earlySweepLockToken: _earlySweepLockToken
+            })
+        );
         _registry.add(_govNFT);
         emit GovNFTCreated({
             owner: _owner,

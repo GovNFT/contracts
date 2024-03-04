@@ -40,14 +40,19 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
     /// @dev IGovNFTFactory address
     address public immutable factory;
 
+    /// @dev True if lock tokens can be swept before lock expiry
+    bool public immutable earlySweepLockToken;
+
     constructor(
         address _owner,
         address _artProxy,
         string memory _name,
-        string memory _symbol
+        string memory _symbol,
+        bool _earlySweepLockToken
     ) ERC721(_name, _symbol) Ownable(_owner) {
         artProxy = _artProxy;
         factory = msg.sender;
+        earlySweepLockToken = _earlySweepLockToken;
     }
 
     /**
@@ -340,7 +345,11 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         address vault = lock.vault;
 
         if (_token == lock.token) {
-            amount = Math.min(amount, IERC20(_token).balanceOf(vault) - (lock.totalLocked - lock.totalClaimed));
+            if (!earlySweepLockToken && block.timestamp < lock.end) revert InvalidSweep();
+            amount = Math.min(
+                amount,
+                IERC20(_token).balanceOf(vault) - (lock.totalLocked + lock.unclaimedBeforeSplit - lock.totalClaimed)
+            );
         } else {
             amount = Math.min(amount, IERC20(_token).balanceOf(vault));
         }

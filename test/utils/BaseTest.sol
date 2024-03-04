@@ -61,7 +61,13 @@ contract BaseTest is Test {
         airdropper = new TestOwner();
 
         vm.prank(address(admin));
-        govNFT = new GovNFTSplit(address(admin), address(0), NAME, SYMBOL);
+        govNFT = new GovNFTSplit({
+            _owner: address(admin),
+            _artProxy: address(0),
+            _name: NAME,
+            _symbol: SYMBOL,
+            _earlySweepLockToken: true
+        });
 
         testToken = address(new MockERC20("TEST", "TEST", 18));
         testGovernanceToken = address(new MockGovernanceToken("TESTGOV", "TESTGOV", 18));

@@ -24,12 +24,14 @@ interface IGovNFTFactory {
     /// @param _artProxy Address of the art proxy
     /// @param _name Name of the GovNFT
     /// @param _symbol Symbol of the GovNFT
+    /// @param _earlySweepLockToken Defines if Lock tokens can be Swept prior to lock expiry
     /// @return _govNFT Address of the created GovNFT
     function createGovNFT(
         address _owner,
         address _artProxy,
         string memory _name,
-        string memory _symbol
+        string memory _symbol,
+        bool _earlySweepLockToken
     ) external returns (address _govNFT);
 
     /// @notice View all created GovNFTs

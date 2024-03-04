@@ -25,6 +25,7 @@ interface IGovNFTTimelockFactory {
     /// @param _artProxy Address of the art proxy
     /// @param _name Name of the GovNFT
     /// @param _symbol Symbol of the GovNFT
+    /// @param _earlySweepLockToken Defines if Lock tokens can be Swept prior to lock expiry
     /// @param _timelock Timelock for the GovNFT
     /// @return _govNFT Address of the created GovNFT
     function createGovNFT(
@@ -32,6 +33,7 @@ interface IGovNFTTimelockFactory {
         address _artProxy,
         string memory _name,
         string memory _symbol,
+        bool _earlySweepLockToken,
         uint256 _timelock
     ) external returns (address _govNFT);
 

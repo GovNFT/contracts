@@ -65,6 +65,7 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     error TokenNotFound();
     error InvalidStart();
     error InvalidCliff();
+    error InvalidSweep();
     error AmountTooBig();
     error ZeroAddress();
     error ZeroAmount();
@@ -79,6 +80,9 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
 
     /// @notice Address of the factory that deployed this contract
     function factory() external view returns (address);
+
+    /// @notice Views if Airdrops in the Lock token can be Swept prior to Lock expiry
+    function earlySweepLockToken() external view returns (bool);
 
     /// @notice Get the number of unclaimed, vested tokens for a given token ID
     /// @param _tokenId Lock Token Id to be used
@@ -131,12 +135,14 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     function delegate(uint256 _tokenId, address delegatee) external;
 
     /// @notice Withdraw all `token`s from the Lock. Can be used to sweep airdropped tokens
+    /// @dev    Can only Sweep Lock prior to Lock expiry if `earlySweepLockToken`
     /// @param _tokenId Lock Token Id to be used
     /// @param token Address of the `token` to sweep
     /// @param recipient Address to receive the tokens
     function sweep(uint256 _tokenId, address token, address recipient) external;
 
     /// @notice Withdraw `amount` of `token` from the Lock. Can be used to sweep airdropped tokens
+    /// @dev    Can only Sweep Lock prior to Lock expiry if `earlySweepLockToken`
     /// @param _tokenId Lock Token Id to be used
     /// @param token Address of the `token` to sweep
     /// @param recipient Address to receive the tokens

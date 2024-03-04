@@ -9,7 +9,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
     uint256 public timelock = 0; //TODO: set timelock
 
     function _setUp() public override {
-        factory = new GovNFTTimelockFactory(artProxy, NAME, SYMBOL, timelock);
+        factory = new GovNFTTimelockFactory({_artProxy: artProxy, _name: NAME, _symbol: SYMBOL, _timelock: timelock});
     }
 
     function test_Setup() public {
@@ -24,6 +24,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
 
         assertEq(_govNFT.name(), NAME);
         assertEq(_govNFT.symbol(), SYMBOL);
+        assertFalse(_govNFT.earlySweepLockToken());
         assertEq(_govNFT.owner(), address(factory));
         assertEq(_govNFT.timelock(), timelock);
     }
@@ -35,6 +36,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
             _artProxy: address(0),
             _name: NAME,
             _symbol: SYMBOL,
+            _earlySweepLockToken: true,
             _timelock: timelock
         });
     }
@@ -49,6 +51,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
                 _artProxy: customArtProxy,
                 _name: "CustomGovNFTTimelock",
                 _symbol: "CustomGovNFT",
+                _earlySweepLockToken: true,
                 _timelock: timelock
             })
         );
@@ -61,6 +64,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
         assertEq(_govNFT.symbol(), "CustomGovNFT");
         assertEq(_govNFT.owner(), address(admin));
         assertEq(_govNFT.artProxy(), customArtProxy);
+        assertTrue(_govNFT.earlySweepLockToken());
         assertEq(_govNFT.timelock(), timelock);
     }
 
@@ -96,6 +100,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
                 _artProxy: artProxy,
                 _name: NAME,
                 _symbol: SYMBOL,
+                _earlySweepLockToken: true,
                 _timelock: timelock
             })
         );

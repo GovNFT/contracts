@@ -20,12 +20,14 @@ contract GovNFTTimelockFactory is IGovNFTTimelockFactory {
 
     constructor(address _artProxy, string memory _name, string memory _symbol, uint256 _timelock) {
         // Create permissionless GovNFT
+        // @dev Permissionless GovNFT cannot Sweep Lock's tokens prior to Lock expiry
         govNFT = address(
             new GovNFTTimelock({
                 _owner: address(this),
                 _artProxy: _artProxy,
                 _name: _name,
                 _symbol: _symbol,
+                _earlySweepLockToken: false,
                 _timelock: _timelock
             })
         );
@@ -47,6 +49,7 @@ contract GovNFTTimelockFactory is IGovNFTTimelockFactory {
         address _artProxy,
         string memory _name,
         string memory _symbol,
+        bool _earlySweepLockToken,
         uint256 _timelock
     ) external returns (address _govNFT) {
         if (_owner == address(this)) revert NotAuthorized();
@@ -57,6 +60,7 @@ contract GovNFTTimelockFactory is IGovNFTTimelockFactory {
                 _artProxy: _artProxy,
                 _name: _name,
                 _symbol: _symbol,
+                _earlySweepLockToken: _earlySweepLockToken,
                 _timelock: _timelock
             })
         );

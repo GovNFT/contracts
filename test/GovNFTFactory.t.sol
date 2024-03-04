@@ -8,7 +8,7 @@ contract GovNFTFactoryTest is BaseTest {
     address public artProxy = vm.addr(0x12345);
 
     function _setUp() public override {
-        factory = new GovNFTFactory(artProxy, NAME, SYMBOL);
+        factory = new GovNFTFactory({_artProxy: artProxy, _name: NAME, _symbol: SYMBOL});
     }
 
     function test_Setup() public {
@@ -23,12 +23,19 @@ contract GovNFTFactoryTest is BaseTest {
 
         assertEq(_govNFT.name(), NAME);
         assertEq(_govNFT.symbol(), SYMBOL);
+        assertFalse(_govNFT.earlySweepLockToken());
         assertEq(_govNFT.owner(), address(factory));
     }
 
     function test_RevertIf_CreateWithFactoryAsAdmin() public {
         vm.expectRevert(IGovNFTFactory.NotAuthorized.selector);
-        factory.createGovNFT({_owner: address(factory), _artProxy: address(0), _name: NAME, _symbol: SYMBOL});
+        factory.createGovNFT({
+            _owner: address(factory),
+            _artProxy: address(0),
+            _name: NAME,
+            _symbol: SYMBOL,
+            _earlySweepLockToken: true
+        });
     }
 
     function test_CreateGovNFT() public {
@@ -40,7 +47,8 @@ contract GovNFTFactoryTest is BaseTest {
                 _owner: address(admin),
                 _artProxy: customArtProxy,
                 _name: "CustomGovNFT",
-                _symbol: "CustomGovNFT"
+                _symbol: "CustomGovNFT",
+                _earlySweepLockToken: true
             })
         );
         assertEq(factory.govNFTsLength(), 2);
@@ -52,6 +60,7 @@ contract GovNFTFactoryTest is BaseTest {
         assertEq(_govNFT.symbol(), "CustomGovNFT");
         assertEq(_govNFT.owner(), address(admin));
         assertEq(_govNFT.artProxy(), customArtProxy);
+        assertTrue(_govNFT.earlySweepLockToken());
     }
 
     function test_CanCreateLockIfNotOwnerInPermissionlessGovNFT() public {
@@ -81,7 +90,13 @@ contract GovNFTFactoryTest is BaseTest {
 
     function test_RevertIf_CreateLockIfNotOwner() public {
         IGovNFT _govNFT = IGovNFT(
-            factory.createGovNFT({_owner: address(admin), _artProxy: artProxy, _name: NAME, _symbol: SYMBOL})
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: artProxy,
+                _name: NAME,
+                _symbol: SYMBOL,
+                _earlySweepLockToken: true
+            })
         );
 
         admin.approve(testToken, address(_govNFT), TOKEN_100K);
