@@ -10,14 +10,14 @@ contract SweepTest is BaseTest {
     function _setUp() public override {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         vault = govNFT.locks(tokenId).vault;
 
@@ -33,7 +33,7 @@ contract SweepTest is BaseTest {
         // sweep does not allow to claim any vested tokens
         vm.startPrank(address(recipient));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(from, testToken, address(recipient));
+        govNFT.sweep({_tokenId: from, _token: testToken, _recipient: address(recipient)});
 
         // all tokens have finished vesting
         uint256 vaultBal = IERC20(testToken).balanceOf(lock.vault);
@@ -44,7 +44,7 @@ contract SweepTest is BaseTest {
         assertEq(oldBal, TOKEN_100K);
 
         // vested tokens can be claimed as expected
-        govNFT.claim(from, address(recipient), type(uint256).max);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: type(uint256).max});
         assertEq(IERC20(testToken).balanceOf(lock.vault), 0);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), oldBal + (lock.initialDeposit - amount));
 
@@ -54,7 +54,7 @@ contract SweepTest is BaseTest {
         // sweep does not allow to claim any vested tokens
         vm.startPrank(address(recipient2));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(splitToken, testToken, address(recipient2));
+        govNFT.sweep({_tokenId: splitToken, _token: testToken, _recipient: address(recipient2)});
 
         // all tokens have finished vesting
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
@@ -63,7 +63,7 @@ contract SweepTest is BaseTest {
         assertEq(splitLock.totalLocked, amount);
 
         // vested tokens can be claimed as expected
-        govNFT.claim(splitToken, address(recipient2), type(uint256).max);
+        govNFT.claim({_tokenId: splitToken, _beneficiary: address(recipient2), _amount: type(uint256).max});
         assertEq(IERC20(testToken).balanceOf(splitLock.vault), 0);
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
 
@@ -79,8 +79,8 @@ contract SweepTest is BaseTest {
 
         vm.prank(address(recipient));
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, receiver: address(recipient), amount: TOKEN_100K});
-        govNFT.sweep(tokenId, airdropToken, address(recipient));
+        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, recipient: address(recipient), amount: TOKEN_100K});
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: address(recipient)});
 
         assertEq(IERC20(airdropToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(airdropToken).balanceOf(vault), 0);
@@ -99,8 +99,8 @@ contract SweepTest is BaseTest {
 
         vm.prank(address(recipient));
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit IGovNFT.Sweep({tokenId: tokenId, token: testToken, receiver: address(recipient), amount: TOKEN_100K});
-        govNFT.sweep(tokenId, testToken, address(recipient), TOKEN_100K);
+        emit IGovNFT.Sweep({tokenId: tokenId, token: testToken, recipient: address(recipient), amount: TOKEN_100K});
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient), _amount: TOKEN_100K});
 
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
@@ -118,8 +118,8 @@ contract SweepTest is BaseTest {
 
         vm.prank(address(recipient));
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, receiver: testUser, amount: TOKEN_100K});
-        govNFT.sweep(tokenId, airdropToken, testUser);
+        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, recipient: testUser, amount: TOKEN_100K});
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: testUser});
 
         assertEq(IERC20(airdropToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(airdropToken).balanceOf(vault), 0);
@@ -140,8 +140,8 @@ contract SweepTest is BaseTest {
 
             vm.prank(address(recipient));
             vm.expectEmit(true, true, true, true, address(govNFT));
-            emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, receiver: address(recipient), amount: amount});
-            govNFT.sweep(tokenId, airdropToken, address(recipient), amount);
+            emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, recipient: address(recipient), amount: amount});
+            govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: address(recipient), _amount: amount});
 
             assertEq(IERC20(airdropToken).balanceOf(address(recipient)), amountSwept);
             assertEq(IERC20(airdropToken).balanceOf(vault), TOKEN_100K - amountSwept);
@@ -179,11 +179,11 @@ contract SweepTest is BaseTest {
 
             //full sweep
             vm.prank(address(recipient));
-            govNFT.sweep(tokenId, testToken, address(recipient));
+            govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
             balanceRecipient += TOKEN_100K;
 
             vm.prank(address(recipient));
-            govNFT.claim(tokenId, address(recipient), lock.totalLocked);
+            govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked});
 
             assertEq(IERC20(testToken).balanceOf(vault), lock.totalLocked - expectedClaim);
             assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -216,7 +216,7 @@ contract SweepTest is BaseTest {
         );
 
         vm.prank(address(recipient));
-        govNFT.sweep(tokenId, testToken, address(recipient), amount);
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient), _amount: amount});
 
         assertEq(IERC20(testToken).balanceOf(vault), lock.totalLocked + TOKEN_100K - amount);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -227,7 +227,7 @@ contract SweepTest is BaseTest {
 
         //check user can stil claim lock
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked});
 
         assertEq(IERC20(testToken).balanceOf(vault), lock.totalLocked + TOKEN_100K - expectedClaim - amount);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -244,7 +244,7 @@ contract SweepTest is BaseTest {
         skip(WEEK * 2); //skip to the vesting end timestamp
 
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked});
 
         assertEq(IERC20(testToken).balanceOf(vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -254,7 +254,7 @@ contract SweepTest is BaseTest {
         assertEq(govNFT.unclaimed(tokenId), 0);
 
         vm.prank(address(recipient));
-        govNFT.sweep(tokenId, testToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
 
         assertEq(IERC20(testToken).balanceOf(vault), 0);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
@@ -287,7 +287,7 @@ contract SweepTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
 
-        govNFT.sweep(tokenId, testToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
 
         assertEq(IERC20(testToken).balanceOf(vault), lock.totalLocked - amount);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), TOKEN_100K);
@@ -301,7 +301,7 @@ contract SweepTest is BaseTest {
 
         vm.startPrank(address(recipient2));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(splitToken, testToken, address(recipient2));
+        govNFT.sweep({_tokenId: splitToken, _token: testToken, _recipient: address(recipient2)});
 
         assertEq(IERC20(testToken).balanceOf(splitVault), amount);
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
@@ -337,7 +337,7 @@ contract SweepTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
 
-        govNFT.sweep(tokenId, testToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
 
         assertEq(IERC20(testToken).balanceOf(vault), totalLocked + unclaimedAmount);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), TOKEN_100K);
@@ -351,7 +351,7 @@ contract SweepTest is BaseTest {
 
         vm.startPrank(address(recipient2));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(splitToken, testToken, address(recipient2));
+        govNFT.sweep({_tokenId: splitToken, _token: testToken, _recipient: address(recipient2)});
 
         assertEq(IERC20(testToken).balanceOf(splitVault), amount);
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
@@ -365,14 +365,14 @@ contract SweepTest is BaseTest {
         deal(testToken, address(admin), TOKEN_100K);
         vm.startPrank(address(admin));
         admin.approve(testToken, address(govNFT), TOKEN_100K);
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp) + WEEK,
-            uint40(block.timestamp) + WEEK * 4,
-            WEEK
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp) + WEEK,
+            _endTime: uint40(block.timestamp) + WEEK * 4,
+            _cliffLength: WEEK
+        });
         IGovNFT.Lock memory lock = govNFT.locks(from);
         timeskip = uint40(bound(timeskip, 0, lock.end - lock.start - 1));
         airdropper.transfer(testToken, lock.vault, TOKEN_100K);
@@ -404,7 +404,7 @@ contract SweepTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
 
-        govNFT.sweep(from, testToken, address(recipient));
+        govNFT.sweep({_tokenId: from, _token: testToken, _recipient: address(recipient)});
 
         assertEq(IERC20(testToken).balanceOf(lock.vault), totalLocked + unclaimedAmount);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), TOKEN_100K);
@@ -418,7 +418,7 @@ contract SweepTest is BaseTest {
 
         vm.startPrank(address(recipient2));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(splitToken, testToken, address(recipient2));
+        govNFT.sweep({_tokenId: splitToken, _token: testToken, _recipient: address(recipient2)});
 
         assertEq(IERC20(testToken).balanceOf(splitVault), amount);
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
@@ -445,20 +445,20 @@ contract SweepTest is BaseTest {
         uint256 unclaimedAmount = govNFT.unclaimed(tokenId);
 
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(tokenId, testToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
 
         assertEqUint(IERC20(testToken).balanceOf(address(recipient)), 0);
-        govNFT.claim(tokenId, address(recipient), type(uint256).max);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: type(uint256).max});
         assertEqUint(IERC20(testToken).balanceOf(address(recipient)), unclaimedAmount);
 
         unclaimedAmount = govNFT.unclaimed(tokenId2);
 
         vm.startPrank(address(recipient2));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(tokenId2, testToken, address(recipient2));
+        govNFT.sweep({_tokenId: tokenId2, _token: testToken, _recipient: address(recipient2)});
 
         assertEqUint(IERC20(testToken).balanceOf(address(recipient2)), 0);
-        govNFT.claim(tokenId2, address(recipient2), type(uint256).max);
+        govNFT.claim({_tokenId: tokenId2, _beneficiary: address(recipient2), _amount: type(uint256).max});
         assertEqUint(IERC20(testToken).balanceOf(address(recipient2)), unclaimedAmount);
     }
 
@@ -488,20 +488,20 @@ contract SweepTest is BaseTest {
         uint256 unclaimedAmount = govNFT.unclaimed(tokenId);
 
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(tokenId, testToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
 
         assertEqUint(IERC20(testToken).balanceOf(address(recipient)), 0);
-        govNFT.claim(tokenId, address(recipient), type(uint256).max);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: type(uint256).max});
         assertEqUint(IERC20(testToken).balanceOf(address(recipient)), unclaimedAmount);
 
         unclaimedAmount = govNFT.unclaimed(tokenId2);
 
         vm.startPrank(address(recipient2));
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
-        govNFT.sweep(tokenId2, testToken, address(recipient2));
+        govNFT.sweep({_tokenId: tokenId2, _token: testToken, _recipient: address(recipient2)});
 
         assertEqUint(IERC20(testToken).balanceOf(address(recipient2)), 0);
-        govNFT.claim(tokenId2, address(recipient), type(uint256).max);
+        govNFT.claim({_tokenId: tokenId2, _beneficiary: address(recipient), _amount: type(uint256).max});
         assertEqUint(IERC20(testToken).balanceOf(address(recipient2)), unclaimedAmount);
     }
 
@@ -515,8 +515,8 @@ contract SweepTest is BaseTest {
         // can sweep after getting approval on nft
         vm.prank(approvedUser);
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, receiver: approvedUser, amount: TOKEN_1});
-        govNFT.sweep(tokenId, airdropToken, approvedUser, TOKEN_1);
+        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, recipient: approvedUser, amount: TOKEN_1});
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: approvedUser, _amount: TOKEN_1});
         assertEq(IERC20(airdropToken).balanceOf(approvedUser), TOKEN_1);
 
         address approvedForAllUser = makeAddr("bob");
@@ -528,8 +528,8 @@ contract SweepTest is BaseTest {
         // can sweep after getting approval for all nfts
         vm.prank(approvedForAllUser);
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, receiver: approvedForAllUser, amount: TOKEN_1});
-        govNFT.sweep(tokenId, airdropToken, approvedForAllUser, TOKEN_1);
+        emit IGovNFT.Sweep({tokenId: tokenId, token: airdropToken, recipient: approvedForAllUser, amount: TOKEN_1});
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: approvedForAllUser, _amount: TOKEN_1});
         assertEq(IERC20(airdropToken).balanceOf(approvedForAllUser), TOKEN_1);
     }
 
@@ -537,13 +537,13 @@ contract SweepTest is BaseTest {
         address testUser = address(0x123);
         vm.prank(testUser);
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, testUser, tokenId));
-        govNFT.sweep(tokenId, airdropToken, address(admin));
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: address(admin)});
 
         vm.prank(address(admin));
         vm.expectRevert(
             abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(admin), tokenId)
         );
-        govNFT.sweep(tokenId, airdropToken, address(admin));
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: address(admin)});
     }
 
     function test_RevertIf_SweepLockTokenBeforeLockExpiryWhenNotAllowed() public {
@@ -558,14 +558,14 @@ contract SweepTest is BaseTest {
         });
         admin.approve(testToken, address(govNFTNoSweep), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId2 = govNFTNoSweep.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId2 = govNFTNoSweep.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         IGovNFT.Lock memory lock = govNFTNoSweep.locks(tokenId2);
 
@@ -591,7 +591,7 @@ contract SweepTest is BaseTest {
         vm.warp(lock.end);
         vm.prank(address(recipient));
         vm.expectEmit(true, true, true, true, address(govNFTNoSweep));
-        emit IGovNFT.Sweep({tokenId: tokenId2, token: testToken, receiver: address(admin), amount: TOKEN_100K});
+        emit IGovNFT.Sweep({tokenId: tokenId2, token: testToken, recipient: address(admin), amount: TOKEN_100K});
         govNFTNoSweep.sweep(tokenId2, testToken, address(admin));
 
         assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
@@ -603,7 +603,7 @@ contract SweepTest is BaseTest {
         tokenId = 3;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, tokenId));
         vm.prank(address(recipient));
-        govNFT.sweep(tokenId, airdropToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: address(recipient)});
     }
 
     function test_RevertIf_SweepIfNoAirdrop() public {
@@ -615,7 +615,7 @@ contract SweepTest is BaseTest {
 
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
         vm.prank(address(recipient));
-        govNFT.sweep(tokenId, testToken, address(recipient));
+        govNFT.sweep({_tokenId: tokenId, _token: testToken, _recipient: address(recipient)});
 
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(testToken).balanceOf(vault), 0);
@@ -626,6 +626,6 @@ contract SweepTest is BaseTest {
     function test_RevertIf_SweepToZeroAddress() public {
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(recipient));
-        govNFT.sweep(tokenId, airdropToken, address(0));
+        govNFT.sweep({_tokenId: tokenId, _token: airdropToken, _recipient: address(0)});
     }
 }

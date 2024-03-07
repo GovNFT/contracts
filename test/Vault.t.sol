@@ -7,14 +7,14 @@ contract VaultTest is BaseTest {
     function test_VaultOwner() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
@@ -48,14 +48,14 @@ contract VaultTest is BaseTest {
     function test_RevertIf_WithdrawIfNotAdmin() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
         assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
@@ -103,14 +103,14 @@ contract VaultTest is BaseTest {
     function test_RevertIf_SweepIfNotAdmin() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
         IVault vault = IVault(lock.vault);
 

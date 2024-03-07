@@ -11,14 +11,14 @@ contract DelegateTest is BaseTest {
         testAddr = makeAddr("alice");
         admin.approve(testGovernanceToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        tokenId = govNFT.createLock(
-            testGovernanceToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        tokenId = govNFT.createLock({
+            _token: testGovernanceToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
     }
 
     function test_Delegate() public {
@@ -49,14 +49,14 @@ contract DelegateTest is BaseTest {
         deal(testGovernanceToken, address(admin), TOKEN_100K);
         admin.approve(testGovernanceToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId2 = govNFT.createLock(
-            testGovernanceToken,
-            recipient2,
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId2 = govNFT.createLock({
+            _token: testGovernanceToken,
+            _recipient: recipient2,
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         assertEq(IVotes(testGovernanceToken).delegates(address(admin)), address(0));
         assertEq(IVotes(testGovernanceToken).delegates(recipient1), address(0));
@@ -87,14 +87,14 @@ contract DelegateTest is BaseTest {
     function test_RevertIf_DelegateWithTokenNotSupported() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
         vm.expectRevert();
         vm.prank(address(recipient));
         govNFT.delegate(tokenId, testAddr);

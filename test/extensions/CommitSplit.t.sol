@@ -23,14 +23,14 @@ contract CommitSplitTest is BaseTest {
 
         admin.approve(testToken, address(govNFTLock), TOKEN_100K);
         vm.prank(address(admin));
-        from = govNFTLock.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK
-        );
+        from = govNFTLock.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK
+        });
         amount = TOKEN_10K * 4;
     }
 
@@ -521,7 +521,16 @@ contract CommitSplitTest is BaseTest {
         uint256 tokenId = from + 2;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, tokenId));
         vm.prank(address(recipient));
-        govNFTLock.claim(tokenId, address(recipient), TOKEN_100K);
+        IGovNFT.SplitParams memory params = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: TOKEN_1,
+            start: uint40(block.timestamp),
+            end: uint40(block.timestamp) + 3 * WEEK,
+            cliff: WEEK
+        });
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
+        paramsList[0] = params;
+        govNFTLock.commitSplit(tokenId, paramsList);
     }
 
     function test_RevertIf_CommitSplitIfZeroAmount() public {

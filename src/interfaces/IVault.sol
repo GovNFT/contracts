@@ -7,10 +7,10 @@ interface IVault {
     function token() external view returns (address);
 
     /// @notice Withdraw `_amount` of `token` from the Vault
-    /// @param _receiver Address to receive the tokens
+    /// @param _recipient Address to receive the tokens
     /// @param _amount Amount of tokens to withdraw
     /// @dev Only callable by the Lock recipient through the GovNFT contract
-    function withdraw(address _receiver, uint256 _amount) external;
+    function withdraw(address _recipient, uint256 _amount) external;
 
     /// @notice Delegates voting power of a given Lock to `_delegatee`
     /// @param _delegatee Address to delegate voting power to

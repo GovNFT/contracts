@@ -23,8 +23,8 @@ contract Vault is IVault, Ownable {
     }
 
     /// @inheritdoc IVault
-    function withdraw(address _receiver, uint256 _amount) external onlyOwner {
-        IERC20(token).safeTransfer(_receiver, _amount);
+    function withdraw(address _recipient, uint256 _amount) external onlyOwner {
+        IERC20(token).safeTransfer(_recipient, _amount);
     }
 
     /// @inheritdoc IVault

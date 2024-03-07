@@ -12,14 +12,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            lockAmount,
-            uint40(block.timestamp) + WEEK * 2,
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: lockAmount,
+            _startTime: uint40(block.timestamp) + WEEK * 2,
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK
+        });
         IGovNFT.Lock memory lock = govNFT.locks(from);
         assertEq(lock.unclaimedBeforeSplit, 0);
         assertEq(lock.totalLocked, govNFT.locked(from)); // no tokens have been vested before splitting
@@ -27,10 +27,10 @@ contract SplitFuzzTest is BaseTest {
 
         skip(timeskip);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -66,14 +66,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            lockAmount,
-            uint40(block.timestamp) + WEEK * 2,
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: lockAmount,
+            _startTime: uint40(block.timestamp) + WEEK * 2,
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK
+        });
 
         IGovNFT.Lock memory lock = govNFT.locks(from);
         assertEq(lock.totalLocked, govNFT.locked(from)); // no tokens have been vested before splitting
@@ -82,10 +82,10 @@ contract SplitFuzzTest is BaseTest {
 
         skip(timeskip);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -112,11 +112,11 @@ contract SplitFuzzTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
 
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), lock.totalLocked - amount);
 
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
     }
 
@@ -128,14 +128,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            uint256(lockAmount),
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 4,
-            WEEK * 3
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: uint256(lockAmount),
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 4,
+            _cliffLength: WEEK * 3
+        });
 
         skip(timeskip); // skip somewhere before cliff ends
 
@@ -144,10 +144,10 @@ contract SplitFuzzTest is BaseTest {
         assertEq(lock.unclaimedBeforeSplit, 0);
         assertEq(lock.splitCount, 0);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -190,14 +190,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            uint256(lockAmount),
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 4,
-            WEEK * 3
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: uint256(lockAmount),
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 4,
+            _cliffLength: WEEK * 3
+        });
 
         skip(timeskip); // skip somewhere before cliff ends
 
@@ -206,10 +206,10 @@ contract SplitFuzzTest is BaseTest {
         assertEq(lock.unclaimedBeforeSplit, 0);
         assertEq(lock.splitCount, 0);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -235,11 +235,11 @@ contract SplitFuzzTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
 
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), lock.totalLocked - amount);
 
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
     }
 
@@ -250,14 +250,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            uint256(lockAmount),
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 6,
-            WEEK
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: uint256(lockAmount),
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 6,
+            _cliffLength: WEEK
+        });
 
         skip(timeskip); // skip somewhere after cliff ends
 
@@ -273,10 +273,10 @@ contract SplitFuzzTest is BaseTest {
         uint256 originalUnclaimedBeforeSplit = govNFT.unclaimed(from);
         amount = bound(amount, 1, lockedBeforeSplit - 1); // amount to split has to be lower than locked value
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
@@ -319,14 +319,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            uint256(lockAmount),
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 6,
-            WEEK
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: uint256(lockAmount),
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 6,
+            _cliffLength: WEEK
+        });
 
         skip(timeskip); // skip somewhere after cliff ends
 
@@ -342,10 +342,10 @@ contract SplitFuzzTest is BaseTest {
         uint256 originalUnclaimedBeforeSplit = govNFT.unclaimed(from);
         amount = bound(amount, 1, lockedBeforeSplit);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
@@ -379,11 +379,11 @@ contract SplitFuzzTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
 
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lockAmount);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lockAmount});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
 
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lockAmount);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lockAmount});
         assertEq(
             IERC20(testToken).balanceOf(address(recipient)),
             lockedBeforeSplit + originalUnclaimedBeforeSplit - amount
@@ -401,14 +401,14 @@ contract SplitFuzzTest is BaseTest {
 
         admin.approve(testToken, address(govNFT), uint256(lockAmount));
         vm.prank(address(admin));
-        uint256 from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            uint256(lockAmount),
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 6,
-            WEEK
-        );
+        uint256 from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: uint256(lockAmount),
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 6,
+            _cliffLength: WEEK
+        });
 
         skip(timeskip); // skip somewhere after cliff ends
 
@@ -424,10 +424,10 @@ contract SplitFuzzTest is BaseTest {
         uint256 originalUnclaimedBeforeSplit = govNFT.unclaimed(from);
         amount = bound(amount, 1, lockedBeforeSplit);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
@@ -451,12 +451,12 @@ contract SplitFuzzTest is BaseTest {
 
         // nothing to claim on split token in split timestamp
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lockAmount);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lockAmount});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
         assertEq(govNFT.locks(tokenId).totalClaimed, 0);
 
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lockAmount);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lockAmount});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), originalUnclaimedBeforeSplit);
         assertEq(govNFT.locks(from).totalClaimed, 0); // unclaimed before split not included
     }

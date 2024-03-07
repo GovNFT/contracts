@@ -7,14 +7,14 @@ contract ClaimTest is BaseTest {
     function test_ClaimFull() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
@@ -35,7 +35,7 @@ contract ClaimTest is BaseTest {
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: address(recipient), claimed: lock.totalLocked});
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked});
 
         lock = govNFT.locks(tokenId);
         assertEq(govNFT.locked(tokenId), 0);
@@ -49,14 +49,14 @@ contract ClaimTest is BaseTest {
     function test_ClaimBeneficiary() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
         address beneficiary = makeAddr("alice");
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -65,7 +65,7 @@ contract ClaimTest is BaseTest {
         vm.prank(address(recipient));
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: beneficiary, claimed: lock.totalLocked});
-        govNFT.claim(tokenId, beneficiary, lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: beneficiary, _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(govNFT)), 0);
         assertEq(IERC20(testToken).balanceOf(beneficiary), lock.totalLocked);
     }
@@ -73,14 +73,14 @@ contract ClaimTest is BaseTest {
     function test_ClaimLess() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
@@ -92,7 +92,7 @@ contract ClaimTest is BaseTest {
         vm.prank(address(recipient));
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: beneficiary, claimed: lock.totalLocked / 10});
-        govNFT.claim(tokenId, beneficiary, lock.totalLocked / 10);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: beneficiary, _amount: lock.totalLocked / 10});
 
         lock = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), (9 * lock.totalLocked) / 10);
@@ -103,7 +103,7 @@ contract ClaimTest is BaseTest {
         vm.prank(address(recipient));
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: beneficiary2, claimed: lock.totalLocked / 10});
-        govNFT.claim(tokenId, beneficiary2, lock.totalLocked / 10);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: beneficiary2, _amount: lock.totalLocked / 10});
 
         lock = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), (8 * lock.totalLocked) / 10);
@@ -114,7 +114,7 @@ contract ClaimTest is BaseTest {
         vm.prank(address(recipient));
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: address(recipient), claimed: (lock.totalLocked / 10) * 8});
-        govNFT.claim(tokenId, address(recipient), lock.totalLocked); // claims remaining tokens
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked}); // claims remaining tokens
 
         lock = govNFT.locks(tokenId);
         assertEq(govNFT.unclaimed(tokenId), 0);
@@ -130,14 +130,21 @@ contract ClaimTest is BaseTest {
         timeskip = uint40(bound(timeskip, 0, _end - _start));
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(testToken, address(recipient), TOKEN_100K, _start, _end, 0);
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: _start,
+            _endTime: _end,
+            _cliffLength: 0
+        });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
         skip(timeskip);
 
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), lock.totalLocked); // claims available tokens
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked}); // claims available tokens
         uint256 expectedAmount = Math.min(
             (lock.totalLocked * (uint40(block.timestamp) - lock.start)) / (lock.end - lock.start),
             lock.totalLocked
@@ -155,14 +162,14 @@ contract ClaimTest is BaseTest {
         vm.assume(_cycles > 0);
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            0
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: 0
+        });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
         IERC20 token = IERC20(testToken);
 
@@ -184,7 +191,7 @@ contract ClaimTest is BaseTest {
             }
 
             lock = govNFT.locks(tokenId);
-            govNFT.claim(tokenId, address(recipient), lock.totalLocked); // claims available tokens
+            govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked}); // claims available tokens
             uint256 expectedAmount = ((lock.totalLocked * (uint40(block.timestamp) - lock.start)) /
                 (lock.end - lock.start)) - lock.totalClaimed;
 
@@ -207,20 +214,20 @@ contract ClaimTest is BaseTest {
     function test_NoClaimedRewardsBeforeStart() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp) + WEEK,
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp) + WEEK,
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK
+        });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
         skip(WEEK - 5); // still before vesting lock.start
 
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), TOKEN_100K); // claims available tokens
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: TOKEN_100K}); // claims available tokens
 
         assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(recipient)), 0);
@@ -231,20 +238,20 @@ contract ClaimTest is BaseTest {
     function test_NoClaimedRewardsBeforeCliff() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp) + WEEK,
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK * 2
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp) + WEEK,
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK * 2
+        });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
         skip(WEEK * 3 - 1); // still before cliff end
 
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), TOKEN_100K); // claims available tokens
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: TOKEN_100K}); // claims available tokens
 
         lock = govNFT.locks(tokenId);
         assertEq(IERC20(testToken).balanceOf(lock.vault), TOKEN_100K);
@@ -253,7 +260,7 @@ contract ClaimTest is BaseTest {
 
         skip(1); // cliff ends
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), TOKEN_100K); // claims available tokens
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: TOKEN_100K}); // claims available tokens
 
         lock = govNFT.locks(tokenId);
         assertEq(IERC20(testToken).balanceOf(lock.vault), 0);
@@ -264,14 +271,14 @@ contract ClaimTest is BaseTest {
     function test_ClaimPermissions() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         skip(WEEK * 2); // skip to the end of vesting
 
@@ -285,7 +292,7 @@ contract ClaimTest is BaseTest {
         vm.prank(approvedUser);
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: approvedUser, claimed: TOKEN_1});
-        govNFT.claim(tokenId, approvedUser, TOKEN_1);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: approvedUser, _amount: TOKEN_1});
         assertEq(IERC20(testToken).balanceOf(approvedUser), TOKEN_1);
 
         address approvedForAllUser = makeAddr("bob");
@@ -298,7 +305,7 @@ contract ClaimTest is BaseTest {
         vm.prank(approvedForAllUser);
         vm.expectEmit(true, true, false, true, address(govNFT));
         emit IGovNFT.Claim({tokenId: tokenId, recipient: approvedForAllUser, claimed: TOKEN_1});
-        govNFT.claim(tokenId, approvedForAllUser, TOKEN_1);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: approvedForAllUser, _amount: TOKEN_1});
         assertEq(IERC20(testToken).balanceOf(approvedForAllUser), TOKEN_1);
     }
 
@@ -306,61 +313,61 @@ contract ClaimTest is BaseTest {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         address testUser = makeAddr("alice");
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         vm.prank(testUser);
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, testUser, tokenId));
-        govNFT.claim(tokenId, address(admin), TOKEN_100K);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(admin), _amount: TOKEN_100K});
 
         vm.prank(address(admin));
         vm.expectRevert(
             abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(admin), tokenId)
         );
-        govNFT.claim(tokenId, address(admin), TOKEN_100K);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(admin), _amount: TOKEN_100K});
     }
 
     function test_RevertIf_ClaimNonExistentToken() public {
         uint256 tokenId = 1;
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, tokenId));
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), TOKEN_100K);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: TOKEN_100K});
     }
 
     function test_RevertIf_ClaimToZeroAddress() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(0), TOKEN_100K);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(0), _amount: TOKEN_100K});
     }
 
     function test_LockedUnclaimed() public {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
         assertEq(govNFT.locked(tokenId), lock.totalLocked);
@@ -382,7 +389,7 @@ contract ClaimTest is BaseTest {
         assertEq(govNFT.unclaimed(tokenId), lock.totalLocked); // all rewards available
 
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), lock.totalLocked / 2);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: lock.totalLocked / 2});
 
         assertEq(govNFT.locked(tokenId), 0);
         assertEq(govNFT.unclaimed(tokenId), lock.totalLocked / 2);
@@ -390,7 +397,7 @@ contract ClaimTest is BaseTest {
         assertEq(lock.totalClaimed, lock.totalLocked / 2); // half of rewards were claimed
 
         vm.prank(address(recipient));
-        govNFT.claim(tokenId, address(recipient), TOKEN_100K);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient), _amount: TOKEN_100K});
 
         assertEq(govNFT.locked(tokenId), 0);
         assertEq(govNFT.unclaimed(tokenId), 0);

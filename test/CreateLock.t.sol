@@ -14,14 +14,14 @@ contract LockTest is BaseTest {
         vm.expectEmit(true, true, true, true, address(govNFT));
         emit IGovNFT.Create({tokenId: 1, recipient: address(recipient), token: testToken, amount: TOKEN_100K});
         vm.prank(address(admin));
-        uint256 tokenId = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         assertEq(govNFT.totalSupply(), 1);
         assertEq(govNFT.balanceOf(address(recipient)), 1);
@@ -50,64 +50,64 @@ contract LockTest is BaseTest {
     function test_RevertIf_CreateLockToZeroAddress() public {
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(admin));
-        govNFT.createLock(
-            address(0),
-            address(recipient),
-            TOKEN_1,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: address(0),
+            _recipient: address(recipient),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
 
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(0),
-            TOKEN_1,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(0),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
     }
 
     function test_RevertIf_CreateLockWithZeroAmount() public {
         vm.expectRevert(IGovNFT.ZeroAmount.selector);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(recipient),
-            0,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: 0,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
     }
 
     function test_RevertIf_CreateLockWithInvalidCliff() public {
         vm.expectRevert(IGovNFT.InvalidCliff.selector);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_1,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK - 1,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK - 1,
+            _cliffLength: WEEK
+        });
     }
 
     function test_RevertIf_CreateLockWithZeroDuration() public {
         vm.expectRevert(IGovNFT.InvalidParameters.selector);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_1,
-            uint40(block.timestamp) + WEEK,
-            uint40(block.timestamp) + WEEK,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp) + WEEK,
+            _endTime: uint40(block.timestamp) + WEEK,
+            _cliffLength: WEEK
+        });
     }
 
     function test_RevertIf_CreateLockIfNotEnoughTokensTransferred() public {
@@ -118,27 +118,27 @@ contract LockTest is BaseTest {
         vm.startPrank(address(admin));
         admin.approve(token, address(govNFT), TOKEN_100K);
         vm.expectRevert(IGovNFT.InsufficientAmount.selector);
-        govNFT.createLock(
-            token,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: token,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
     }
 
     function test_RevertIf_CreateLockWithEndBeforeStart() public {
         vm.expectRevert(stdError.arithmeticError);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_1,
-            uint40(block.timestamp) + WEEK * 2,
-            uint40(block.timestamp) + WEEK,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp) + WEEK * 2,
+            _endTime: uint40(block.timestamp) + WEEK,
+            _cliffLength: WEEK
+        });
 
         vm.expectRevert(stdError.arithmeticError);
         vm.prank(address(admin));
@@ -155,13 +155,13 @@ contract LockTest is BaseTest {
     function test_RevertIf_CreateLockWhenStartIsInPast() public {
         vm.expectRevert(IGovNFT.InvalidStart.selector);
         vm.prank(address(admin));
-        govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_1,
-            uint40(block.timestamp) - 1,
-            uint40(block.timestamp) + WEEK * 2,
-            WEEK
-        );
+        govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_1,
+            _startTime: uint40(block.timestamp) - 1,
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK
+        });
     }
 }

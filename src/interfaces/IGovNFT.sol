@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
+
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
@@ -32,7 +33,7 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
 
     /// @dev Parameters necessary to perform a Split:
     ///      `beneficiary` Address of the user to receive tokens vested from split
-    ///      `start` Epoch time at which token distribution starts
+    ///      `start` Time at which token distribution starts
     ///      `end` Time at which everything should be vested
     ///      `cliff` Duration after which the first portion vests
     ///      `amount` Amount of tokens to be vested in the new Lock
@@ -46,13 +47,13 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
 
     /// Events
     event Create(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
-    event Sweep(uint256 indexed tokenId, address indexed token, address indexed receiver, uint256 amount);
+    event Sweep(uint256 indexed tokenId, address indexed token, address indexed recipient, uint256 amount);
     event Claim(uint256 indexed tokenId, address indexed recipient, uint256 claimed);
     event Delegate(uint256 indexed tokenId, address indexed delegate);
     event Split(
         uint256 indexed from,
-        uint256 indexed tokenId,
-        address recipient,
+        uint256 indexed to,
+        address indexed recipient,
         uint256 splitAmount1,
         uint256 splitAmount2,
         uint40 startTime,
@@ -81,6 +82,11 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @notice Address of the factory that deployed this contract
     function factory() external view returns (address);
 
+    /// @notice Returns the Lock information for a given token ID
+    /// @param _tokenId Token Id from which the info will be fetched
+    /// @return Lock Information for the given token ID
+    function locks(uint256 _tokenId) external view returns (Lock memory);
+
     /// @notice Views if Airdrops in the Lock token can be Swept prior to Lock expiry
     function earlySweepLockToken() external view returns (bool);
 
@@ -94,11 +100,6 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @return The amount of locked tokens of a token ID
     function locked(uint256 _tokenId) external view returns (uint256);
 
-    /// @notice Returns the Lock information for a given token ID
-    /// @param _tokenId Token Id from which the info will be fetched
-    /// @return Lock Information for the given token ID
-    function locks(uint256 _tokenId) external view returns (Lock memory);
-
     /// @notice Get the Split NFT ID from the Split Lock list of `_tokenId` at the given `_index`
     /// @param _tokenId Lock Token Id from which to fetch the Split list
     /// @param _index Index in Split Lock list to be accessed
@@ -109,7 +110,7 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @param _token Address of the ERC20 token being distributed
     /// @param _recipient Address to vest tokens for
     /// @param _amount Amount of tokens being vested for `recipient`
-    /// @param _startTime Epoch time at which token distribution starts
+    /// @param _startTime Time at which token distribution starts
     /// @param _endTime Time at which everything should be vested
     /// @param _cliffLength Duration after which the first portion vests
     /// @return The token ID of the created Lock
@@ -131,21 +132,21 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
 
     ///  @notice Delegates voting power of a given Lock to `delegatee`
     ///  @param _tokenId Lock Token Id to be used
-    ///  @param delegatee Address to delegate voting power to
-    function delegate(uint256 _tokenId, address delegatee) external;
+    ///  @param _delegatee Address to delegate voting power to
+    function delegate(uint256 _tokenId, address _delegatee) external;
 
     /// @notice Withdraw all `token`s from the Lock. Can be used to sweep airdropped tokens
     /// @dev    Can only Sweep Lock prior to Lock expiry if `earlySweepLockToken`
     /// @param _tokenId Lock Token Id to be used
-    /// @param token Address of the `token` to sweep
-    /// @param recipient Address to receive the tokens
-    function sweep(uint256 _tokenId, address token, address recipient) external;
+    /// @param _token Address of the `token` to sweep
+    /// @param _recipient Address to receive the tokens
+    function sweep(uint256 _tokenId, address _token, address _recipient) external;
 
     /// @notice Withdraw `amount` of `token` from the Lock. Can be used to sweep airdropped tokens
     /// @dev    Can only Sweep Lock prior to Lock expiry if `earlySweepLockToken`
     /// @param _tokenId Lock Token Id to be used
-    /// @param token Address of the `token` to sweep
-    /// @param recipient Address to receive the tokens
-    /// @param amount Amount of tokens to sweep
-    function sweep(uint256 _tokenId, address token, address recipient, uint256 amount) external;
+    /// @param _token Address of the `token` to sweep
+    /// @param _recipient Address to receive the tokens
+    /// @param _amount Amount of tokens to sweep
+    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 _amount) external;
 }

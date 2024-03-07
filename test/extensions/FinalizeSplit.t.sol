@@ -23,14 +23,14 @@ contract FinalizeSplitTest is BaseTest {
 
         admin.approve(testToken, address(govNFTLock), TOKEN_100K);
         vm.prank(address(admin));
-        from = govNFTLock.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_100K,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK
-        );
+        from = govNFTLock.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK
+        });
         amount = TOKEN_10K * 4;
     }
 
@@ -65,10 +65,10 @@ contract FinalizeSplitTest is BaseTest {
 
         skip(timelockDelay);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -132,10 +132,10 @@ contract FinalizeSplitTest is BaseTest {
 
         skip(timelockDelay);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -158,13 +158,13 @@ contract FinalizeSplitTest is BaseTest {
         // assert claims
         assertEq(govNFT.locks(from).totalClaimed, 0);
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), lock.totalLocked - amount);
         assertEq(govNFT.locks(from).totalClaimed, lock.totalLocked - amount);
 
         assertEq(govNFT.locks(tokenId).totalClaimed, 0);
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
         assertEq(govNFT.locks(tokenId).totalClaimed, amount);
     }
@@ -205,7 +205,7 @@ contract FinalizeSplitTest is BaseTest {
 
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -269,7 +269,7 @@ contract FinalizeSplitTest is BaseTest {
 
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
@@ -292,13 +292,13 @@ contract FinalizeSplitTest is BaseTest {
         // assert claims
         assertEq(govNFT.locks(from).totalClaimed, 0);
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), lock.totalLocked - amount);
         assertEq(govNFT.locks(from).totalClaimed, lock.totalLocked - amount);
 
         assertEq(govNFT.locks(tokenId).totalClaimed, 0);
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
         assertEq(govNFT.locks(tokenId).totalClaimed, amount);
     }
@@ -338,10 +338,10 @@ contract FinalizeSplitTest is BaseTest {
         uint256 lockedBeforeSplit = govNFT.locked(from);
         uint256 originalUnclaimed = govNFT.unclaimed(from);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
@@ -379,7 +379,7 @@ contract FinalizeSplitTest is BaseTest {
         assertEq(lock.splitCount, 0);
 
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         uint256 totalClaimed = govNFT.locks(from).totalClaimed;
 
         skip(2 days); // skip somewhere before vesting ends to vest more rewards
@@ -412,10 +412,10 @@ contract FinalizeSplitTest is BaseTest {
         uint256 lockedBeforeSplit = govNFT.locked(from);
         uint256 originalUnclaimed = govNFT.unclaimed(from);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
@@ -482,10 +482,10 @@ contract FinalizeSplitTest is BaseTest {
         uint256 lockedBeforeSplit = govNFT.locked(from);
         uint256 originalUnclaimed = govNFT.unclaimed(from);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - splitAmount,
             splitAmount2: splitAmount,
@@ -553,10 +553,10 @@ contract FinalizeSplitTest is BaseTest {
         uint256 lockedBeforeSplit = govNFT.locked(from);
         uint256 originalUnclaimed = govNFT.unclaimed(from);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
@@ -588,12 +588,12 @@ contract FinalizeSplitTest is BaseTest {
 
         // assert claims
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), originalUnclaimed + lockedBeforeSplit - amount);
         assertEq(govNFT.locks(from).totalClaimed, lockedBeforeSplit - amount); //unclaimed before split not included
 
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), amount);
         assertEq(govNFT.locks(tokenId).totalClaimed, amount);
     }
@@ -633,10 +633,10 @@ contract FinalizeSplitTest is BaseTest {
         uint256 lockedBeforeSplit = govNFT.locked(from);
         uint256 originalUnclaimed = govNFT.unclaimed(from);
 
-        vm.expectEmit(true, true, false, true);
+        vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
             from: from,
-            tokenId: from + 1,
+            to: from + 1,
             recipient: address(recipient2),
             splitAmount1: lockedBeforeSplit - splitAmount,
             splitAmount2: splitAmount,
@@ -675,13 +675,13 @@ contract FinalizeSplitTest is BaseTest {
 
         // assert claims
         vm.prank(address(recipient));
-        govNFT.claim(from, address(recipient), lock.totalLocked);
+        govNFT.claim({_tokenId: from, _beneficiary: address(recipient), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient)), originalUnclaimed + lockedBeforeSplit - splitAmount);
 
         assertEq(govNFT.locks(from).totalClaimed, lockedBeforeSplit - splitAmount); //unclaimed before split not included
 
         vm.prank(address(recipient2));
-        govNFT.claim(tokenId, address(recipient2), lock.totalLocked);
+        govNFT.claim({_tokenId: tokenId, _beneficiary: address(recipient2), _amount: lock.totalLocked});
         assertEq(IERC20(testToken).balanceOf(address(recipient2)), splitAmount);
         assertEq(govNFT.locks(tokenId).totalClaimed, splitAmount);
     }

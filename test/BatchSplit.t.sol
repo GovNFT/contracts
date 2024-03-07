@@ -11,14 +11,14 @@ contract BatchSplitTest is BaseTest {
         deal(testToken, address(admin), TOKEN_10M);
         admin.approve(testToken, address(govNFT), TOKEN_10M);
         vm.prank(address(admin));
-        from = govNFT.createLock(
-            testToken,
-            address(recipient),
-            TOKEN_10M,
-            uint40(block.timestamp),
-            uint40(block.timestamp) + WEEK * 3,
-            WEEK
-        );
+        from = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_10M,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 3,
+            _cliffLength: WEEK
+        });
         amount = TOKEN_10K * 3;
 
         // no prior splits or unclaimed rewards
@@ -79,10 +79,10 @@ contract BatchSplitTest is BaseTest {
         for (uint256 i = 0; i < paramsList.length; i++) {
             // each split decreases the parent's `totalLocked` value by `amount`
             splitLockAmounts += paramsList[i].amount;
-            vm.expectEmit(true, true, false, true);
+            vm.expectEmit(true, true, true, true);
             emit IGovNFT.Split({
                 from: from,
-                tokenId: from + (i + 1),
+                to: from + (i + 1),
                 recipient: paramsList[i].beneficiary,
                 splitAmount1: lock.totalLocked - splitLockAmounts,
                 splitAmount2: paramsList[i].amount,
@@ -187,10 +187,10 @@ contract BatchSplitTest is BaseTest {
         for (uint256 i = 0; i < paramsList.length; i++) {
             // each split decreases the parent's `totalLocked` value by `amount`
             splitLockAmounts += paramsList[i].amount;
-            vm.expectEmit(true, true, false, true);
+            vm.expectEmit(true, true, true, true);
             emit IGovNFT.Split({
                 from: from,
-                tokenId: from + (i + 1),
+                to: from + (i + 1),
                 recipient: paramsList[i].beneficiary,
                 splitAmount1: lock.totalLocked - splitLockAmounts,
                 splitAmount2: paramsList[i].amount,
@@ -300,10 +300,10 @@ contract BatchSplitTest is BaseTest {
         for (uint256 i = 0; i < paramsList.length; i++) {
             // each split decreases the parent's `locked` value by `amount`
             splitLockAmounts += paramsList[i].amount;
-            vm.expectEmit(true, true, false, true);
+            vm.expectEmit(true, true, true, true);
             emit IGovNFT.Split({
                 from: from,
-                tokenId: from + (i + 1),
+                to: from + (i + 1),
                 recipient: paramsList[i].beneficiary,
                 splitAmount1: lockedBeforeSplit - splitLockAmounts,
                 splitAmount2: paramsList[i].amount,

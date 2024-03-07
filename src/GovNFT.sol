@@ -19,7 +19,7 @@ import {Vault} from "./Vault.sol";
 /// @title Velodrome GovNFT
 /// @author velodrome.finance, @airtoonricardo, @pedrovalido
 /// @notice GovNFT implementation that vests ERC-20 tokens to a given address, in the form of an ERC-721
-/// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
+/// @notice Tokens are vested over a determined period of time, as soon as the cliff period ends
 /// @dev    Contract not intended to be used standalone. Should inherit Splitting functionality
 ///         from one of the available Split modules instead.
 abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable {
@@ -53,28 +53,6 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         artProxy = _artProxy;
         factory = msg.sender;
         earlySweepLockToken = _earlySweepLockToken;
-    }
-
-    /**
-     * @dev Throws if owner is not the sender nor the factory.
-     * @dev Used in onlyOwner modifier.
-     */
-    function _checkOwner() internal view override(Ownable) {
-        address _owner = owner();
-        if (_owner != _msgSender() && _owner != factory) {
-            revert OwnableUnauthorizedAccount(_msgSender());
-        }
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner. Prevents transferring ownership to the factory
-     */
-    function transferOwnership(address newOwner) public virtual override onlyOwner {
-        if (newOwner == address(0) || newOwner == factory) {
-            revert OwnableInvalidOwner(newOwner);
-        }
-        _transferOwnership(newOwner);
     }
 
     /// @inheritdoc IGovNFT
@@ -121,10 +99,10 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         if (_token == address(0)) revert ZeroAddress();
         _createLockChecks(_recipient, _amount, _startTime, _endTime, _cliffLength);
 
-        address _vault = address(new Vault(_token));
-        _tokenId = _createNFT(
-            _recipient,
-            Lock({
+        address vault = address(new Vault(_token));
+        _tokenId = _createNFT({
+            _recipient: _recipient,
+            _newLock: Lock({
                 totalLocked: _amount,
                 initialDeposit: _amount,
                 totalClaimed: 0,
@@ -134,42 +112,87 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
                 cliffLength: _cliffLength,
                 start: _startTime,
                 end: _endTime,
-                vault: _vault,
+                vault: vault,
                 minter: msg.sender
             })
-        );
+        });
 
-        IERC20(_token).safeTransferFrom(msg.sender, _vault, _amount);
-        if (IERC20(_token).balanceOf(_vault) < _amount) revert InsufficientAmount();
+        IERC20(_token).safeTransferFrom({from: msg.sender, to: vault, value: _amount});
+        if (IERC20(_token).balanceOf(vault) < _amount) revert InsufficientAmount();
 
-        emit Create(_tokenId, _recipient, _token, _amount);
+        emit Create({tokenId: _tokenId, recipient: _recipient, token: _token, amount: _amount});
     }
 
     /// @inheritdoc IGovNFT
     function claim(uint256 _tokenId, address _beneficiary, uint256 _amount) external nonReentrant {
-        _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
+        _checkAuthorized({owner: _ownerOf(_tokenId), spender: msg.sender, tokenId: _tokenId});
         if (_beneficiary == address(0)) revert ZeroAddress();
 
         Lock storage lock = _locks[_tokenId];
-        uint256 _claimable = Math.min(_unclaimed(lock), _amount);
+        uint256 claimable = Math.min(_unclaimed(lock), _amount);
 
-        if (_claimable > lock.unclaimedBeforeSplit) {
-            lock.totalClaimed += _claimable - lock.unclaimedBeforeSplit;
+        if (claimable > lock.unclaimedBeforeSplit) {
+            lock.totalClaimed += claimable - lock.unclaimedBeforeSplit;
             delete lock.unclaimedBeforeSplit;
         } else {
-            lock.unclaimedBeforeSplit -= _claimable;
+            lock.unclaimedBeforeSplit -= claimable;
         }
 
-        IVault(lock.vault).withdraw(_beneficiary, _claimable);
-        emit Claim(_tokenId, _beneficiary, _claimable);
+        IVault(lock.vault).withdraw({_recipient: _beneficiary, _amount: claimable});
+        emit Claim({tokenId: _tokenId, recipient: _beneficiary, claimed: claimable});
     }
 
     /// @inheritdoc IGovNFT
-    function delegate(uint256 _tokenId, address delegatee) external nonReentrant {
-        _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
+    function delegate(uint256 _tokenId, address _delegatee) external nonReentrant {
+        _checkAuthorized({owner: _ownerOf(_tokenId), spender: msg.sender, tokenId: _tokenId});
 
-        IVault(_locks[_tokenId].vault).delegate(delegatee);
-        emit Delegate(_tokenId, delegatee);
+        IVault(_locks[_tokenId].vault).delegate(_delegatee);
+        emit Delegate({tokenId: _tokenId, delegate: _delegatee});
+    }
+
+    /// @inheritdoc IGovNFT
+    function sweep(uint256 _tokenId, address _token, address _recipient) external {
+        sweep(_tokenId, _token, _recipient, type(uint256).max);
+    }
+
+    /// @inheritdoc IGovNFT
+    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 _amount) public nonReentrant {
+        if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
+        _checkAuthorized({owner: _ownerOf(_tokenId), spender: msg.sender, tokenId: _tokenId});
+
+        Lock storage lock = _locks[_tokenId];
+        address vault = lock.vault;
+
+        if (_token == lock.token) {
+            if (!earlySweepLockToken && block.timestamp < lock.end) revert InvalidSweep();
+            _amount = Math.min(
+                _amount,
+                IERC20(_token).balanceOf(vault) - (lock.totalLocked + lock.unclaimedBeforeSplit - lock.totalClaimed)
+            );
+        } else {
+            _amount = Math.min(_amount, IERC20(_token).balanceOf(vault));
+        }
+
+        if (_amount == 0) revert ZeroAmount();
+        IVault(vault).sweep(_token, _recipient, _amount);
+        emit Sweep({tokenId: _tokenId, token: _token, recipient: _recipient, amount: _amount});
+    }
+
+    /// @inheritdoc IERC721Metadata
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
+        if (_ownerOf(_tokenId) == address(0)) revert TokenNotFound();
+        return IArtProxy(artProxy).tokenURI(_tokenId);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner. Prevents transferring ownership to the factory
+     */
+    function transferOwnership(address newOwner) public virtual override onlyOwner {
+        if (newOwner == address(0) || newOwner == factory) {
+            revert OwnableInvalidOwner(newOwner);
+        }
+        _transferOwnership(newOwner);
     }
 
     /// @dev Creates an NFT designed to vest tokens to the given recipient
@@ -180,7 +203,7 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
     function _createNFT(address _recipient, Lock memory _newLock) internal returns (uint256 _tokenId) {
         _tokenId = ++tokenId;
 
-        _safeMint(_recipient, _tokenId);
+        _safeMint({to: _recipient, tokenId: _tokenId});
 
         _locks[_tokenId] = _newLock;
     }
@@ -260,17 +283,38 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         splitTokensByIndex[_from][_parentLock.splitCount++] = _tokenId;
 
         // Transfer Split Amount from Parent Vault to new Split Vault
-        IVault(_parentLock.vault).withdraw({_receiver: splitLock.vault, _amount: _params.amount});
+        IVault(_parentLock.vault).withdraw({_recipient: splitLock.vault, _amount: _params.amount});
         if (IERC20(splitLock.token).balanceOf(splitLock.vault) < _params.amount) revert InsufficientAmount();
         emit Split({
             from: _from,
-            tokenId: _tokenId,
+            to: _tokenId,
             recipient: _params.beneficiary,
             splitAmount1: _parentLockedAmount,
             splitAmount2: _params.amount,
             startTime: _params.start,
             endTime: _params.end
         });
+    }
+
+    /// @dev Checks if the parameters used to create a Lock are valid
+    /// @param _recipient Address to vest tokens for
+    /// @param _amount Amount of tokens to be vested for `recipient`
+    /// @param _startTime Time at which token distribution starts
+    /// @param _endTime Time at which everything should be vested
+    /// @param _cliff Duration after which the first portion vests
+    function _createLockChecks(
+        address _recipient,
+        uint256 _amount,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _cliff
+    ) internal view {
+        if (_startTime < block.timestamp) revert InvalidStart();
+        if (_recipient == address(0)) revert ZeroAddress();
+        if (_amount == 0) revert ZeroAmount();
+
+        if (_endTime == _startTime) revert InvalidParameters();
+        if (_endTime - _startTime < _cliff) revert InvalidCliff();
     }
 
     /// @dev Verifies if the given Split Parameters are valid and consistent with Parent Lock
@@ -310,58 +354,14 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         if (_parentLock.totalLocked - _parentTotalVested < sum) revert AmountTooBig();
     }
 
-    /// @dev Checks if the parameters used to create a Lock are valid
-    /// @param _recipient Address to vest tokens for
-    /// @param _amount Amount of tokens to be vested for `recipient`
-    /// @param _startTime Epoch time at which token distribution starts
-    /// @param _endTime Time at which everything should be vested
-    /// @param _cliff Duration after which the first portion vests
-    function _createLockChecks(
-        address _recipient,
-        uint256 _amount,
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _cliff
-    ) internal view {
-        if (_startTime < block.timestamp) revert InvalidStart();
-        if (_recipient == address(0)) revert ZeroAddress();
-        if (_amount == 0) revert ZeroAmount();
-
-        if (_endTime == _startTime) revert InvalidParameters();
-        if (_endTime - _startTime < _cliff) revert InvalidCliff();
-    }
-
-    /// @inheritdoc IGovNFT
-    function sweep(uint256 _tokenId, address _token, address _recipient) external {
-        sweep(_tokenId, _token, _recipient, type(uint256).max);
-    }
-
-    /// @inheritdoc IGovNFT
-    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 amount) public nonReentrant {
-        if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
-        _checkAuthorized(_ownerOf(_tokenId), msg.sender, _tokenId);
-
-        Lock storage lock = _locks[_tokenId];
-        address vault = lock.vault;
-
-        if (_token == lock.token) {
-            if (!earlySweepLockToken && block.timestamp < lock.end) revert InvalidSweep();
-            amount = Math.min(
-                amount,
-                IERC20(_token).balanceOf(vault) - (lock.totalLocked + lock.unclaimedBeforeSplit - lock.totalClaimed)
-            );
-        } else {
-            amount = Math.min(amount, IERC20(_token).balanceOf(vault));
+    /**
+     * @dev Throws if owner is not the sender nor the factory.
+     * @dev Used in onlyOwner modifier.
+     */
+    function _checkOwner() internal view override(Ownable) {
+        address _owner = owner();
+        if (_owner != _msgSender() && _owner != factory) {
+            revert OwnableUnauthorizedAccount(_msgSender());
         }
-        if (amount == 0) revert ZeroAmount();
-
-        IVault(vault).sweep(_token, _recipient, amount);
-        emit Sweep(_tokenId, _token, _recipient, amount);
-    }
-
-    /// @inheritdoc IERC721Metadata
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        if (_ownerOf(_tokenId) == address(0)) revert TokenNotFound();
-        return IArtProxy(artProxy).tokenURI(_tokenId);
     }
 }
