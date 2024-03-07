@@ -8,10 +8,14 @@ See `SPECIFICATION.md` for more detail.
 
 ### Contracts
 
-| Filename     | Description                                                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `GovNFT.sol` | Manages the vesting process of ERC-20 tokens, represented as ERC-721 NFTs, including creating nfts, handling claims and splits. |
-| `Vault.sol`  | Stores ERC-20 tokens for nfts, enabling delegation of governance tokens and fund management through the GovNFT contract.        |
+| Filename                    | Description                                                                                                                                    |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GovNFT.sol`                | Abstract contract that manages the vesting process of ERC-20 tokens, represented as ERC-721 NFTs, including creating nfts and handling claims. |
+| `GovNFTSplit.sol`           | Inherits from GovNFT and implements the split functionality.                                                                                   |
+| `GovNFTTimelock.sol`        | Inherits from GovNFT and implements the split functionality with timelock.                                                                     |
+| `Vault.sol`                 | Stores ERC-20 tokens for nfts, enabling delegation of governance tokens and fund management through the GovNFT contract.                       |
+| `GovNFTFactory.sol`         | Used to create and keep track of deployed GovNFTSplit instances.                                                                               |
+| `GovNFTTimelockFactory.sol` | Used to create and keep track of deployed GovNFTTimelock instances.                                                                            |
 
 ## Testing
 
@@ -44,10 +48,15 @@ This is a list of all permissions in GovNFT, sorted by the contract they are sto
 ### GovNFT
 
 - Lock Recipient and Approved Operators
+
   - can claim vested tokens
   - can delegate the voting power of all unclaimed and locked tokens
   - can sweep airdropped tokens to a recipient
   - can split its lock to another entity
+
+- GovNFT owner
+  - when owner is not the factory, only the owner can create locks
+  - when the owner is the factory, anyone can create locks
 
 ### Vault
 

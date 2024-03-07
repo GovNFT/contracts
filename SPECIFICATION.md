@@ -33,6 +33,22 @@ Creating a lock is only allowed by the contract's owner, unless the GovNFT contr
 Allows recipients to claim vested tokens as they become available.
 Determined by duration, start time, and cliff period, as specified during the Lock creation.
 
+#### Delegation
+
+Allows recipients to actively participate in governance delegation, even for tokens that are not claimed.
+Key points:
+
+- Only for ERC-20 tokens that have the `delegate` function implemented.
+- The recipient calls the delegate function, specifying the delegatee's address.
+
+#### Sweeping Airdropped Tokens
+
+Airdrop Sweeping is designed to manage tokens that are deposited into the Lock outside the original vesting schedule, typically through airdrops.
+The process involves the ability to "sweep" or transfer these additional tokens to a specified recipient.
+If the airdrop is the same as the lock's token, the sweeping is restricted depending on the `earlySweepLockToken` flag. If false, these tokens can only be swept after the lock's expired (can be swept any time otherwise).
+
+### GovNFTSplit
+
 #### Splitting
 
 The split function takes a parent NFT `from` and splits it into another NFT, that will be referred to as `to`.
@@ -51,18 +67,14 @@ After a `split` is performed:
 
 Additionally, there is the option to batch split the parent NFT `from` into several `to` NFTs, providing an array of split parameters.
 
-#### Delegation
+### GovNFTTimelock
 
-Allows recipients to actively participate in governance delegation, even for tokens that are not claimed.
-Key points:
+#### Splitting
 
-- Only for ERC-20 tokens that have the `delegate` function implemented.
-- The recipient calls the delegate function, specifying the delegatee's address.
+Implements the splitting functionality in 2 steps:
 
-#### Sweeping Airdropped Tokens
-
-Airdrop Sweeping is designed to manage tokens that are deposited into the Lock outside the original vesting schedule, typically through airdrops.
-The process involves the ability to "sweep" or transfer these additional tokens to a specified recipient.
+- propose a split
+- finalize a proposed split after the timelock period has ended
 
 ### Vault
 
@@ -70,14 +82,20 @@ Each NFT is an exclusive owner of a Vault (where the ERC-20 tokens are actually 
 
 - allowing the GovNFT to withdraw vested tokens to the recipient
 - delegate their voting rights while tokens are locked, if the stored tokens possess governance capabilities
-- sweeping airdropped from the vault to a specified receiver.
+- sweeping airdropped tokens from the vault to a specified receiver.
 
 ### GovNFTFactory
 
-Facilitates the creation and tracking of deployed GovNFTs. Creating a GovNFT requires the following arguments:
+Facilitates the creation and tracking of deployed GovNFTSplits. Creating a GovNFT requires the following arguments:
 
 - owner who will be allowed to create locks
 - address of the artProxy to be used for the token URI
 - name and symbol
+- boolean to allow early sweeps of aidropped lock tokens
 
-Upon the deployment of the factory, a single permissionless GovNFT is created and owned by the factory (anyone can create a lock in this case).
+Upon the deployment of the factory, a single permissionless GovNFT meant for public use is created and owned by the factory (anyone can create a lock in this case).
+
+### GovNFTTimelockFactory
+
+Similarly to GovNFTFactory, it creates and keeps track of GovNFTTimelocks.
+When creating a GovNFTTimelock, a timelock period is passed as a parameter (time to wait between proposal of a split and its finality).
