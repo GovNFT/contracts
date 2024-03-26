@@ -48,9 +48,7 @@ contract BaseTest is Test {
     uint256 constant TOKEN_10M = 1e25; // 1e7 = 10M tokens with 18 decimals
     uint256 constant TOKEN_100M = 1e26; // 1e8 = 100M tokens with 18 decimals
     uint256 constant TOKEN_10B = 1e28; // 1e10 = 10B tokens with 18 decimals
-    uint256 constant POOL_1 = 1e9;
 
-    uint256 constant DURATION = 7 days;
     uint40 constant WEEK = 1 weeks;
     uint256 constant YEAR = 365 days;
     uint256 constant MONTH = 30 days;

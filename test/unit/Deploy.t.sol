@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.20 <0.9.0;
 
-import "../script/Deploy.s.sol";
+import "../../script/Deploy.s.sol";
 import "test/utils/BaseTest.sol";
 
 contract DeployTest is BaseTest {

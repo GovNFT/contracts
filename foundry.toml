@@ -9,6 +9,11 @@ fs_permissions = [{ access = "read-write", path = "./"}]
 [fuzz]
 runs = 5000
 
+[invariant]
+runs = 256
+depth = 20
+fail_on_revert = true
+
 [rpc_endpoints]
 optimism = "${OPTIMISM_RPC_URL}"
 base = "${BASE_RPC_URL}"
