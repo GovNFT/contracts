@@ -18,7 +18,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: lockAmount,
             _startTime: uint40(block.timestamp) + WEEK * 2,
             _endTime: uint40(block.timestamp) + WEEK * 3,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(from);
         assertEq(lock.unclaimedBeforeSplit, 0);
@@ -35,7 +36,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -44,7 +46,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -72,7 +75,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: lockAmount,
             _startTime: uint40(block.timestamp) + WEEK * 2,
             _endTime: uint40(block.timestamp) + WEEK * 3,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         IGovNFT.Lock memory lock = govNFT.locks(from);
@@ -90,7 +94,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -99,7 +104,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
         _checkLockedUnclaimedSplit(from, lock.totalLocked - amount, 0, tokenId, amount, 0);
@@ -134,7 +140,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: uint256(lockAmount),
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 4,
-            _cliffLength: WEEK * 3
+            _cliffLength: WEEK * 3,
+            _description: ""
         });
 
         skip(timeskip); // skip somewhere before cliff ends
@@ -152,7 +159,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -161,7 +169,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: lock.cliffLength - timeskip
+            cliff: lock.cliffLength - timeskip,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -196,7 +205,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: uint256(lockAmount),
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 4,
-            _cliffLength: WEEK * 3
+            _cliffLength: WEEK * 3,
+            _description: ""
         });
 
         skip(timeskip); // skip somewhere before cliff ends
@@ -214,7 +224,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -223,7 +234,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK * 3 - timeskip
+            cliff: WEEK * 3 - timeskip,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
         _checkLockedUnclaimedSplit(from, lock.totalLocked - amount, 0, tokenId, amount, 0);
@@ -256,7 +268,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: uint256(lockAmount),
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 6,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         skip(timeskip); // skip somewhere after cliff ends
@@ -281,7 +294,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -290,7 +304,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -325,7 +340,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: uint256(lockAmount),
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 6,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         skip(timeskip); // skip somewhere after cliff ends
@@ -350,7 +366,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
 
@@ -360,7 +377,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
         _checkLockedUnclaimedSplit(from, lockedBeforeSplit - amount, originalUnclaimedBeforeSplit, tokenId, amount, 0);
@@ -407,7 +425,8 @@ contract SplitFuzzTest is BaseTest {
             _amount: uint256(lockAmount),
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 6,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         skip(timeskip); // skip somewhere after cliff ends
@@ -432,7 +451,8 @@ contract SplitFuzzTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
@@ -441,7 +461,8 @@ contract SplitFuzzTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
         _checkLockedUnclaimedSplit(from, lockedBeforeSplit - amount, originalUnclaimedBeforeSplit, tokenId, amount, 0);

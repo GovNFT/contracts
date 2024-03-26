@@ -37,16 +37,24 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     ///      `end` Time at which everything should be vested
     ///      `cliff` Duration after which the first portion vests
     ///      `amount` Amount of tokens to be vested in the new Lock
+    ///      `description` Description of the new lock
     struct SplitParams {
         address beneficiary;
         uint40 start;
         uint40 end;
         uint40 cliff;
         uint256 amount;
+        string description;
     }
 
     /// Events
-    event Create(uint256 indexed tokenId, address indexed recipient, address indexed token, uint256 amount);
+    event Create(
+        uint256 indexed tokenId,
+        address indexed recipient,
+        address indexed token,
+        uint256 amount,
+        string description
+    );
     event Sweep(uint256 indexed tokenId, address indexed token, address indexed recipient, uint256 amount);
     event Claim(uint256 indexed tokenId, address indexed recipient, uint256 claimed);
     event Delegate(uint256 indexed tokenId, address indexed delegate);
@@ -57,7 +65,8 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         uint256 splitAmount1,
         uint256 splitAmount2,
         uint40 startTime,
-        uint40 endTime
+        uint40 endTime,
+        string description
     );
 
     /// Errors
@@ -118,6 +127,7 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @param _startTime Time at which token distribution starts
     /// @param _endTime Time at which everything should be vested
     /// @param _cliffLength Duration after which the first portion vests
+    /// @param _description Description of the lock
     /// @return The token ID of the created Lock
     function createLock(
         address _token,
@@ -125,7 +135,8 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         uint256 _amount,
         uint40 _startTime,
         uint40 _endTime,
-        uint40 _cliffLength
+        uint40 _cliffLength,
+        string memory _description
     ) external returns (uint256);
 
     /// @notice Claim tokens which have vested in the amount specified

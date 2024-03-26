@@ -17,7 +17,8 @@ contract BatchSplitTest is BaseTest {
             _amount: TOKEN_10M,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 3,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         amount = TOKEN_10K * 3;
 
@@ -40,7 +41,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         // extending end timestamp
         paramsList[1] = IGovNFT.SplitParams({
@@ -48,7 +50,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount * 2,
             start: lock.start,
             end: lock.end + 3 * WEEK,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         // extending start timestamp
         paramsList[2] = IGovNFT.SplitParams({
@@ -56,7 +59,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount + amount / 2,
             start: lock.start + WEEK / 2,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         // extending cliff period
         paramsList[3] = IGovNFT.SplitParams({
@@ -64,7 +68,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount / 2,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength * 2
+            cliff: lock.cliffLength * 2,
+            description: ""
         });
         // extending start and decreasing cliff
         paramsList[4] = IGovNFT.SplitParams({
@@ -72,7 +77,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount * 3,
             start: lock.start + WEEK / 2,
             end: lock.end,
-            cliff: lock.cliffLength - WEEK / 2
+            cliff: lock.cliffLength - WEEK / 2,
+            description: ""
         });
 
         uint256 splitLockAmounts;
@@ -87,7 +93,8 @@ contract BatchSplitTest is BaseTest {
                 splitAmount1: lock.totalLocked - splitLockAmounts,
                 splitAmount2: paramsList[i].amount,
                 startTime: paramsList[i].start,
-                endTime: paramsList[i].end
+                endTime: paramsList[i].end,
+                description: ""
             });
         }
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -148,7 +155,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount,
             start: timestamp,
             end: lock.end,
-            cliff: lock.cliffLength - 2 days
+            cliff: lock.cliffLength - 2 days,
+            description: ""
         });
         // extending end timestamp
         paramsList[1] = IGovNFT.SplitParams({
@@ -156,7 +164,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount / 2,
             start: timestamp,
             end: lock.end + 3 * WEEK,
-            cliff: lock.cliffLength - 2 days
+            cliff: lock.cliffLength - 2 days,
+            description: ""
         });
         // extending start timestamp
         paramsList[2] = IGovNFT.SplitParams({
@@ -164,7 +173,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount + amount / 2,
             start: timestamp + WEEK / 2,
             end: lock.end,
-            cliff: lock.cliffLength - 2 days
+            cliff: lock.cliffLength - 2 days,
+            description: ""
         });
         // extending cliff period
         paramsList[3] = IGovNFT.SplitParams({
@@ -172,7 +182,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount,
             start: timestamp,
             end: lock.end,
-            cliff: (lock.cliffLength - 2 days) * 2
+            cliff: (lock.cliffLength - 2 days) * 2,
+            description: ""
         });
         // extending start and decreasing cliff
         paramsList[4] = IGovNFT.SplitParams({
@@ -180,7 +191,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount * 3,
             start: timestamp + 2 days,
             end: lock.end,
-            cliff: lock.cliffLength - 4 days
+            cliff: lock.cliffLength - 4 days,
+            description: ""
         });
 
         uint256 splitLockAmounts;
@@ -195,7 +207,8 @@ contract BatchSplitTest is BaseTest {
                 splitAmount1: lock.totalLocked - splitLockAmounts,
                 splitAmount2: paramsList[i].amount,
                 startTime: paramsList[i].start,
-                endTime: paramsList[i].end
+                endTime: paramsList[i].end,
+                description: ""
             });
         }
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -261,7 +274,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount,
             start: timestamp,
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         // extending end timestamp
         paramsList[1] = IGovNFT.SplitParams({
@@ -269,7 +283,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount / 2,
             start: timestamp,
             end: lock.end + 3 * WEEK,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         // extending start timestamp
         paramsList[2] = IGovNFT.SplitParams({
@@ -277,7 +292,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount + amount / 2,
             start: timestamp + WEEK / 2,
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         // extending cliff period
         paramsList[3] = IGovNFT.SplitParams({
@@ -285,7 +301,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount,
             start: timestamp,
             end: lock.end,
-            cliff: WEEK / 2
+            cliff: WEEK / 2,
+            description: ""
         });
         // extending start and cliff
         paramsList[4] = IGovNFT.SplitParams({
@@ -293,7 +310,8 @@ contract BatchSplitTest is BaseTest {
             amount: amount * 3,
             start: timestamp + WEEK,
             end: lock.end,
-            cliff: WEEK / 2
+            cliff: WEEK / 2,
+            description: ""
         });
 
         uint256 splitLockAmounts;
@@ -308,7 +326,8 @@ contract BatchSplitTest is BaseTest {
                 splitAmount1: lockedBeforeSplit - splitLockAmounts,
                 splitAmount2: paramsList[i].amount,
                 startTime: paramsList[i].start,
-                endTime: paramsList[i].end
+                endTime: paramsList[i].end,
+                description: ""
             });
         }
         vm.expectEmit(false, false, false, true, address(govNFT));
@@ -365,7 +384,8 @@ contract BatchSplitTest is BaseTest {
                 amount: (lock.totalLocked + TOKEN_1) / paramsList.length,
                 start: lock.start,
                 end: lock.end,
-                cliff: lock.cliffLength
+                cliff: lock.cliffLength,
+                description: ""
             });
         }
         vm.expectRevert(IGovNFT.AmountTooBig.selector);

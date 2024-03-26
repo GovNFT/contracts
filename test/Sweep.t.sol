@@ -16,7 +16,8 @@ contract SweepTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         vault = govNFT.locks(tokenId).vault;
@@ -278,7 +279,8 @@ contract SweepTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK / 2
+            cliff: WEEK / 2,
+            description: ""
         });
         uint256 splitToken = govNFT.split(tokenId, paramsList)[0];
 
@@ -325,7 +327,8 @@ contract SweepTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 splitToken = govNFT.split(tokenId, paramsList)[0];
 
@@ -371,7 +374,8 @@ contract SweepTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp) + WEEK,
             _endTime: uint40(block.timestamp) + WEEK * 4,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(from);
         timeskip = uint40(bound(timeskip, 0, lock.end - lock.start - 1));
@@ -392,7 +396,8 @@ contract SweepTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         uint256 splitToken = govNFT.split(from, paramsList)[0];
 
@@ -438,7 +443,8 @@ contract SweepTest is BaseTest {
             amount: 1,
             start: uint40(block.timestamp),
             end: govNFT.locks(tokenId).end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId2 = govNFT.split(tokenId, paramsList)[0];
 
@@ -481,7 +487,8 @@ contract SweepTest is BaseTest {
             amount: 1,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         uint256 tokenId2 = govNFT.split(tokenId, paramsList)[0];
 
@@ -564,7 +571,8 @@ contract SweepTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         IGovNFT.Lock memory lock = govNFTNoSweep.locks(tokenId2);

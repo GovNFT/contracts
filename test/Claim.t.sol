@@ -13,7 +13,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -55,7 +56,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         address beneficiary = makeAddr("alice");
 
@@ -79,7 +81,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -136,7 +139,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: _start,
             _endTime: _end,
-            _cliffLength: 0
+            _cliffLength: 0,
+            _description: ""
         });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -168,7 +172,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: 0
+            _cliffLength: 0,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
         IERC20 token = IERC20(testToken);
@@ -220,7 +225,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp) + WEEK,
             _endTime: uint40(block.timestamp) + WEEK * 3,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
@@ -244,7 +250,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp) + WEEK,
             _endTime: uint40(block.timestamp) + WEEK * 3,
-            _cliffLength: WEEK * 2
+            _cliffLength: WEEK * 2,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
@@ -277,7 +284,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         skip(WEEK * 2); // skip to the end of vesting
@@ -319,7 +327,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         vm.prank(testUser);
@@ -349,7 +358,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
@@ -366,7 +376,8 @@ contract ClaimTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 

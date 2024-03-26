@@ -13,7 +13,8 @@ contract VaultTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
@@ -54,7 +55,8 @@ contract VaultTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
@@ -109,7 +111,8 @@ contract VaultTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
         IVault vault = IVault(lock.vault);

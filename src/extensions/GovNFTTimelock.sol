@@ -57,7 +57,8 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
                 recipient: params.beneficiary,
                 splitAmount: params.amount,
                 startTime: params.start,
-                endTime: params.end
+                endTime: params.end,
+                description: params.description
             });
         }
         splitProposal.timestamp = block.timestamp;

@@ -99,7 +99,8 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         uint256 _amount,
         uint40 _startTime,
         uint40 _endTime,
-        uint40 _cliffLength
+        uint40 _cliffLength,
+        string memory _description
     ) external nonReentrant onlyOwner returns (uint256 _tokenId) {
         if (_token == address(0)) revert ZeroAddress();
         _createLockChecks(_recipient, _amount, _startTime, _endTime, _cliffLength);
@@ -125,7 +126,13 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         IERC20(_token).safeTransferFrom({from: msg.sender, to: vault, value: _amount});
         if (IERC20(_token).balanceOf(vault) < _amount) revert InsufficientAmount();
 
-        emit Create({tokenId: _tokenId, recipient: _recipient, token: _token, amount: _amount});
+        emit Create({
+            tokenId: _tokenId,
+            recipient: _recipient,
+            token: _token,
+            amount: _amount,
+            description: _description
+        });
     }
 
     /// @inheritdoc IGovNFT
@@ -298,7 +305,8 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
             splitAmount1: _parentLockedAmount,
             splitAmount2: _params.amount,
             startTime: _params.start,
-            endTime: _params.end
+            endTime: _params.end,
+            description: _params.description
         });
     }
 

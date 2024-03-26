@@ -16,7 +16,8 @@ contract SplitTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 3,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
         amount = TOKEN_10K * 4;
     }
@@ -36,7 +37,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -47,7 +49,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -73,7 +76,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -84,7 +88,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -127,7 +132,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -138,7 +144,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 5 days
+            cliff: WEEK - 5 days,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -175,7 +182,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -186,7 +194,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 5 days
+            cliff: WEEK - 5 days,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -230,7 +239,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -241,7 +251,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -288,7 +299,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -299,7 +311,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -341,7 +354,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -352,7 +366,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -403,7 +418,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -414,7 +430,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -470,7 +487,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -481,7 +499,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -525,7 +544,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: govNFT.locks(from).end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -565,7 +585,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -576,7 +597,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -603,7 +625,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount / 2,
             splitAmount2: amount / 2,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(tokenId);
@@ -614,7 +637,8 @@ contract SplitTest is BaseTest {
             amount: amount / 2,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId2 = govNFT.split(tokenId, paramsList)[0];
 
@@ -652,7 +676,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -663,7 +688,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 2 days
+            cliff: WEEK - 2 days,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -703,7 +729,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount / 2,
             splitAmount2: amount / 2,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(tokenId);
@@ -714,7 +741,8 @@ contract SplitTest is BaseTest {
             amount: amount / 2,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 4 days
+            cliff: WEEK - 4 days,
+            description: ""
         });
         uint256 tokenId2 = govNFT.split(tokenId, paramsList)[0];
 
@@ -755,7 +783,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount,
             splitAmount2: amount,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -766,7 +795,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -802,7 +832,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lockedBeforeSplit - amount / 2,
             splitAmount2: amount / 2,
             startTime: uint40(block.timestamp),
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(tokenId);
@@ -813,7 +844,8 @@ contract SplitTest is BaseTest {
             amount: amount / 2,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         uint256 tokenId2 = govNFT.split(tokenId, paramsList)[0];
 
@@ -858,7 +890,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - TOKEN_1,
             splitAmount2: TOKEN_1,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -868,7 +901,8 @@ contract SplitTest is BaseTest {
             amount: TOKEN_1,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -893,7 +927,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - TOKEN_1 * 2,
             splitAmount2: TOKEN_1,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -903,7 +938,8 @@ contract SplitTest is BaseTest {
             amount: TOKEN_1,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         uint256 tokenId2 = govNFT.split(from, paramsList)[0];
 
@@ -924,7 +960,8 @@ contract SplitTest is BaseTest {
             amount: TOKEN_1,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         govNFT.split(from, paramsList);
 
@@ -938,7 +975,8 @@ contract SplitTest is BaseTest {
             amount: TOKEN_1,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -953,7 +991,8 @@ contract SplitTest is BaseTest {
             amount: TOKEN_1,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         govNFT.split(tokenId, paramsList);
     }
@@ -967,7 +1006,8 @@ contract SplitTest is BaseTest {
             amount: 0,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + 3 * WEEK,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -986,7 +1026,8 @@ contract SplitTest is BaseTest {
             amount: lockedBalance + 1,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         govNFT.split(from, paramsList);
 
@@ -1002,7 +1043,8 @@ contract SplitTest is BaseTest {
             amount: lockedBalance + 1,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + WEEK * 3,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -1018,7 +1060,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: uint40(block.timestamp) + WEEK * 3,
-            cliff: WEEK
+            cliff: WEEK,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -1038,7 +1081,8 @@ contract SplitTest is BaseTest {
                 amount: TOKEN_1,
                 start: uint40(block.timestamp),
                 end: uint40(block.timestamp) + WEEK * 3,
-                cliff: WEEK
+                cliff: WEEK,
+                description: ""
             });
             tokenId = govNFT.split(from, paramsList)[0];
             tokens[i] = tokenId;
@@ -1065,7 +1109,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start + WEEK,
-            endTime: lock.end + WEEK
+            endTime: lock.end + WEEK,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -1075,7 +1120,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start + WEEK,
             end: lock.end + WEEK,
-            cliff: lock.cliffLength + WEEK
+            cliff: lock.cliffLength + WEEK,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -1129,7 +1175,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start + delta,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -1139,7 +1186,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start + delta,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -1171,7 +1219,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end + delta
+            endTime: lock.end + delta,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -1181,7 +1230,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end + delta,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -1213,7 +1263,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -1223,7 +1274,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength + cliffDelta
+            cliff: lock.cliffLength + cliffDelta,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -1256,7 +1308,8 @@ contract SplitTest is BaseTest {
             splitAmount1: lock.totalLocked - amount,
             splitAmount2: amount,
             startTime: lock.start + startDelta,
-            endTime: lock.end
+            endTime: lock.end,
+            description: ""
         });
         vm.expectEmit(false, false, false, true, address(govNFT));
         emit IERC4906.MetadataUpdate(from);
@@ -1266,7 +1319,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start + startDelta,
             end: lock.end,
-            cliff: lock.cliffLength - cliffDelta
+            cliff: lock.cliffLength - cliffDelta,
+            description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
@@ -1297,7 +1351,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start - 1,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         govNFT.split(from, paramsList);
 
@@ -1312,7 +1367,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start + 1,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         govNFT.split(from, paramsList);
 
@@ -1324,7 +1380,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp) - 1,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -1340,7 +1397,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end - 1,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -1356,7 +1414,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.end + 1,
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         govNFT.split(from, paramsList);
 
@@ -1368,7 +1427,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.end,
             end: lock.end,
-            cliff: 0
+            cliff: 0,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -1384,7 +1444,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength - 1
+            cliff: lock.cliffLength - 1,
+            description: ""
         });
         govNFT.split(from, paramsList);
 
@@ -1396,7 +1457,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.end - lock.cliffLength / 2,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }
@@ -1412,7 +1474,8 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: lock.start,
             end: lock.end,
-            cliff: lock.cliffLength
+            cliff: lock.cliffLength,
+            description: ""
         });
         govNFT.split(from, paramsList);
     }

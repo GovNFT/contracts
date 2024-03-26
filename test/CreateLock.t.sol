@@ -12,7 +12,13 @@ contract LockTest is BaseTest {
         admin.approve(testToken, address(govNFT), TOKEN_100K);
 
         vm.expectEmit(true, true, true, true, address(govNFT));
-        emit IGovNFT.Create({tokenId: 1, recipient: address(recipient), token: testToken, amount: TOKEN_100K});
+        emit IGovNFT.Create({
+            tokenId: 1,
+            recipient: address(recipient),
+            token: testToken,
+            amount: TOKEN_100K,
+            description: ""
+        });
         vm.prank(address(admin));
         uint256 tokenId = govNFT.createLock({
             _token: testToken,
@@ -20,7 +26,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         assertEq(govNFT.totalSupply(), 1);
@@ -56,7 +63,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         vm.expectRevert(IGovNFT.ZeroAddress.selector);
@@ -67,7 +75,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 
@@ -80,7 +89,8 @@ contract LockTest is BaseTest {
             _amount: 0,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 
@@ -93,7 +103,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK - 1,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 
@@ -106,7 +117,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp) + WEEK,
             _endTime: uint40(block.timestamp) + WEEK,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 
@@ -124,7 +136,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_100K,
             _startTime: uint40(block.timestamp),
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 
@@ -137,7 +150,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp) + WEEK * 2,
             _endTime: uint40(block.timestamp) + WEEK,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
 
         vm.expectRevert(stdError.arithmeticError);
@@ -148,7 +162,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp) + WEEK + 1,
             _endTime: uint40(block.timestamp) + WEEK,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 
@@ -161,7 +176,8 @@ contract LockTest is BaseTest {
             _amount: TOKEN_1,
             _startTime: uint40(block.timestamp) - 1,
             _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK
+            _cliffLength: WEEK,
+            _description: ""
         });
     }
 }

@@ -12,7 +12,8 @@ interface IGovNFTTimelock is IGovNFT {
         address indexed recipient,
         uint256 splitAmount,
         uint256 startTime,
-        uint256 endTime
+        uint256 endTime,
+        string description
     );
 
     /// @dev Split Proposal Information for an NFT:
