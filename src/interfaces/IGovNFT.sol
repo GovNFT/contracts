@@ -95,6 +95,11 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @return The amount of claimable tokens for the given token ID
     function unclaimed(uint256 _tokenId) external view returns (uint256);
 
+    /// @notice Get the number of vested tokens for a given token ID
+    /// @param _tokenId Lock Token Id to be used
+    /// @return The amount of vested tokens for the given token ID
+    function totalVested(uint256 _tokenId) external view returns (uint256);
+
     /// @notice Get the number of locked tokens for a given token ID
     /// @param _tokenId Lock Token Id to be used
     /// @return The amount of locked tokens of a token ID

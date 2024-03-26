@@ -69,6 +69,11 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         return _totalVested(_lock) + _lock.unclaimedBeforeSplit - _lock.totalClaimed;
     }
 
+    /// @inheritdoc IGovNFT
+    function totalVested(uint256 _tokenId) external view returns (uint256) {
+        return _totalVested(_locks[_tokenId]);
+    }
+
     function _totalVested(Lock storage _lock) internal view returns (uint256) {
         uint256 time = Math.min(block.timestamp, _lock.end);
 
