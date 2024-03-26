@@ -5,10 +5,9 @@ import "test/utils/BaseTest.sol";
 
 contract GovNFTFactoryTest is BaseTest {
     IGovNFTFactory factory;
-    address public artProxy = vm.addr(0x12345);
 
     function _setUp() public override {
-        factory = new GovNFTFactory({_artProxy: artProxy, _name: NAME, _symbol: SYMBOL});
+        factory = new GovNFTFactory({_artProxy: address(artProxy), _name: NAME, _symbol: SYMBOL});
     }
 
     function test_Setup() public {
@@ -92,7 +91,7 @@ contract GovNFTFactoryTest is BaseTest {
         IGovNFT _govNFT = IGovNFT(
             factory.createGovNFT({
                 _owner: address(admin),
-                _artProxy: artProxy,
+                _artProxy: address(artProxy),
                 _name: NAME,
                 _symbol: SYMBOL,
                 _earlySweepLockToken: true

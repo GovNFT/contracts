@@ -22,12 +22,15 @@ import {GovNFTTimelock, IGovNFTTimelock} from "src/extensions/GovNFTTimelock.sol
 import {GovNFTSplit, IGovNFTSplit} from "src/extensions/GovNFTSplit.sol";
 import {GovNFTFactory, IGovNFTFactory} from "src/GovNFTFactory.sol";
 
+import {IArtProxy} from "src/interfaces/IArtProxy.sol";
 import {IGovNFT} from "src/interfaces/IGovNFT.sol";
 
 import {Vault, IVault} from "src/Vault.sol";
+import {ArtProxy} from "src/art/ArtProxy.sol";
 
 contract BaseTest is Test {
     GovNFTSplit public govNFT;
+    IArtProxy public artProxy;
 
     address public testToken;
     address public testGovernanceToken;
@@ -49,6 +52,8 @@ contract BaseTest is Test {
 
     uint256 constant DURATION = 7 days;
     uint40 constant WEEK = 1 weeks;
+    uint256 constant YEAR = 365 days;
+    uint256 constant MONTH = 30 days;
 
     string constant NAME = "GovNFT: NFT for vested distribution of (governance) tokens";
     string constant SYMBOL = "GOVNFT";
@@ -60,10 +65,12 @@ contract BaseTest is Test {
         recipient2 = new TestOwner();
         airdropper = new TestOwner();
 
+        artProxy = new ArtProxy();
+
         vm.prank(address(admin));
         govNFT = new GovNFTSplit({
             _owner: address(admin),
-            _artProxy: address(0),
+            _artProxy: address(artProxy),
             _name: NAME,
             _symbol: SYMBOL,
             _earlySweepLockToken: true

@@ -5,11 +5,15 @@ import "test/utils/BaseTest.sol";
 
 contract GovNFTTimelockFactoryTest is BaseTest {
     IGovNFTTimelockFactory factory;
-    address public artProxy = vm.addr(0x12345);
     uint256 public timelock = 0; //TODO: set timelock
 
     function _setUp() public override {
-        factory = new GovNFTTimelockFactory({_artProxy: artProxy, _name: NAME, _symbol: SYMBOL, _timelock: timelock});
+        factory = new GovNFTTimelockFactory({
+            _artProxy: address(artProxy),
+            _name: NAME,
+            _symbol: SYMBOL,
+            _timelock: timelock
+        });
     }
 
     function test_Setup() public {
@@ -97,7 +101,7 @@ contract GovNFTTimelockFactoryTest is BaseTest {
         IGovNFT _govNFT = IGovNFT(
             factory.createGovNFT({
                 _owner: address(admin),
-                _artProxy: artProxy,
+                _artProxy: address(artProxy),
                 _name: NAME,
                 _symbol: SYMBOL,
                 _earlySweepLockToken: true,
