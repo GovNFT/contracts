@@ -1,11 +1,10 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.20 <0.9.0;
 
 import {IGovNFTTimelock} from "../interfaces/IGovNFTTimelock.sol";
 import {GovNFT} from "../GovNFT.sol";
 
-/// @title Velodrome GovNFTTimelock
-/// @author velodrome.finance, @airtoonricardo, @pedrovalido
+/// @title GovNFTTimelock
 /// @notice GovNFT implementation that vests ERC-20 tokens to a given address, in the form of an ERC-721
 /// @notice Tokens are vested over a determined period of time, as soon as the Cliff period ends
 /// @dev    This contract extends the original GovNFT implementation to include a timelock mechanism,

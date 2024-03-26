@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.20 <0.9.0;
 
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -16,8 +16,7 @@ import {IGovNFT} from "./interfaces/IGovNFT.sol";
 import {IVault} from "./interfaces/IVault.sol";
 import {Vault} from "./Vault.sol";
 
-/// @title Velodrome GovNFT
-/// @author velodrome.finance, @airtoonricardo, @pedrovalido
+/// @title GovNFT
 /// @notice GovNFT implementation that vests ERC-20 tokens to a given address, in the form of an ERC-721
 /// @notice Tokens are vested over a determined period of time, as soon as the cliff period ends
 /// @dev    Contract not intended to be used standalone. Should inherit Splitting functionality

@@ -29,8 +29,8 @@ export default {
     },
   },
   tenderly: {
-    username: "velodrome-finance",
-    project: "v2",
+    username: `${process.env.TENDERLY_USERNAME}`,
+    project: `${process.env.TENDERLY_PROJECT}`,
     privateVerification: false,
   },
   paths: {

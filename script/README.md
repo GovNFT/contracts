@@ -20,12 +20,13 @@ forge script script/Deploy.s.sol:Deploy --broadcast --slow --rpc-url optimism --
 #### Tenderly
 
 Foundry does not automatically verify contracts within Tenderly. To test with tenderly, you will
-need to use hardhat. Specifically, you will need to modify `hardhat.config.ts` with your correct
-`tenderly` object. If you are using Tenderly devnet, you will need to set `TENDERLY_DEVNET_TEMPLATE`
-and `TENDERLY_DEVNET` in the .env. `TENDERLY_DEVNET_TEMPLATE` is the name of the devnet template you
-are using. `TENDERLY_DEVNET` is the auto-generated key for the template when you select "Spawn
-DevNet" within the template. It will look something like `d81265d8-1bad-457c-13da-0a51e815ae54`. For
-more information on Tenderly devnets, see [here](https://docs.tenderly.co/devnets/intro-to-devnets).
+need to use hardhat. Specifically, you will need to set the `TENDERLY_USERNAME` and `TENDERLY_PROJECT`
+variables in the .env file in order for `hardhat.config.ts` to have your desired `tenderly` object.
+If you are using Tenderly devnet, you will need to set `TENDERLY_DEVNET_TEMPLATE` and `TENDERLY_DEVNET`
+in the .env. `TENDERLY_DEVNET_TEMPLATE` is the name of the devnet template you are using.
+`TENDERLY_DEVNET` is the auto-generated key for the template when you select "Spawn DevNet" within
+the template. It will look something like `d81265d8-1bad-457c-13da-0a51e815ae54`. For more
+information on Tenderly devnets, see [here](https://docs.tenderly.co/devnets/intro-to-devnets).
 For a forked environment instead of a devnet, you will need to set `TENDERLY_FORK_ID` in the .env.
 
 ```

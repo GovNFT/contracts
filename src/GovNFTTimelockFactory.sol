@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.20 <0.9.0;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -6,8 +6,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {IGovNFTTimelockFactory} from "./interfaces/IGovNFTTimelockFactory.sol";
 import {GovNFTTimelock} from "./extensions/GovNFTTimelock.sol";
 
-/// @title Velodrome GovNFTTimelockFactory
-/// @author velodrome.finance, @airtoonricardo, @pedrovalido
+/// @title GovNFTTimelockFactory
 /// @notice GovNFTFactoryTimelock contract to create and keep track of GovNFTs with timelock
 contract GovNFTTimelockFactory is IGovNFTTimelockFactory {
     using EnumerableSet for EnumerableSet.AddressSet;

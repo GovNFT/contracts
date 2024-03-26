@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.20 <0.9.0;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -8,8 +8,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IVault} from "./interfaces/IVault.sol";
 
-/// @title Velodrome Vault (for GovNFT locks)
-/// @author velodrome.finance, @airtoonricardo, @pedrovalido
+/// @title Vault (for GovNFT locks)
 /// @notice Vault that stores the ERC-20 tokens of a lock.
 /// @notice Funds from each lock are stored in each Vault to allow delegation of locked governance tokens.
 contract Vault is IVault, Ownable {
