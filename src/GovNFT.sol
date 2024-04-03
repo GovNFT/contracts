@@ -200,7 +200,8 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner. Prevents transferring ownership to the factory
      */
-    function transferOwnership(address newOwner) public virtual override onlyOwner {
+    function transferOwnership(address newOwner) public virtual override {
+        if (owner() != _msgSender()) revert OwnableUnauthorizedAccount(_msgSender());
         if (newOwner == address(0) || newOwner == factory) {
             revert OwnableInvalidOwner(newOwner);
         }

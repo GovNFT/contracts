@@ -124,4 +124,45 @@ contract GovNFTFactoryTest is BaseTest {
             _description: ""
         });
     }
+
+    function test_TransferOwnership() public {
+        vm.startPrank(address(admin));
+        GovNFTSplit _govNFT = GovNFTSplit(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: address(artProxy),
+                _name: NAME,
+                _symbol: SYMBOL,
+                _earlySweepLockToken: true
+            })
+        );
+
+        assertEq(_govNFT.owner(), address(admin));
+        _govNFT.transferOwnership(address(notAdmin));
+        assertEq(_govNFT.owner(), address(notAdmin));
+    }
+
+    function test_RevertIf_TransferOwnership_WhenNotOwnerOfGovNFT() public {
+        GovNFTSplit _govNFT = GovNFTSplit(factory.govNFT());
+        assertEq(_govNFT.owner(), address(factory));
+
+        vm.prank(address(notAdmin));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(notAdmin)));
+        _govNFT.transferOwnership(address(notAdmin));
+
+        vm.prank(address(admin));
+        _govNFT = GovNFTSplit(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: address(artProxy),
+                _name: NAME,
+                _symbol: SYMBOL,
+                _earlySweepLockToken: true
+            })
+        );
+
+        vm.prank(address(factory));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(factory)));
+        _govNFT.transferOwnership(address(factory));
+    }
 }
