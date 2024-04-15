@@ -2,7 +2,6 @@
 pragma solidity >=0.8.20 <0.9.0;
 
 import "test/utils/BaseTest.sol";
-import "base64-sol/base64.sol";
 
 contract ArtTest is BaseTest, ArtProxy {
     address public OP = 0x4200000000000000000000000000000000000042;

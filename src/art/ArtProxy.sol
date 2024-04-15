@@ -5,9 +5,9 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {IArtProxy} from "../interfaces/IArtProxy.sol";
 import {IGovNFT} from "../interfaces/IGovNFT.sol";
-import "base64-sol/base64.sol";
 
 /// @title GovNFT Art
 /// @notice Art associated with GovNFT
