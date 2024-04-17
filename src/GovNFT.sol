@@ -143,7 +143,9 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         uint256 claimable = Math.min(_unclaimed(lock), _amount);
         if (claimable == 0) return;
 
-        if (claimable > lock.unclaimedBeforeSplit) {
+        if (lock.unclaimedBeforeSplit == 0) {
+            lock.totalClaimed += claimable;
+        } else if (claimable > lock.unclaimedBeforeSplit) {
             lock.totalClaimed += claimable - lock.unclaimedBeforeSplit;
             delete lock.unclaimedBeforeSplit;
         } else {
