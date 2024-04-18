@@ -12,13 +12,15 @@ contract GovNFTFactoryTest is BaseTest {
 
     function test_Setup() public {
         assertFalse(factory.govNFT() == address(0));
-        assertEq(factory.govNFTsLength(), 1);
+        uint256 length = factory.govNFTsLength();
+        assertEq(length, 1);
         assertTrue(factory.isGovNFT(factory.govNFT()));
 
-        address[] memory govNFTs = factory.govNFTs();
+        address[] memory govNFTs = factory.govNFTs(0, length);
         GovNFTSplit _govNFT = GovNFTSplit(govNFTs[0]);
         assertEq(govNFTs.length, 1);
         assertEq(address(_govNFT), factory.govNFT());
+        assertEq(address(_govNFT), factory.govNFTByIndex(0));
 
         assertEq(_govNFT.name(), NAME);
         assertEq(_govNFT.symbol(), SYMBOL);
@@ -50,16 +52,41 @@ contract GovNFTFactoryTest is BaseTest {
                 _earlySweepLockToken: true
             })
         );
-        assertEq(factory.govNFTsLength(), 2);
-        address[] memory govNFTs = factory.govNFTs();
+        uint256 length = factory.govNFTsLength();
+        assertEq(length, 2);
+        address[] memory govNFTs = factory.govNFTs(0, length);
         assertEq(govNFTs.length, 2);
-        assertTrue(govNFTs[1] == address(_govNFT));
+        assertEq(govNFTs[1], address(_govNFT));
+        assertEq(factory.govNFTByIndex(1), address(_govNFT));
 
         assertEq(_govNFT.name(), "CustomGovNFT");
         assertEq(_govNFT.symbol(), "CustomGovNFT");
         assertEq(_govNFT.owner(), address(admin));
         assertEq(_govNFT.artProxy(), customArtProxy);
         assertTrue(_govNFT.earlySweepLockToken());
+    }
+
+    function testFuzz_CreateMultipleGovNFTs(uint8 govNFTCount) public {
+        assertEq(factory.govNFTsLength(), 1);
+        address[] memory govNFTs = new address[](govNFTCount);
+        for (uint256 i = 0; i < govNFTCount; i++) {
+            govNFTs[i] = factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: vm.addr(0x54321),
+                _name: "CustomGovNFT",
+                _symbol: "CustomGovNFT",
+                _earlySweepLockToken: true
+            });
+        }
+        uint256 length = factory.govNFTsLength();
+        // increment by 1 to account for existing permissionless GovNFT
+        assertEq(length, uint256(govNFTCount) + 1);
+        address[] memory fetchedGovNFTs = factory.govNFTs(1, length);
+        for (uint256 i = 0; i < govNFTCount; i++) {
+            assertEq(fetchedGovNFTs[i], govNFTs[i]);
+            // account for permissionless govNFT in index 0
+            assertEq(factory.govNFTByIndex(i + 1), govNFTs[i]);
+        }
     }
 
     function test_CanCreateLockIfNotOwnerInPermissionlessGovNFT() public {

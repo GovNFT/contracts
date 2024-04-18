@@ -32,10 +32,11 @@ contract DeployTest is BaseTest {
         assertEq(govNFT.name(), NAME);
         assertEq(govNFT.symbol(), SYMBOL);
         assertTrue(govNFT.owner() == address(factory));
-        assertTrue(factory.govNFTsLength() == 1);
+        uint256 length = factory.govNFTsLength();
+        assertTrue(length == 1);
         assertTrue(factory.isGovNFT(address(govNFT)));
         assertTrue(govNFT.factory() == address(factory));
-        address[] memory govNFTs = factory.govNFTs();
+        address[] memory govNFTs = factory.govNFTs(0, length);
         assertTrue(govNFTs.length == 1);
         assertTrue(govNFTs[0] == address(govNFT));
     }

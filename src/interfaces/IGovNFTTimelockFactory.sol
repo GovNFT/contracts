@@ -41,6 +41,17 @@ interface IGovNFTTimelockFactory {
     /// @return Array of GovNFTs
     function govNFTs() external view returns (address[] memory);
 
+    /// @notice Paginated View of all created GovNFTs
+    /// @param _start Index of first GovNFT to be fetched
+    /// @param _end End index for pagination
+    /// @return Array of GovNFTs
+    function govNFTs(uint256 _start, uint256 _end) external view returns (address[] memory);
+
+    /// @notice Enumerate GovNFTs by Index
+    /// @param _index Position from which to fetch the GovNFT
+    /// @return GovNFT at the given Index
+    function govNFTByIndex(uint256 _index) external view returns (address);
+
     /// @notice View if an address is a GovNFT contract created by this factory
     /// @param _govNFT Address of govNFT queried
     /// @return True if GovNFT, else false
