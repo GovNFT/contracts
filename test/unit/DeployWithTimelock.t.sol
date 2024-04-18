@@ -28,7 +28,7 @@ contract DeployWithTimelockTest is BaseTest {
         assertTrue(factory.govNFT() != address(0));
 
         GovNFTTimelock govNFT = GovNFTTimelock(factory.govNFT());
-        assertTrue(govNFT.artProxy() == address(0)); //TODO change once we set art proxy
+        assertTrue(govNFT.artProxy() != address(0));
         assertEq(govNFT.name(), NAME);
         assertEq(govNFT.symbol(), SYMBOL);
         assertTrue(govNFT.owner() == address(factory));
