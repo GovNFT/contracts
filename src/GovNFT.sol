@@ -216,7 +216,9 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
     /// @param _newLock Information of the Lock to be created
     /// @return _tokenId The ID of the recently created NFT
     function _createNFT(address _recipient, Lock memory _newLock) internal returns (uint256 _tokenId) {
-        _tokenId = ++tokenId;
+        unchecked {
+            _tokenId = ++tokenId;
+        }
 
         _safeMint({to: _recipient, tokenId: _tokenId});
 
@@ -295,7 +297,9 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         _tokenId = _createNFT({_recipient: _params.beneficiary, _newLock: splitLock});
 
         // Update Parent NFT's Split Token List
-        splitTokensByIndex[_from][_parentLock.splitCount++] = _tokenId;
+        unchecked {
+            splitTokensByIndex[_from][_parentLock.splitCount++] = _tokenId;
+        }
 
         // Transfer Split Amount from Parent Vault to new Split Vault
         IVault(_parentLock.vault).withdraw({_recipient: splitLock.vault, _amount: _params.amount});
