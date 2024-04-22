@@ -17,13 +17,18 @@ contract GovNFTFactory is IGovNFTFactory {
     /// @inheritdoc IGovNFTFactory
     address public immutable govNFT;
 
-    constructor(address _artProxy, string memory _name, string memory _symbol) {
+    /// @inheritdoc IGovNFTFactory
+    address public immutable vaultImplementation;
+
+    constructor(address _vaultImplementation, address _artProxy, string memory _name, string memory _symbol) {
+        vaultImplementation = _vaultImplementation;
         // Create permissionless GovNFT
         // @dev Permissionless GovNFT cannot Sweep Lock's tokens prior to Lock expiry
         govNFT = address(
             new GovNFTSplit({
                 _owner: address(this),
                 _artProxy: _artProxy,
+                _vaultImplementation: _vaultImplementation,
                 _name: _name,
                 _symbol: _symbol,
                 _earlySweepLockToken: false
@@ -54,6 +59,7 @@ contract GovNFTFactory is IGovNFTFactory {
             new GovNFTSplit({
                 _owner: _owner,
                 _artProxy: _artProxy,
+                _vaultImplementation: vaultImplementation,
                 _name: _name,
                 _symbol: _symbol,
                 _earlySweepLockToken: _earlySweepLockToken

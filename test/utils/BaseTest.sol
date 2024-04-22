@@ -31,6 +31,8 @@ import {ArtProxy} from "src/art/ArtProxy.sol";
 contract BaseTest is Test {
     GovNFTSplit public govNFT;
     IArtProxy public artProxy;
+    IGovNFTFactory public factory;
+    address public vaultImplementation;
 
     address public testToken;
     address public testGovernanceToken;
@@ -66,13 +68,22 @@ contract BaseTest is Test {
         artProxy = new ArtProxy();
 
         vm.prank(address(admin));
-        govNFT = new GovNFTSplit({
-            _owner: address(admin),
+        vaultImplementation = address(new Vault());
+        factory = new GovNFTFactory({
+            _vaultImplementation: vaultImplementation,
             _artProxy: address(artProxy),
             _name: NAME,
-            _symbol: SYMBOL,
-            _earlySweepLockToken: true
+            _symbol: SYMBOL
         });
+        govNFT = GovNFTSplit(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: address(artProxy),
+                _name: NAME,
+                _symbol: SYMBOL,
+                _earlySweepLockToken: true
+            })
+        );
 
         testToken = address(new MockERC20("TEST", "TEST", 18));
         testGovernanceToken = address(new MockGovernanceToken("TESTGOV", "TESTGOV", 18));

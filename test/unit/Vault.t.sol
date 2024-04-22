@@ -19,12 +19,13 @@ contract VaultTest is BaseTest {
 
         IGovNFT.Lock memory lock = govNFT.locks(tokenId);
 
-        address vaultOwner = Ownable(lock.vault).owner();
+        address vaultOwner = IVault(lock.vault).owner();
         assertEq(vaultOwner, address(govNFT));
     }
 
     function test_Withdraw() public {
-        Vault vault = new Vault(testToken);
+        Vault vault = new Vault();
+        vault.initialize(testToken);
 
         assertEq(IERC20(testToken).balanceOf(address(vault)), 0);
         assertEq(IERC20(testToken).balanceOf(address(admin)), TOKEN_100K);
@@ -80,7 +81,8 @@ contract VaultTest is BaseTest {
     }
 
     function test_Sweep() public {
-        Vault vault = new Vault(testToken);
+        Vault vault = new Vault();
+        vault.initialize(testToken);
 
         assertEq(IERC20(testToken).balanceOf(address(vault)), 0);
         assertEq(IERC20(testToken).balanceOf(address(admin)), TOKEN_100K);
@@ -134,5 +136,68 @@ contract VaultTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(lock.vault), 0);
         assertEq(IERC20(testToken).balanceOf(testAddr), TOKEN_100K);
         assertEq(IERC20(testToken).balanceOf(address(admin)), 0);
+    }
+
+    function test_SetOwner() public {
+        admin.approve(testToken, address(govNFT), TOKEN_100K);
+        vm.prank(address(admin));
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK,
+            _description: ""
+        });
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
+        IVault vault = IVault(lock.vault);
+
+        address lockOwner = govNFT.ownerOf(tokenId);
+        vm.prank(vault.owner());
+        vault.setOwner(lockOwner);
+
+        assertEq(vault.owner(), lockOwner);
+    }
+
+    function test_RevertIf_SetOwnerToZeroAddress() public {
+        admin.approve(testToken, address(govNFT), TOKEN_100K);
+        vm.prank(address(admin));
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK,
+            _description: ""
+        });
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
+        IVault vault = IVault(lock.vault);
+
+        vm.prank(vault.owner());
+        vm.expectRevert(IVault.ZeroAddress.selector);
+        vault.setOwner(address(0));
+    }
+
+    function test_RevertIf_SetOwner_WhenNotOwner() public {
+        admin.approve(testToken, address(govNFT), TOKEN_100K);
+        vm.prank(address(admin));
+        uint256 tokenId = govNFT.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_100K,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp) + WEEK * 2,
+            _cliffLength: WEEK,
+            _description: ""
+        });
+        IGovNFT.Lock memory lock = govNFT.locks(tokenId);
+        IVault vault = IVault(lock.vault);
+
+        address owner = govNFT.ownerOf(tokenId);
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(IVault.NotOwner.selector, owner));
+        vault.setOwner(owner);
     }
 }

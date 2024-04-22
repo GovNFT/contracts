@@ -4,13 +4,17 @@ pragma solidity >=0.8.20 <0.9.0;
 import "test/utils/BaseTest.sol";
 
 contract GovNFTFactoryTest is BaseTest {
-    IGovNFTFactory factory;
-
     function _setUp() public override {
-        factory = new GovNFTFactory({_artProxy: address(artProxy), _name: NAME, _symbol: SYMBOL});
+        factory = new GovNFTFactory({
+            _vaultImplementation: vaultImplementation,
+            _artProxy: address(artProxy),
+            _name: NAME,
+            _symbol: SYMBOL
+        });
     }
 
     function test_Setup() public {
+        assertFalse(factory.vaultImplementation() == address(0));
         assertFalse(factory.govNFT() == address(0));
         uint256 length = factory.govNFTsLength();
         assertEq(length, 1);
@@ -26,6 +30,7 @@ contract GovNFTFactoryTest is BaseTest {
         assertEq(_govNFT.symbol(), SYMBOL);
         assertFalse(_govNFT.earlySweepLockToken());
         assertEq(_govNFT.owner(), address(factory));
+        assertEq(_govNFT.vaultImplementation(), factory.vaultImplementation());
     }
 
     function test_RevertIf_CreateWithFactoryAsAdmin() public {
@@ -63,6 +68,7 @@ contract GovNFTFactoryTest is BaseTest {
         assertEq(_govNFT.symbol(), "CustomGovNFT");
         assertEq(_govNFT.owner(), address(admin));
         assertEq(_govNFT.artProxy(), customArtProxy);
+        assertEq(_govNFT.vaultImplementation(), factory.vaultImplementation());
         assertTrue(_govNFT.earlySweepLockToken());
     }
 

@@ -10,14 +10,24 @@ contract CommitSplitTest is BaseTest {
     GovNFTTimelock public govNFTLock;
 
     function _setUp() public override {
-        govNFTLock = new GovNFTTimelock({
-            _owner: address(admin),
-            _artProxy: address(0),
-            _name: "GovNFTTimelock",
+        address vaultImplementation = address(new Vault());
+        GovNFTTimelockFactory factory = new GovNFTTimelockFactory({
+            _vaultImplementation: vaultImplementation,
+            _artProxy: address(artProxy),
+            _name: NAME,
             _symbol: SYMBOL,
-            _earlySweepLockToken: true,
             _timelock: timelockDelay
         });
+        govNFTLock = GovNFTTimelock(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: address(artProxy),
+                _name: "GovNFTTimelock",
+                _symbol: SYMBOL,
+                _earlySweepLockToken: true,
+                _timelock: timelockDelay
+            })
+        );
         // reassigning govNFT to use in helper functions
         govNFT = GovNFTSplit(address(govNFTLock));
 

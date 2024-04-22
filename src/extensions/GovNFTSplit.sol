@@ -12,10 +12,11 @@ contract GovNFTSplit is GovNFT, IGovNFTSplit {
     constructor(
         address _owner,
         address _artProxy,
+        address _vaultImplementation,
         string memory _name,
         string memory _symbol,
         bool _earlySweepLockToken
-    ) GovNFT(_owner, _artProxy, _name, _symbol, _earlySweepLockToken) {}
+    ) GovNFT(_owner, _artProxy, _vaultImplementation, _name, _symbol, _earlySweepLockToken) {}
 
     /// @inheritdoc IGovNFTSplit
     function split(uint256 _from, SplitParams[] calldata _paramsList) external nonReentrant returns (uint256[] memory) {

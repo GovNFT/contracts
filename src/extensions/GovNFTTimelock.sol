@@ -19,11 +19,12 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
     constructor(
         address _owner,
         address _artProxy,
+        address _vaultImplementation,
         string memory _name,
         string memory _symbol,
         bool _earlySweepLockToken,
         uint256 _timelock
-    ) GovNFT(_owner, _artProxy, _name, _symbol, _earlySweepLockToken) {
+    ) GovNFT(_owner, _artProxy, _vaultImplementation, _name, _symbol, _earlySweepLockToken) {
         timelock = _timelock;
     }
 

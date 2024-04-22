@@ -6,6 +6,7 @@ import "forge-std/StdJson.sol";
 
 import {GovNFTFactory} from "src/GovNFTFactory.sol";
 import {ArtProxy} from "src/art/ArtProxy.sol";
+import {Vault} from "src/Vault.sol";
 
 contract Deploy is Script {
     using stdJson for string;
@@ -15,13 +16,16 @@ contract Deploy is Script {
     string public outputFilename = vm.envString("OUTPUT_FILENAME");
 
     GovNFTFactory public govNFTFactory;
+    Vault public vaultImplementation;
     ArtProxy public artProxy;
     string public jsonOutput;
 
     function run() public {
         vm.startBroadcast(deployerAddress);
+        vaultImplementation = new Vault();
         artProxy = new ArtProxy();
         govNFTFactory = new GovNFTFactory({
+            _vaultImplementation: address(vaultImplementation),
             _artProxy: address(artProxy),
             _name: "GovNFT: NFT for vested distribution of (governance) tokens",
             _symbol: "GOVNFT"
@@ -32,6 +36,7 @@ contract Deploy is Script {
         string memory path = string.concat(root, "/script/constants/output/");
         path = string.concat(path, outputFilename);
         vm.writeJson(vm.serializeAddress("", "GovNFTFactory", address(govNFTFactory)), path);
+        vm.writeJson(vm.serializeAddress("", "VaultImplementation", address(vaultImplementation)), path);
         vm.writeJson(vm.serializeAddress("", "ArtProxy", address(artProxy)), path);
     }
 }

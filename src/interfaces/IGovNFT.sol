@@ -91,6 +91,9 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @notice Address of the factory that deployed this contract
     function factory() external view returns (address);
 
+    /// @notice Address of the Vault implementation being used
+    function vaultImplementation() external view returns (address);
+
     /// @notice Returns the Lock information for a given token ID
     /// @param _tokenId Token Id from which the info will be fetched
     /// @return Lock Information for the given token ID

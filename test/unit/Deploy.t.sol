@@ -26,6 +26,7 @@ contract DeployTest is BaseTest {
         IGovNFTFactory factory = deploy.govNFTFactory();
         assertTrue(address(factory) != address(0));
         assertTrue(factory.govNFT() != address(0));
+        assertTrue(factory.vaultImplementation() != address(0));
 
         GovNFTSplit govNFT = GovNFTSplit(factory.govNFT());
         assertTrue(govNFT.artProxy() != address(0));
@@ -36,6 +37,7 @@ contract DeployTest is BaseTest {
         assertTrue(length == 1);
         assertTrue(factory.isGovNFT(address(govNFT)));
         assertTrue(govNFT.factory() == address(factory));
+        assertEq(govNFT.vaultImplementation(), factory.vaultImplementation());
         address[] memory govNFTs = factory.govNFTs(0, length);
         assertTrue(govNFTs.length == 1);
         assertTrue(govNFTs[0] == address(govNFT));

@@ -10,6 +10,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 import {IArtProxy} from "./interfaces/IArtProxy.sol";
 import {IGovNFT} from "./interfaces/IGovNFT.sol";
@@ -39,18 +40,23 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
     /// @dev IGovNFTFactory address
     address public immutable factory;
 
+    /// @inheritdoc IGovNFT
+    address public immutable vaultImplementation;
+
     /// @dev True if lock tokens can be swept before lock expiry
     bool public immutable earlySweepLockToken;
 
     constructor(
         address _owner,
         address _artProxy,
+        address _vaultImplementation,
         string memory _name,
         string memory _symbol,
         bool _earlySweepLockToken
     ) ERC721(_name, _symbol) Ownable(_owner) {
         artProxy = _artProxy;
         factory = msg.sender;
+        vaultImplementation = _vaultImplementation;
         earlySweepLockToken = _earlySweepLockToken;
     }
 
@@ -104,7 +110,8 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         if (_token == address(0)) revert ZeroAddress();
         _createLockChecks(_recipient, _amount, _startTime, _endTime, _cliffLength);
 
-        address vault = address(new Vault(_token));
+        address vault = Clones.clone(vaultImplementation);
+        IVault(vault).initialize(_token);
         _tokenId = _createNFT({
             _recipient: _recipient,
             _newLock: Lock({
@@ -291,9 +298,10 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
             start: _params.start,
             end: _params.end,
             token: _parentLock.token,
-            vault: address(new Vault(_parentLock.token)),
+            vault: Clones.clone(vaultImplementation),
             minter: msg.sender
         });
+        IVault(splitLock.vault).initialize(_parentLock.token);
         _tokenId = _createNFT({_recipient: _params.beneficiary, _newLock: splitLock});
 
         // Update Parent NFT's Split Token List

@@ -16,6 +16,9 @@ interface IGovNFTFactory {
     error NotAuthorized();
     error ZeroAddress();
 
+    /// @notice Address of the Vault implementation being used for GovNFTs
+    function vaultImplementation() external view returns (address);
+
     /// @notice Get the permissionless GovNFT contract created and owned by this factory
     function govNFT() external view returns (address);
 

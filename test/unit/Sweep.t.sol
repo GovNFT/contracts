@@ -556,13 +556,15 @@ contract SweepTest is BaseTest {
     function test_RevertIf_SweepLockTokenBeforeLockExpiryWhenNotAllowed() public {
         // Create GovNFT without ability to Sweep Lock's tokens
         deal(testToken, address(admin), TOKEN_100K);
-        GovNFTSplit govNFTNoSweep = new GovNFTSplit({
-            _owner: address(admin),
-            _artProxy: address(0),
-            _name: NAME,
-            _symbol: SYMBOL,
-            _earlySweepLockToken: false
-        });
+        GovNFTSplit govNFTNoSweep = GovNFTSplit(
+            factory.createGovNFT({
+                _owner: address(admin),
+                _artProxy: address(artProxy),
+                _name: NAME,
+                _symbol: SYMBOL,
+                _earlySweepLockToken: false
+            })
+        );
         admin.approve(testToken, address(govNFTNoSweep), TOKEN_100K);
         vm.prank(address(admin));
         uint256 tokenId2 = govNFTNoSweep.createLock({
