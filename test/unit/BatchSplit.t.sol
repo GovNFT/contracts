@@ -406,7 +406,7 @@ contract BatchSplitTest is BaseTest {
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](2);
         assertEq(paramsList.length, 2);
 
-        vm.expectRevert(IGovNFT.InvalidStart.selector);
+        vm.expectRevert(IGovNFT.ZeroAddress.selector);
         vm.prank(address(recipient));
         govNFT.split(from, paramsList);
     }

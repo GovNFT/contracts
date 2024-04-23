@@ -336,8 +336,7 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         uint256 _startTime,
         uint256 _endTime,
         uint256 _cliff
-    ) internal view {
-        if (_startTime < block.timestamp) revert InvalidStart();
+    ) internal pure {
         if (_recipient == address(0)) revert ZeroAddress();
         if (_amount == 0) revert ZeroAmount();
 
@@ -373,7 +372,7 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
             });
 
             if (params.end < _parentLock.end) revert InvalidEnd();
-            if (params.start < _parentLock.start) revert InvalidStart();
+            if (params.start < _parentLock.start || params.start < block.timestamp) revert InvalidStart();
             if (params.start + params.cliff < parentCliffEnd) revert InvalidCliff();
 
             sum += params.amount;

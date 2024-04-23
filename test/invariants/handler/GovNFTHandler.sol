@@ -56,6 +56,9 @@ abstract contract GovNFTHandler is Test {
         for (uint256 i = 0; i < _testActorCount; i++) {
             actors[i] = new TestOwner();
         }
+        timestore.increaseCurrentTimestamp({timeskip: 2 weeks});
+        vm.warp(timestore.currentTimestamp());
+        vm.roll(timestore.currentBlockNumber());
         _setUpHandler();
     }
 
@@ -140,7 +143,11 @@ abstract contract GovNFTHandler is Test {
         uint256 _timeskipSeed
     ) external useActor(_actorIndex) increaseTimestamp(_timeskipSeed) maxLocks(_amount, _actorIndex, _timeskipSeed) {
         _startTime = uint40(
-            bound(_startTime, block.timestamp, Math.min(block.timestamp + 4 weeks, type(uint40).max - 6 weeks - 1))
+            bound(
+                _startTime,
+                block.timestamp - 2 weeks,
+                Math.min(block.timestamp + 4 weeks, type(uint40).max - 6 weeks - 1)
+            )
         );
         _endTime = uint40(bound(_endTime, _startTime + 1, _startTime + 6 weeks));
         _cliffLength = uint40(bound(_cliffLength, 0, _endTime - _startTime));
