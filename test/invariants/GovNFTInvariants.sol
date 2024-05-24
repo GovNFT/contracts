@@ -136,6 +136,23 @@ abstract contract GovNFTInvariants is Test {
         }
     }
 
+    function invariant_noClaimableTokensBeforeCliffEnd() external useCurrentTimestamp {
+        uint256 length = govNFT.tokenId();
+
+        IGovNFT.Lock memory lock;
+        for (uint256 i = 1; i < length + 1; i++) {
+            lock = govNFT.locks(i);
+
+            if (block.timestamp < lock.start + lock.cliffLength) {
+                assertEq(lock.totalClaimed, 0, "Invariant: No claimable rewards before cliff ends");
+                assertEq(lock.unclaimedBeforeSplit, 0, "Invariant: No claimable rewards before cliff ends");
+
+                assertEq(govNFT.unclaimed(i), 0, "Invariant: No claimable rewards before cliff ends");
+                assertEq(govNFT.locked(i), lock.totalLocked, "Invariant: No claimable rewards before cliff ends");
+            }
+        }
+    }
+
     function invariant_sumOfChildLocksEqualToTotalDeposit() external useCurrentTimestamp {
         uint256 length = govNFT.tokenId();
 

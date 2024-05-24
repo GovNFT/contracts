@@ -223,16 +223,13 @@ contract BatchSplitTest is BaseTest {
         assertEq(govNFT.totalSupply(), oldSupply + paramsList.length);
 
         // original NFT assertions
-        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
-        assertEq(remainingCliff, WEEK - 2 days);
-        // since still on cliff and vesting has started, the split cliff length will be
-        // the remaining cliff period and the new start will be the current timestamp
+        // since still on cliff and vesting has started, the lock timestamps remain the same
         _checkLockUpdates({
             tokenId: from,
             _totalLocked: lock.totalLocked - splitLockAmounts,
             _initialDeposit: lock.totalLocked,
-            _cliffLength: remainingCliff,
-            _start: uint40(block.timestamp),
+            _cliffLength: lock.cliffLength,
+            _start: lock.start,
             _end: lock.end
         });
         for (uint256 i = 0; i < paramsList.length; i++) {

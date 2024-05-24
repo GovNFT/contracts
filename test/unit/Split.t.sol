@@ -123,6 +123,8 @@ contract SplitTest is BaseTest {
         assertEq(lock.totalLocked, govNFT.locked(from)); // still on cliff, no tokens vested
         assertEq(lock.splitCount, 0);
         assertEq(IERC20(testToken).balanceOf(lock.vault), lock.totalLocked);
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
+        assertEq(remainingCliff, WEEK - 5 days);
 
         vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
@@ -144,25 +146,15 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 5 days,
+            cliff: remainingCliff,
             description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
         // original NFT assertions
-        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
-        // since still on cliff and vesting has started, the split cliff length will be
-        // the remaining cliff period and the new start will be the current timestamp
-        _checkLockUpdates(
-            from,
-            lock.totalLocked - amount,
-            lock.totalLocked,
-            remainingCliff,
-            uint40(block.timestamp),
-            lock.end
-        );
+        // since still on cliff and vesting has started, the lock timestamps remain the same
+        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, lock.cliffLength, lock.start, lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), 0, 1);
-        assertEq(remainingCliff, WEEK - 5 days);
 
         // split NFT assertions
         _checkLockUpdates(tokenId, amount, amount, remainingCliff, uint40(block.timestamp), lock.end);
@@ -667,6 +659,8 @@ contract SplitTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(lock.vault), lock.totalLocked);
         assertEq(lock.unclaimedBeforeSplit, 0);
         assertEq(lock.splitCount, 0);
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
+        assertEq(remainingCliff, WEEK - 2 days);
 
         vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
@@ -688,25 +682,15 @@ contract SplitTest is BaseTest {
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 2 days,
+            cliff: remainingCliff,
             description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
         // original NFT assertions
-        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
-        // since still on cliff and vesting has started, the split cliff length will be
-        // the remaining cliff period and the new start will be the current timestamp
-        _checkLockUpdates(
-            from,
-            lock.totalLocked - amount,
-            lock.totalLocked,
-            remainingCliff,
-            uint40(block.timestamp),
-            lock.end
-        );
+        // since still on cliff and vesting has started, the lock timestamps remain the same
+        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, lock.cliffLength, lock.start, lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient), 0, 1);
-        assertEq(remainingCliff, WEEK - 2 days);
 
         // split NFT assertions
         _checkLockUpdates(tokenId, amount, amount, remainingCliff, uint40(block.timestamp), lock.end);
@@ -720,6 +704,8 @@ contract SplitTest is BaseTest {
         assertEq(IERC20(testToken).balanceOf(lock.vault), lock.totalLocked);
         assertEq(lock.unclaimedBeforeSplit, 0);
         assertEq(lock.splitCount, 0);
+        remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
+        assertEq(remainingCliff, WEEK - 4 days);
 
         vm.expectEmit(true, true, true, true);
         emit IGovNFT.Split({
@@ -741,25 +727,22 @@ contract SplitTest is BaseTest {
             amount: amount / 2,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: WEEK - 4 days,
+            cliff: remainingCliff,
             description: ""
         });
         uint256 tokenId2 = govNFT.split(tokenId, paramsList)[0];
 
         // original NFT assertions
-        remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
-        // since still on cliff and vesting has started, the split cliff length will be
-        // the remaining cliff period and the new start will be the current timestamp
+        // since still on cliff and vesting has started, the lock timestamps remain the same
         _checkLockUpdates(
             tokenId,
             lock.totalLocked - amount / 2,
             lock.totalLocked,
-            remainingCliff,
-            uint40(block.timestamp),
+            lock.cliffLength,
+            lock.start,
             lock.end
         );
         _checkSplitInfo(tokenId, tokenId2, address(recipient), address(recipient2), 0, 1);
-        assertEq(remainingCliff, WEEK - 4 days);
 
         // split NFT assertions
         _checkLockUpdates(tokenId2, amount / 2, amount / 2, remainingCliff, uint40(block.timestamp), lock.end);

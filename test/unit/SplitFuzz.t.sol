@@ -164,28 +164,21 @@ contract SplitFuzzTest is BaseTest {
         });
         vm.prank(address(recipient));
         IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
+        assertEq(remainingCliff, lock.cliffLength - timeskip);
         paramsList[0] = IGovNFT.SplitParams({
             beneficiary: address(recipient2),
             amount: amount,
             start: uint40(block.timestamp),
             end: lock.end,
-            cliff: lock.cliffLength - timeskip,
+            cliff: remainingCliff,
             description: ""
         });
         uint256 tokenId = govNFT.split(from, paramsList)[0];
 
         // original NFT assertions
-        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
-        _checkLockUpdates(
-            from,
-            lock.totalLocked - amount,
-            lock.totalLocked,
-            remainingCliff,
-            uint40(block.timestamp),
-            lock.end
-        );
+        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, lock.cliffLength, lock.start, lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), 0, 1);
-        assertEq(remainingCliff, lock.cliffLength - timeskip);
 
         // split NFT assertions
         _checkLockUpdates(tokenId, amount, amount, remainingCliff, uint40(block.timestamp), lock.end);

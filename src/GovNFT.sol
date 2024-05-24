@@ -263,10 +263,9 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
         }
         // Update Parent NFT using updated `parentLockedAmount`
         _parentLock.totalLocked = parentLockedAmount;
-        if (block.timestamp > _parentLock.start) {
-            uint40 parentCliffEnd = _parentLock.start + _parentLock.cliffLength;
+        if (block.timestamp >= _parentLock.start + _parentLock.cliffLength) {
             _parentLock.start = uint40(block.timestamp);
-            _parentLock.cliffLength = uint40(block.timestamp < parentCliffEnd ? parentCliffEnd - block.timestamp : 0);
+            delete _parentLock.cliffLength;
         }
 
         _parentLock.unclaimedBeforeSplit += (_parentTotalVested - _parentLock.totalClaimed);

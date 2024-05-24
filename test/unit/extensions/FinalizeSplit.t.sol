@@ -99,14 +99,7 @@ contract FinalizeSplitTest is BaseTest {
 
         // original NFT assertions
         // start timestamp and cliff account for `timelockDelay`, since tokens should not vest during this period
-        _checkLockUpdates(
-            from,
-            lock.totalLocked - amount,
-            lock.totalLocked,
-            lock.cliffLength - timelockDelay,
-            lock.start + timelockDelay,
-            lock.end
-        );
+        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, lock.cliffLength, lock.start, lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), 0, 1);
 
         // split NFT assertions
@@ -222,6 +215,7 @@ contract FinalizeSplitTest is BaseTest {
 
         skip(timelockDelay);
 
+        vm.expectEmit(true, true, true, true, address(govNFTLock));
         emit IGovNFT.Split({
             from: from,
             to: from + 1,
@@ -241,18 +235,10 @@ contract FinalizeSplitTest is BaseTest {
         assertEq(govNFTLock.proposedSplits(from).pendingSplits.length, 0);
 
         // original NFT assertions
-        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
-        // since still on cliff and vesting has started, the split cliff length will be
-        // the remaining cliff period and the new start will be the current timestamp
-        _checkLockUpdates(
-            from,
-            lock.totalLocked - amount,
-            lock.totalLocked,
-            remainingCliff,
-            uint40(block.timestamp),
-            lock.end
-        );
+        // since still on cliff and vesting has started, the lock timestamps remain the same
+        _checkLockUpdates(from, lock.totalLocked - amount, lock.totalLocked, lock.cliffLength, lock.start, lock.end);
         _checkSplitInfo(from, tokenId, address(recipient), address(recipient2), 0, 1);
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
         assertEq(remainingCliff, WEEK - (5 days + timelockDelay));
 
         // split NFT assertions
