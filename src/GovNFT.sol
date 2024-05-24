@@ -142,7 +142,11 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
     }
 
     /// @inheritdoc IGovNFT
-    function claim(uint256 _tokenId, address _beneficiary, uint256 _amount) external nonReentrant {
+    function claim(uint256 _tokenId, address _beneficiary, uint256 _amount) external virtual nonReentrant {
+        _claim(_tokenId, _beneficiary, _amount);
+    }
+
+    function _claim(uint256 _tokenId, address _beneficiary, uint256 _amount) internal {
         _checkAuthorized({owner: _ownerOf(_tokenId), spender: msg.sender, tokenId: _tokenId});
         if (_beneficiary == address(0)) revert ZeroAddress();
 
@@ -172,12 +176,21 @@ abstract contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable 
     }
 
     /// @inheritdoc IGovNFT
-    function sweep(uint256 _tokenId, address _token, address _recipient) external {
-        sweep(_tokenId, _token, _recipient, type(uint256).max);
+    function sweep(uint256 _tokenId, address _token, address _recipient) external virtual nonReentrant {
+        _sweep(_tokenId, _token, _recipient, type(uint256).max);
     }
 
     /// @inheritdoc IGovNFT
-    function sweep(uint256 _tokenId, address _token, address _recipient, uint256 _amount) public nonReentrant {
+    function sweep(
+        uint256 _tokenId,
+        address _token,
+        address _recipient,
+        uint256 _amount
+    ) external virtual nonReentrant {
+        _sweep(_tokenId, _token, _recipient, _amount);
+    }
+
+    function _sweep(uint256 _tokenId, address _token, address _recipient, uint256 _amount) internal {
         if (_token == address(0) || _recipient == address(0)) revert ZeroAddress();
         _checkAuthorized({owner: _ownerOf(_tokenId), spender: msg.sender, tokenId: _tokenId});
 

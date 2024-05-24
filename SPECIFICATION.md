@@ -69,12 +69,13 @@ Additionally, there is the option to batch split the parent NFT `from` into seve
 
 ### GovNFTTimelock
 
-#### Splitting
+#### Freeze
 
-Implements the splitting functionality in 2 steps:
+Used to freeze/unfreeze functionality to prevent any changes in value when transferring the NFT.
+There's a timelock period between the freeze intention and the NFT being frozen. There's no timelock between unfreeze and the NFT being unfrozen.
 
-- propose a split
-- finalize a proposed split after the timelock period has ended
+When the NFT is frozen and the timelock period has yet to pass, claims, splits, sweeps and transfers cannot be performed. Unfreeze can occur instantly.
+When the NFT is frozen and the timelock period has passed, claims, splits and sweeps cannot be performed. Unfreeze can occur instantly. Transfers can also occur.
 
 ### Vault
 

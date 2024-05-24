@@ -5,36 +5,37 @@ import {IGovNFT} from "./IGovNFT.sol";
 
 interface IGovNFTTimelock is IGovNFT {
     /// Errors
-    error SplitTooSoon();
+    error AlreadyIntendedFrozen();
+    error AlreadyIntendedUnfrozen();
+    error FrozenToken();
+    error UnfrozenToken();
 
     /// Events
-    event CommitSplit(
-        uint256 indexed from,
-        address indexed recipient,
-        uint256 splitAmount,
-        uint256 startTime,
-        uint256 endTime,
-        string description
-    );
+    event Freeze(uint256 indexed tokenId);
+    event Unfreeze(uint256 indexed tokenId);
 
-    /// @dev Split Proposal Information for an NFT:
-    ///      `timestamp` Timestamp of the Split Proposal
-    ///      `pendingSplits` Array of Split parameters to be used when splitting the given NFT
-    struct SplitProposal {
-        uint256 timestamp;
-        SplitParams[] pendingSplits;
+    struct Frozen {
+        uint40 timestamp;
+        bool isFrozen;
     }
 
     /// @notice Returns the timelock for the Split
     function timelock() external view returns (uint256);
 
-    /// @notice Returns the Split Proposal information for the given `_tokenId`
-    /// @param _tokenId Lock Token Id with pending Split Proposal
-    /// @return Split Proposal information to be used to finalize the Split
-    function proposedSplits(uint256 _tokenId) external view returns (SplitProposal memory);
+    /// @notice Returns the Frozen information for a given token ID
+    /// @param _tokenId Token Id from which the info will be fetched
+    /// @return Frozen Information for the given token ID
+    function frozenState(uint256 _tokenId) external view returns (Frozen memory);
 
-    /// @notice Commits the intention of splitting a given Parent NFT, given the parameters
-    /// @dev After a Split is finalized, new Split NFTs are minted from a given Parent NFT
+    /// @notice Freezes a token
+    /// @param _tokenId The token to freeze
+    function freeze(uint256 _tokenId) external;
+
+    /// @notice Unfreezes a token
+    /// @param _tokenId The token to unfreeze
+    function unfreeze(uint256 _tokenId) external;
+
+    /// @notice Splitting creates new Split NFTs from a given Parent NFT
     /// - The Parent NFT will have `locked(from) - sum` tokens to be vested,
     ///   where `sum` is the sum of all tokens to be vested in the Split Locks
     /// - Each Split NFT will vest `params.amount` tokens
@@ -46,10 +47,6 @@ interface IGovNFTTimelock is IGovNFT {
     ///          `params.cliff` has to end at the same time or after the old cliff
     /// @param _from Token ID of the NFT to be split
     /// @param _paramsList List of SplitParams structs containing all the parameters needed to split a lock
-    function commitSplit(uint256 _from, SplitParams[] calldata _paramsList) external;
-
-    /// @notice Finalizes the Splits previously proposed on the given NFT
-    /// @param _from Token ID of the NFT to be split
-    /// @return _splitTokenIds Returns token IDs of the new Split NFTs with the desired locks.
-    function finalizeSplit(uint256 _from) external returns (uint256[] memory _splitTokenIds);
+    /// @return Returns token IDs of the new Split NFTs with the desired locks.
+    function split(uint256 _from, SplitParams[] calldata _paramsList) external returns (uint256[] memory);
 }
