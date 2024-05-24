@@ -47,8 +47,6 @@ Airdrop Sweeping is designed to manage tokens that are deposited into the Lock o
 The process involves the ability to "sweep" or transfer these additional tokens to a specified recipient.
 If the airdrop is the same as the lock's token, the sweeping is restricted depending on the `earlySweepLockToken` flag. If false, these tokens can only be swept after the lock's expired (can be swept any time otherwise).
 
-### GovNFTSplit
-
 #### Splitting
 
 The split function takes a parent NFT `from` and splits it into another NFT, that will be referred to as `to`.
@@ -87,7 +85,7 @@ Each NFT is an exclusive owner of a Vault (where the ERC-20 tokens are actually 
 
 ### GovNFTFactory
 
-Facilitates the creation and tracking of deployed GovNFTSplits. Creating a GovNFT requires the following arguments:
+Facilitates the creation and tracking of deployed GovNFTs. Creating a GovNFT requires the following arguments:
 
 - owner who will be allowed to create locks
 - address of the artProxy to be used for the token URI

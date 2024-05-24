@@ -21,7 +21,7 @@ contract GovNFTFactoryTest is BaseTest {
         assertTrue(factory.isGovNFT(factory.govNFT()));
 
         address[] memory govNFTs = factory.govNFTs(0, length);
-        GovNFTSplit _govNFT = GovNFTSplit(govNFTs[0]);
+        GovNFT _govNFT = GovNFT(govNFTs[0]);
         assertEq(govNFTs.length, 1);
         assertEq(address(_govNFT), factory.govNFT());
         assertEq(address(_govNFT), factory.govNFTByIndex(0));
@@ -48,7 +48,7 @@ contract GovNFTFactoryTest is BaseTest {
         address customArtProxy = vm.addr(0x54321);
         assertEq(factory.govNFTsLength(), 1);
 
-        GovNFTSplit _govNFT = GovNFTSplit(
+        GovNFT _govNFT = GovNFT(
             factory.createGovNFT({
                 _owner: address(admin),
                 _artProxy: customArtProxy,
@@ -160,7 +160,7 @@ contract GovNFTFactoryTest is BaseTest {
 
     function test_TransferOwnership() public {
         vm.startPrank(address(admin));
-        GovNFTSplit _govNFT = GovNFTSplit(
+        GovNFT _govNFT = GovNFT(
             factory.createGovNFT({
                 _owner: address(admin),
                 _artProxy: address(artProxy),
@@ -176,7 +176,7 @@ contract GovNFTFactoryTest is BaseTest {
     }
 
     function test_RevertIf_TransferOwnership_WhenNotOwnerOfGovNFT() public {
-        GovNFTSplit _govNFT = GovNFTSplit(factory.govNFT());
+        GovNFT _govNFT = GovNFT(factory.govNFT());
         assertEq(_govNFT.owner(), address(factory));
 
         vm.prank(address(notAdmin));
@@ -184,7 +184,7 @@ contract GovNFTFactoryTest is BaseTest {
         _govNFT.transferOwnership(address(notAdmin));
 
         vm.prank(address(admin));
-        _govNFT = GovNFTSplit(
+        _govNFT = GovNFT(
             factory.createGovNFT({
                 _owner: address(admin),
                 _artProxy: address(artProxy),

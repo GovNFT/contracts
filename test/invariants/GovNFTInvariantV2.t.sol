@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.20 <0.9.0;
 
-import "./handler/GovNFTSplitHandlerV2.sol";
+import "./handler/GovNFTHandlerV2.sol";
 import "test/invariants/GovNFTInvariants.sol";
 import {GovNFTFactory} from "src/GovNFTFactory.sol";
 import {Vault} from "src/Vault.sol";
 
-contract GovNFTSplitInvariantV2Test is GovNFTInvariants {
+contract GovNFTInvariantV2Test is GovNFTInvariants {
     function _setUp() internal virtual override {
         address vaultImplementation = address(new Vault());
         GovNFTFactory factory = new GovNFTFactory({
@@ -17,8 +17,8 @@ contract GovNFTSplitInvariantV2Test is GovNFTInvariants {
         });
         govNFT = IGovNFT(factory.govNFT());
 
-        handler = new GovNFTSplitHandlerV2({
-            _govNFT: GovNFTSplit(address(govNFT)),
+        handler = new GovNFTHandlerV2({
+            _govNFT: GovNFT(address(govNFT)),
             _timestore: timestore,
             _testToken: testToken,
             _airdropToken: airdropToken,

@@ -2,14 +2,14 @@
 pragma solidity >=0.8.20 <0.9.0;
 
 import "test/invariants/handler/GovNFTHandler.sol";
-import {GovNFTSplit} from "src/extensions/GovNFTSplit.sol";
+import {GovNFT} from "src/GovNFT.sol";
 
-/// @dev Handler for GovNFTSplit contract that creates Locks with larger durations
-contract GovNFTSplitHandlerV1 is GovNFTHandler {
+/// @dev Handler for GovNFT contract that creates Locks with larger durations
+contract GovNFTHandlerV1 is GovNFTHandler {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     constructor(
-        GovNFTSplit _govNFT,
+        GovNFT _govNFT,
         TimeStore _timestore,
         address _testToken,
         address _airdropToken,

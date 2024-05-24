@@ -70,20 +70,12 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
         emit Unfreeze(_tokenId);
     }
 
-    /// @inheritdoc IGovNFTTimelock
+    /// @inheritdoc IGovNFT
     function split(
         uint256 _from,
         SplitParams[] calldata _paramsList
-    ) external nonReentrant onlyUnfrozen(_from) returns (uint256[] memory) {
-        _checkAuthorized({owner: _ownerOf(_from), spender: msg.sender, tokenId: _from});
-
-        // Fetch Parent Lock
-        Lock storage parentLock = _locks[_from];
-        uint256 totalVested_ = _totalVested(parentLock);
-        _validateSplitParams({_parentLock: parentLock, _parentTotalVested: totalVested_, _paramsList: _paramsList});
-
-        return
-            _split({_from: _from, _parentTotalVested: totalVested_, _parentLock: parentLock, _paramsList: _paramsList});
+    ) external override(GovNFT, IGovNFT) nonReentrant onlyUnfrozen(_from) returns (uint256[] memory) {
+        return _split({_from: _from, _paramsList: _paramsList});
     }
 
     /// @inheritdoc IGovNFT

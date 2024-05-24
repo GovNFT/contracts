@@ -19,7 +19,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {GovNFTTimelockFactory, IGovNFTTimelockFactory} from "src/GovNFTTimelockFactory.sol";
 import {GovNFTTimelock, IGovNFTTimelock} from "src/extensions/GovNFTTimelock.sol";
 
-import {GovNFTSplit, IGovNFTSplit} from "src/extensions/GovNFTSplit.sol";
+import {GovNFT} from "src/GovNFT.sol";
+import {IGovNFT} from "src/interfaces/IGovNFT.sol";
 import {GovNFTFactory, IGovNFTFactory} from "src/GovNFTFactory.sol";
 
 import {IArtProxy} from "src/interfaces/IArtProxy.sol";
@@ -29,7 +30,7 @@ import {Vault, IVault} from "src/Vault.sol";
 import {ArtProxy} from "src/art/ArtProxy.sol";
 
 contract BaseTest is Test {
-    GovNFTSplit public govNFT;
+    GovNFT public govNFT;
     IArtProxy public artProxy;
     IGovNFTFactory public factory;
     address public vaultImplementation;
@@ -75,7 +76,7 @@ contract BaseTest is Test {
             _name: NAME,
             _symbol: SYMBOL
         });
-        govNFT = GovNFTSplit(
+        govNFT = GovNFT(
             factory.createGovNFT({
                 _owner: address(admin),
                 _artProxy: address(artProxy),

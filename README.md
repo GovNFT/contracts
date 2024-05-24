@@ -11,10 +11,9 @@ See `SPECIFICATION.md` for more detail.
 | Filename                    | Description                                                                                                                                    |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GovNFT.sol`                | Abstract contract that manages the vesting process of ERC-20 tokens, represented as ERC-721 NFTs, including creating nfts and handling claims. |
-| `GovNFTSplit.sol`           | Inherits from GovNFT and implements the split functionality.                                                                                   |
 | `GovNFTTimelock.sol`        | Inherits from GovNFT and implements the split functionality with timelock.                                                                     |
 | `Vault.sol`                 | Stores ERC-20 tokens for nfts, enabling delegation of governance tokens and fund management through the GovNFT contract.                       |
-| `GovNFTFactory.sol`         | Used to create and keep track of deployed GovNFTSplit instances.                                                                               |
+| `GovNFTFactory.sol`         | Used to create and keep track of deployed GovNFT instances.                                                                                    |
 | `GovNFTTimelockFactory.sol` | Used to create and keep track of deployed GovNFTTimelock instances.                                                                            |
 
 ## Testing

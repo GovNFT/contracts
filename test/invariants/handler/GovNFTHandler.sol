@@ -11,13 +11,13 @@ import {TestOwner} from "test/utils/TestOwner.sol";
 import {TimeStore} from "test/invariants/TimeStore.sol";
 import {GovNFTInvariants} from "test/invariants/GovNFTInvariants.sol";
 
-import {GovNFTSplit} from "src/extensions/GovNFTSplit.sol";
+import {GovNFT} from "src/GovNFT.sol";
 import {IGovNFT} from "src/interfaces/IGovNFT.sol";
 
 abstract contract GovNFTHandler is Test {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    GovNFTSplit public govNFT;
+    GovNFT public govNFT;
     TimeStore public timestore;
     GovNFTInvariants public testContract;
 
@@ -37,7 +37,7 @@ abstract contract GovNFTHandler is Test {
     mapping(uint256 tokenId => uint256 totalClaimed) public idToPersistentClaims;
 
     constructor(
-        GovNFTSplit _govNFT,
+        GovNFT _govNFT,
         TimeStore _timestore,
         address _testToken,
         address _airdropToken,

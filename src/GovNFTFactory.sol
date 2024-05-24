@@ -4,7 +4,7 @@ pragma solidity >=0.8.20 <0.9.0;
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IGovNFTFactory} from "./interfaces/IGovNFTFactory.sol";
-import {GovNFTSplit} from "./extensions/GovNFTSplit.sol";
+import {GovNFT} from "./GovNFT.sol";
 
 /// @title GovNFTFactory
 /// @notice GovNFTFactory contract to create and keep track of GovNFTs
@@ -25,7 +25,7 @@ contract GovNFTFactory is IGovNFTFactory {
         // Create permissionless GovNFT
         // @dev Permissionless GovNFT cannot Sweep Lock's tokens prior to Lock expiry
         govNFT = address(
-            new GovNFTSplit({
+            new GovNFT({
                 _owner: address(this),
                 _artProxy: _artProxy,
                 _vaultImplementation: _vaultImplementation,
@@ -56,7 +56,7 @@ contract GovNFTFactory is IGovNFTFactory {
         if (_owner == address(this)) revert NotAuthorized();
         if (_artProxy == address(0)) revert ZeroAddress();
         _govNFT = address(
-            new GovNFTSplit({
+            new GovNFT({
                 _owner: _owner,
                 _artProxy: _artProxy,
                 _vaultImplementation: vaultImplementation,

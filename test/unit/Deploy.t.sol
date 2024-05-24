@@ -28,7 +28,7 @@ contract DeployTest is BaseTest {
         assertTrue(factory.govNFT() != address(0));
         assertTrue(factory.vaultImplementation() != address(0));
 
-        GovNFTSplit govNFT = GovNFTSplit(factory.govNFT());
+        GovNFT govNFT = GovNFT(factory.govNFT());
         assertTrue(govNFT.artProxy() != address(0));
         assertEq(govNFT.name(), NAME);
         assertEq(govNFT.symbol(), SYMBOL);
