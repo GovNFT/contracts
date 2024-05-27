@@ -68,6 +68,7 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
         uint40 endTime,
         string description
     );
+    event SplitFull(address indexed owner, address indexed oldVault, address indexed newVault);
 
     /// Errors
     error InsufficientAmount();
@@ -183,4 +184,12 @@ interface IGovNFT is IERC721Enumerable, IERC4906 {
     /// @param _paramsList List of SplitParams structs containing all the parameters needed to split a lock
     /// @return Returns token IDs of the new Split NFTs with the desired locks.
     function split(uint256 _from, SplitParams[] calldata _paramsList) external returns (uint256[] memory);
+
+    /// @notice Splitting without creating new NFTs. This is useful for claiming airdrops that require some sort of action.
+    /// - A new vault is created and the whole balance of the old vault is transferred to the new vault
+    /// - The old vault's owner is set to the lock recipient
+    /// - The lock is updated to use the new vault
+    /// @dev     Callable by owner and approved operators
+    /// @param _from Token ID of the NFT to be split
+    function split(uint256 _from) external;
 }

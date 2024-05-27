@@ -45,8 +45,15 @@ contract Vault is IVault, Initializable {
         IERC20(_token).safeTransfer(_recipient, _amount);
     }
 
+    /// @inheritdoc IVault
     function setOwner(address _newOwner) external onlyOwner {
         if (_newOwner == address(0)) revert ZeroAddress();
         owner = _newOwner;
+    }
+
+    /// @inheritdoc IVault
+    function execute(address _to, bytes calldata _data) external onlyOwner {
+        (bool success, bytes memory returnData) = _to.call(_data);
+        if (!success) revert(string(returnData));
     }
 }

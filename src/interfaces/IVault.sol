@@ -38,4 +38,9 @@ interface IVault {
     /// @notice Transfers Ownership of the Vault to a new Owner
     /// @param _newOwner New Owner to be set
     function setOwner(address _newOwner) external;
+
+    /// @notice Executes a transaction on behalf of the Vault
+    /// @param _to Address of the contract to call
+    /// @param _data Data to be sent to use in the call
+    function execute(address _to, bytes calldata _data) external;
 }

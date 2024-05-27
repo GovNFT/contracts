@@ -5,7 +5,7 @@ import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
+import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -208,6 +208,39 @@ contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable {
         if (_amount == 0) revert ZeroAmount();
         IVault(vault).sweep(_token, _recipient, _amount);
         emit Sweep({tokenId: _tokenId, token: _token, recipient: _recipient, amount: _amount});
+    }
+
+    /// @inheritdoc IGovNFT
+    function split(uint256 _from) external nonReentrant {
+        address owner = _ownerOf(_from);
+        _checkAuthorized({owner: owner, spender: msg.sender, tokenId: _from});
+
+        Lock storage parentLock = _locks[_from];
+
+        // create new vault
+        address newVault = Clones.clone(vaultImplementation);
+        IVault(newVault).initialize(parentLock.token);
+
+        address oldVault = parentLock.vault;
+
+        // transfer full amount to new vault
+        uint256 vaultBalance = IERC20(parentLock.token).balanceOf(oldVault);
+        IVault(oldVault).withdraw({_recipient: newVault, _amount: vaultBalance});
+
+        // set delegatee in new vault same as parent vault
+        try IVotes(parentLock.token).delegates(oldVault) returns (address delegatee) {
+            IVault(newVault).delegate(delegatee);
+        } catch {
+            // ignore if delegatee is not set
+        }
+
+        // transfer ownership of old vault
+        IVault(oldVault).setOwner(owner);
+
+        // update parent lock to new vault
+        parentLock.vault = newVault;
+
+        emit SplitFull({owner: msg.sender, oldVault: oldVault, newVault: newVault});
     }
 
     /// @inheritdoc IGovNFT
