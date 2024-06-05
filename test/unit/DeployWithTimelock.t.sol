@@ -36,7 +36,7 @@ contract DeployWithTimelockTest is BaseTest {
         assertTrue(length == 1);
         assertTrue(factory.isGovNFT(address(govNFT)));
         assertTrue(govNFT.factory() == address(factory));
-        assertEq(govNFT.timelock(), 0);
+        assertEq(govNFT.timelock(), 1 hours);
         address[] memory govNFTs = factory.govNFTs(0, length);
         assertTrue(govNFTs.length == 1);
         assertTrue(govNFTs[0] == address(govNFT));

@@ -24,7 +24,7 @@ async function main() {
     "0x0000000000000000000000000000000000000000", //TODO veArtProxy contract address
     "GovNFT: NFT for vested distribution of (governance) tokens",
     "GOVNFT",
-    0, //TODO set timelock
+    3600,
   );
   console.log(
     `GovNFTTimelockFactory deployed to ${govNFTTimelockFactory.address}`,

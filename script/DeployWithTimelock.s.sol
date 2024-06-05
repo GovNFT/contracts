@@ -30,7 +30,7 @@ contract DeployWithTimelock is Script {
             _artProxy: address(artProxy),
             _name: "GovNFT: NFT for vested distribution of (governance) tokens",
             _symbol: "GOVNFT",
-            _timelock: 0
+            _timelock: 1 hours
         });
         vm.stopBroadcast();
 

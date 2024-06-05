@@ -5,7 +5,7 @@ import "test/utils/BaseTest.sol";
 
 contract GovNFTTimelockFactoryTest is BaseTest {
     IGovNFTTimelockFactory factoryLock;
-    uint256 public timelock = 0; //TODO: set timelock
+    uint256 public timelock = 1 hours;
 
     function _setUp() public override {
         factoryLock = new GovNFTTimelockFactory({
