@@ -84,7 +84,7 @@ contract GovNFTFactory is IGovNFTFactory {
     /// @inheritdoc IGovNFTFactory
     function govNFTs(uint256 _start, uint256 _end) external view returns (address[] memory _govNFTs) {
         uint256 length = _registry.length();
-        _end = _end <= length ? _end : length;
+        _end = _end < length ? _end : length;
         _govNFTs = new address[](_end - _start);
         for (uint256 i = 0; i < _end - _start; i++) {
             _govNFTs[i] = _registry.at(i + _start);

@@ -42,6 +42,8 @@ interface IGovNFTFactory {
     function govNFTs() external view returns (address[] memory);
 
     /// @notice Paginated View of all created GovNFTs
+    /// @dev    Should not assume the last GovNFT returned is at index matching given `_end`,
+    ///         because if `_end` exceeds `length`, implementation defaults to `length`
     /// @param _start Index of first GovNFT to be fetched
     /// @param _end End index for pagination
     /// @return Array of GovNFTs
