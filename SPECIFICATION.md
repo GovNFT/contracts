@@ -65,6 +65,19 @@ After a `split` is performed:
 
 Additionally, there is the option to batch split the parent NFT `from` into several `to` NFTs, providing an array of split parameters.
 
+##### Splitting Full Amount
+
+There's a `split` function that takes an NFT and splits its full amount into a new Vault, giving ownership of the old one to the NFT recipient.
+Calling this `split` function requires one argument: the ID of the NFT to be split.
+
+It effectively:
+
+- Creates a new Vault for the NFT;
+- Transfers the NFT's tokens to the new Vault;
+- Transfers the ownership of the old Vault to the NFT recipient;
+- In case the lock tokens are governance tokens, the delegatee is also transferred to the new Vault.
+- After the ownership of the old Vault is transferred, its new owner can perform arbitrary code execution in the old Vault (Via `vault.execute()`).
+
 ### GovNFTTimelock
 
 #### Freeze
