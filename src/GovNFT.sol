@@ -211,7 +211,11 @@ contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     /// @inheritdoc IGovNFT
-    function split(uint256 _from) external nonReentrant {
+    function split(uint256 _from) external virtual nonReentrant {
+        _split(_from);
+    }
+
+    function _split(uint256 _from) internal {
         address owner = _ownerOf(_from);
         _checkAuthorized({owner: owner, spender: msg.sender, tokenId: _from});
 

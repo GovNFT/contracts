@@ -71,6 +71,11 @@ contract GovNFTTimelock is GovNFT, IGovNFTTimelock {
     }
 
     /// @inheritdoc IGovNFT
+    function split(uint256 _from) external override(GovNFT, IGovNFT) nonReentrant onlyUnfrozen(_from) {
+        _split(_from);
+    }
+
+    /// @inheritdoc IGovNFT
     function split(
         uint256 _from,
         SplitParams[] calldata _paramsList

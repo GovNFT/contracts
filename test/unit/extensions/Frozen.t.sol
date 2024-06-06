@@ -287,6 +287,43 @@ contract FrozenTest is BaseTest {
         assertEq(frozenState.timestamp, block.timestamp);
     }
 
+    function test_RevertIf_SplitFullFrozen() public {
+        deal(testToken, address(admin), TOKEN_10M);
+        admin.approve(testToken, address(govNFTTimelock), TOKEN_10M);
+        vm.prank(address(admin));
+        tokenId = govNFTTimelock.createLock({
+            _token: testToken,
+            _recipient: address(recipient),
+            _amount: TOKEN_10M,
+            _startTime: uint40(block.timestamp),
+            _endTime: uint40(block.timestamp + WEEK),
+            _cliffLength: 0,
+            _description: ""
+        });
+
+        vm.prank(address(recipient));
+        govNFTTimelock.freeze({_tokenId: tokenId});
+
+        IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
+        assertTrue(frozenState.isFrozen);
+        assertEq(frozenState.timestamp, block.timestamp);
+
+        IGovNFT.Lock memory lockBeforeSplit = govNFTTimelock.locks(tokenId);
+
+        vm.expectRevert(IGovNFTTimelock.FrozenToken.selector);
+        vm.prank(address(recipient));
+        govNFTTimelock.split(tokenId);
+
+        IGovNFT.Lock memory lockAfterFailedSplit = govNFTTimelock.locks(tokenId);
+        assertEq(lockBeforeSplit.totalLocked, lockAfterFailedSplit.totalLocked);
+        assertEq(lockBeforeSplit.vault, lockAfterFailedSplit.vault);
+        assertEq(IERC20(lockBeforeSplit.token).balanceOf(lockBeforeSplit.vault), lockBeforeSplit.totalLocked);
+
+        frozenState = govNFTTimelock.frozenState(tokenId);
+        assertTrue(frozenState.isFrozen);
+        assertEq(frozenState.timestamp, block.timestamp);
+    }
+
     function test_TransferFrozen() public {
         vm.prank(address(recipient));
         govNFTTimelock.freeze({_tokenId: tokenId});
