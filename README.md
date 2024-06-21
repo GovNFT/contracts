@@ -38,7 +38,7 @@ See `script/README.md` for more detail.
 
 ## Security
 
-TODO: add audit info here
+The contracts have been audited by Spearbit. The audit report can be found [here](https://cantina.xyz/portfolio/aa79aa69-8468-442d-bfbb-b403de36edec).
 
 ## Access Control
 
