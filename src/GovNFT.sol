@@ -230,6 +230,7 @@ contract GovNFT is IGovNFT, ERC721Enumerable, ReentrancyGuard, Ownable {
         // transfer full amount to new vault
         uint256 vaultBalance = IERC20(parentLock.token).balanceOf(oldVault);
         IVault(oldVault).withdraw({_recipient: newVault, _amount: vaultBalance});
+        if (IERC20(parentLock.token).balanceOf(newVault) < vaultBalance) revert InsufficientAmount();
 
         // set delegatee in new vault same as parent vault
         try IVotes(parentLock.token).delegates(oldVault) returns (address delegatee) {
