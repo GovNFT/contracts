@@ -1,0 +1,9 @@
+DelegateUnitConcreteTest
+├── When caller is not Authorized 
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Authorized 
+    ├── When lock token does not support delegation
+    │   └── It should revert
+    └── When lock token supports delegation
+        ├── It should set lock's delegatee
+        └── It should emit a {Delegate} event

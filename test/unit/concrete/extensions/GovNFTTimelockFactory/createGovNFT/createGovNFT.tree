@@ -1,0 +1,15 @@
+CreateGovNFTUnitConcreteTest
+├── When owner is factory 
+│   └── It should revert with NotAuthorized 
+└── When owner is not factory 
+    ├── When artProxy is address zero 
+    │   └── It should revert with AlreadyIntendedFrozen 
+    └── When artProxy is not address zero
+        ├── It should add new govNFT to registry
+        ├── It should set owner to owner in the new govNFT
+        ├── It should set artProxy to artProxy in the new govNFT
+        ├── It should set name to name in the new govNFT
+        ├── It should set symbol to symbol in the new govNFT
+        ├── It should set earlySweepLockToken to earlySweepLockToken in the new govNFT
+        ├── It should set timelock to timelock in the new govNFT
+        └── It should emit a {GovNFTTimelockCreated} event

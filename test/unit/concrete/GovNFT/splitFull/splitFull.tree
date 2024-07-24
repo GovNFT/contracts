@@ -1,0 +1,13 @@
+SplitFullUnitConcreteTest
+├── When caller is not Authorized 
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Authorized 
+    ├── Given vault balance after transfer is smaller than amount
+    │   └── It should revert with InsufficientAmount
+    └── Given vault balance is equal or greater than amount
+        ├── It create a new vault 
+        ├── It should send all lock token balance to new vault 
+        ├── It should set same delegatee
+        ├── It should transfer ownership of old vault
+        ├── It should set new vault as lock's vault
+        └── It should emit a {SplitFull} event

@@ -1,0 +1,54 @@
+SweepUnitConcreteTest
+├── When token is address zero 
+│   └── It should revert with ZeroAddress
+└── When token is not address zero
+    ├── When recipient is address zero
+    │   └── It should revert with ZeroAddress
+    └── When recipient is not address zero
+        ├── When caller is not authorized
+        │   └── It should revert with OwnableUnauthorizedAccount
+        └── When caller is authorized
+            ├── When token to sweep is lock token
+            │   ├── Given early sweeping of lock tokens is disabled
+            │   │   ├── Given lock did not finish vesting
+            │   │   │   └── It should revert with InvalidSweep
+            │   │   └── Given lock finished vesting
+            │   │        ├── When amount to sweep is zero
+            │   │        │   └── It should revert with ZeroAmount
+            │   │        └── When amount to sweep is not zero
+            │   │            ├── Given vault only has lock balance
+            │   │            │   └── It should revert with ZeroAmount
+            │   │            └── Given vault has additional lock token balance
+            │   │                 ├── When amount to sweep is smaller than additional balance
+            │   │                 │   ├── It should sweep amount to recipient
+            │   │                 │   ├── It should emit a {Sweep} event
+            │   │                 │   └── It should emit a {Sweep} event
+            │   │                 └── When amount to sweep is equal or greater than additional balance
+            │   │                     ├──It should sweep additional balance to recipient
+            │   │                     └─ It should emit a {Sweep} event
+            │   └── Given early sweeping of lock tokens is enabled
+            │       ├── When amount to sweep is zero
+            │       │   └── It should revert with ZeroAmount
+            │       └── When amount to sweep is not zero
+            │           ├── Given vault balance only lock balance
+            │           │   └── It should revert with ZeroAmount
+            │           └── Given vault has additional lock token balance
+            │               ├── When amount to sweep is smaller than additional balance
+            │               │     ├── It should sweep amount to recipient
+            │               │     └── It should emit a {Sweep} event 
+            │               └── When amount to sweep is equal or greater than additional balance
+            │                   ├── It should sweep additional balance to recipient
+            │                   └── It should emit a {Sweep} event
+            └── When token to sweep is not lock token
+                ├── When amount to sweep is zero
+                │   └── It should revert with ZeroAmount
+                └── When amount to sweep is not zero
+                    ├── Given vault balance is zero
+                    │   └── It should revert with ZeroAmount
+                    └── Given vault balance is not zero
+                        ├── Given amount is smaller than vault balance
+                        │   ├── It should sweep amount to recipient
+                        │   └── It should emit a {Sweep} event 
+                        └── Given amount is equal or greater than vault balance
+                             ├── It should sweep vault balance to recipient
+                             └── It should emit a {Sweep} event

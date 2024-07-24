@@ -2,7 +2,7 @@
 pragma solidity >=0.8.20 <0.9.0;
 
 import "test/utils/BaseTest.sol";
-import "../utils/MockAirdropper.sol";
+import "test/utils/MockAirdropper.sol";
 
 contract SplitFullTest is BaseTest {
     uint256 tokenId;

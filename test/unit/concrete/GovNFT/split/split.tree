@@ -1,0 +1,80 @@
+SplitUnitConcreteTest
+├── When caller is not Authorized
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When caller is Authorized 
+    ├── When split paramaters list length is zero
+    │   └── It should revert with InvalidParamaters
+    └── When split paramaters list length is not zero
+        ├── When one of recipients is address zero
+        │   └── It should revert with ZeroAddress
+        └── When none of recipients is address zero
+            ├── When one of amounts is zero
+            │    └── It should revert with ZeroAmount
+            └── When none of amounts is zero
+                ├── When one of end times is equal to start time
+                │   └── It should revert with InvalidParameters
+                └── When none of end times is equal to start time
+                    ├── When one of end times is smaller than start time
+                    │   └── It should revert with ArithmeticError
+                    └── When all end times are equal or greater than start time
+                        ├── When one of cliffs is greater than duration
+                        │   └── It should revert with InvalidCliff
+                        └── When all cliffs are smaller than duration
+                            ├── When one of end times is smaller than parent lock's end time
+                            │   └── It should revert with InvalidEnd
+                            └── When all end times are equal or greater than parent lock's end time
+                                ├── When one of start times is smaller than parent lock's start time
+                                │   └── It should revert with InvalidStart
+                                └── When all start times are equal or greater than parent lock's start time
+                                    ├── When one of start times is smaller than block timestamp
+                                    │   └── It should revert with InvalidStart
+                                    └── When all start times are equal or greater than block timestamp
+                                        ├── When one of cliff ends is smaller than parent lock's cliff end
+                                        │   └── It should revert with InvalidCliff
+                                        └── When all cliff ends are equal or smaller than parent lock's cliff end
+                                            ├── When sum of all split amounts is greater than current parent locked amount
+                                            │   └── It should revert with AmountTooBig
+                                            └── When sum of all split amounts is smaller or equal to current parent locked amount
+                                                ├── Given vault balance after transfer is smaller than amount
+                                                │   └── It should revert with InsufficientAmount
+                                                └── Given vault balance is equal or greater than amount
+                                                    ├── Given block timestamp is smaller than parent lock cliff end
+                                                    │   ├── It should mint an NFT for each set of Split parameters 
+                                                    │   ├── It should set totalLocked to _param.amount in split NFTs
+                                                    │   ├── It should set initialDeposit to _param.amount in split NFTs
+                                                    │   ├── It should set totalClaimed to zero in split NFTs
+                                                    │   ├── It should set unclaimedBeforeSplit to zero in split NFTs
+                                                    │   ├── It should set splitCount to zero in split NFTs
+                                                    │   ├── It should set cliffLength to _param.cliff in split NFTs
+                                                    │   ├── It should set start to _param.start in split NFTs
+                                                    │   ├── It should set end to _param.end in split NFTs
+                                                    │   ├── It should set token to parent lock token in split NFTs
+                                                    │   ├── It should set vault to a new vault in split NFTs
+                                                    │   ├── It should set minter to msg.sender in split NFTs
+                                                    │   ├── It should add splitNFTs to parent's splitTokensByIndex
+                                                    │   ├── It should subtract sum of amounts to totalLocked in parent lock
+                                                    │   ├── It should emit a {Split} event
+                                                    │   ├── It should add total unclaimed to parent lock unclaimedBeforeSplit
+                                                    │   ├── It should delete parent lock total claimed
+                                                    │   └── It should emit a {MetadataUpdate} event
+                                                    └── Given block timestamp is greater or equal to parent lock cliff end
+                                                        ├── It should mint an NFT for each set of Split parameters 
+                                                        ├── It should set start to block timestamp in parent lock
+                                                        ├── It should delete parent lock cliff
+                                                        ├── It should set totalLocked to _param.amount in split NFTs
+                                                        ├── It should set initialDeposit to _param.amount in split NFTs
+                                                        ├── It should set totalClaimed to zero in split NFTs
+                                                        ├── It should set unclaimedBeforeSplit to zero in split NFTs
+                                                        ├── It should set splitCount to zero in split NFTs
+                                                        ├── It should set cliffLength to _param.cliff in split NFTs
+                                                        ├── It should set start to _param.start in split NFTs
+                                                        ├── It should set end to _param.end in split NFTs
+                                                        ├── It should set token to parent lock token in split NFTs
+                                                        ├── It should set vault to a new vault in split NFTs
+                                                        ├── It should set minter to msg.sender in split NFTs
+                                                        ├── It should add splitNFTs to parent's splitTokensByIndex
+                                                        ├── It should subtract sum of amounts to totalLocked in parent lock
+                                                        ├── It should emit a {Split} event
+                                                        ├── It should add total unclaimed to parent lock unclaimedBeforeSplit
+                                                        ├── It should delete parent lock total claimed
+                                                        └── It should emit a {MetadataUpdate} event

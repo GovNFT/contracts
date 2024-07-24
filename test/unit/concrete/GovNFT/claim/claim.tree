@@ -1,0 +1,24 @@
+ClaimUnitConcreteTest
+├── When caller is not Authorized
+│   └── It should revert with ERC721InsufficientApproval
+└── When caller is Authorized
+    ├── When beneficiary is address zero
+    │   └── It should revert with ZeroAddress
+    └── When beneficiary is not address zero
+        ├── Given claimable is zero
+        │   └── It should early return
+        └── Given claimable is not zero
+            ├── Given unclaimedBeforeSplit is zero
+            │   ├── It should increase `totalClaimed` by `claimable`
+            │   ├── It should withdraw funds from vault and send to beneficiary
+            │   └── It should emit a {Claim} event
+            └── Given unclaimedBeforeSplit is greater than zero
+                ├──Given unclaimedBeforeSplit is smaller than claimable
+                │   ├── It should increase `totalClaimed` by `claimable - unclaimedBeforeSplit`
+                │   ├── It should delete `unclaimedBeforeSplit`
+                │   ├── It should withdraw funds from vault and send to beneficiary
+                │   └── It should emit a {Claim} event
+                └── Given unclaimedBeforeSplit is not greater than claimable
+                    ├── It should decrease `unclaimedBeforeSplit` by `claimable`
+                    ├── It should withdraw funds from vault and send to beneficiary
+                    └── It should emit a {Claim} event

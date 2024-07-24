@@ -1,0 +1,42 @@
+CreateLockUnitConcreteTest
+├── When govNFT is not permissionless and caller is not owner
+│   └── It should revert with OwnableUnauthorizedAccount
+└── When govNFT is permissionless or caller is owner
+    ├── When token is address zero
+    │   └── It should revert with ZeroAddress
+    └── When token is not address zero
+        ├── When recipient is address zero
+        │   └── It should revert with ZeroAddress
+        └── When recipient is not address zero
+            ├── When amount is zero
+            │    └── It should revert with ZeroAmount
+            └── When amount is not zero
+                ├── When end time is equal to start time
+                │   └── It should revert with InvalidParameters
+                └── When end time does not equal start time
+                    ├── When end time is smaller than start time
+                    │   └── It should revert with ArithmeticError
+                    └── When end time is greater than start time
+                        ├── When cliff is greater than duration
+                        │   └── It should revert with InvalidCliff
+                        └── When cliff is equal or smaller than duration
+                            ├── Given vault balance after transfer is smaller than amount
+                            │   └── It should revert with InsufficientAmount
+                            └── Given vault balance is equal or greater than amount
+                                ├── It should create a vault
+                                ├── It should increment _tokenId
+                                ├── It should mint an NFT with _tokenId to recipient
+                                ├── It should set totalLocked to amount in new lock 
+                                ├── It should set initialDeposit to amount in new lock 
+                                ├── It should set totalClaimed to zero in new lock 
+                                ├── It should set unclaimedBeforeSplit to zero in new lock 
+                                ├── It should set token to _token in new lock 
+                                ├── It should set splitCount to zero in new lock 
+                                ├── It should set cliffLength to _cliffLength in new lock 
+                                ├── It should set start to _startTime in new lock 
+                                ├── It should set end to _endTime in new lock 
+                                ├── It should set vault to new vault in new lock 
+                                ├── It should set minter to msg.sender in new lock 
+                                ├── It should send amount to vault
+                                └── It should emit a {Create} event
+
