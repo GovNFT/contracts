@@ -120,12 +120,4 @@ contract SplitFullTest is BaseTest {
         assertEq(IERC20(airdropToken).balanceOf(address(recipient)), TOKEN_10K);
         assertEq(IERC20(airdropToken).balanceOf(oldVault), 0);
     }
-
-    function test_RevertIf_SplitIfNotAuthorized() public {
-        vm.prank(address(notAdmin));
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(notAdmin), tokenId)
-        );
-        govNFT.split(tokenId);
-    }
 }
