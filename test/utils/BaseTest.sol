@@ -51,6 +51,7 @@ contract BaseTest is Test {
     uint256 constant TOKEN_10M = 1e25; // 1e7 = 10M tokens with 18 decimals
     uint256 constant TOKEN_100M = 1e26; // 1e8 = 100M tokens with 18 decimals
     uint256 constant TOKEN_10B = 1e28; // 1e10 = 10B tokens with 18 decimals
+    uint256 constant MAX_TOKENS = 1e40; // maximum number of tokens, used in fuzzing
 
     uint40 constant WEEK = 1 weeks;
     uint256 constant YEAR = 365 days;

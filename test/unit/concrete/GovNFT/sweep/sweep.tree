@@ -6,7 +6,7 @@ SweepUnitConcreteTest
     │   └── It should revert with ZeroAddress
     └── When recipient is not address zero
         ├── When caller is not authorized
-        │   └── It should revert with OwnableUnauthorizedAccount
+        │   └── It should revert with ERC721InsufficientApproval
         └── When caller is authorized
             ├── When token to sweep is lock token
             │   ├── Given early sweeping of lock tokens is disabled
@@ -22,27 +22,26 @@ SweepUnitConcreteTest
             │   │                 ├── When amount to sweep is smaller than additional balance
             │   │                 │   ├── It should sweep amount to recipient
             │   │                 │   ├── It should emit a {Sweep} event
-            │   │                 │   └── It should emit a {Sweep} event
             │   │                 └── When amount to sweep is equal or greater than additional balance
             │   │                     ├──It should sweep additional balance to recipient
             │   │                     └─ It should emit a {Sweep} event
             │   └── Given early sweeping of lock tokens is enabled
-            │       ├── When amount to sweep is zero
+            │       ├── When amount to sweep is zero_
             │       │   └── It should revert with ZeroAmount
-            │       └── When amount to sweep is not zero
-            │           ├── Given vault balance only lock balance
+            │       └── When amount to sweep is not zero_
+            │           ├── Given vault only has lock balance_
             │           │   └── It should revert with ZeroAmount
-            │           └── Given vault has additional lock token balance
-            │               ├── When amount to sweep is smaller than additional balance
+            │           └── Given vault has additional lock token balance_
+            │               ├── When amount to sweep is smaller than additional balance_
             │               │     ├── It should sweep amount to recipient
             │               │     └── It should emit a {Sweep} event 
-            │               └── When amount to sweep is equal or greater than additional balance
+            │               └── When amount to sweep is equal or greater than additional balance_
             │                   ├── It should sweep additional balance to recipient
             │                   └── It should emit a {Sweep} event
             └── When token to sweep is not lock token
-                ├── When amount to sweep is zero
+                ├── When amount to sweep is zero__
                 │   └── It should revert with ZeroAmount
-                └── When amount to sweep is not zero
+                └── When amount to sweep is not zero__
                     ├── Given vault balance is zero
                     │   └── It should revert with ZeroAmount
                     └── Given vault balance is not zero
