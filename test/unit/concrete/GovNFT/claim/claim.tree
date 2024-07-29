@@ -18,7 +18,7 @@ ClaimUnitConcreteTest
                 │   ├── It should delete `unclaimedBeforeSplit`
                 │   ├── It should withdraw funds from vault and send to beneficiary
                 │   └── It should emit a {Claim} event
-                └── Given unclaimedBeforeSplit is not greater than claimable
+                └── Given unclaimedBeforeSplit is equal or greater than claimable
                     ├── It should decrease `unclaimedBeforeSplit` by `claimable`
                     ├── It should withdraw funds from vault and send to beneficiary
                     └── It should emit a {Claim} event
