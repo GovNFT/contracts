@@ -35,21 +35,6 @@ contract FrozenTest is BaseTest {
         });
     }
 
-    function test_Freeze() public {
-        IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
-        assertFalse(frozenState.isFrozen);
-        assertEq(frozenState.timestamp, 0);
-
-        vm.expectEmit(address(govNFTTimelock));
-        emit IGovNFTTimelock.Freeze({tokenId: tokenId});
-        vm.prank(address(recipient));
-        govNFTTimelock.freeze({_tokenId: tokenId});
-
-        frozenState = govNFTTimelock.frozenState(tokenId);
-        assertTrue(frozenState.isFrozen);
-        assertEq(frozenState.timestamp, block.timestamp);
-    }
-
     function test_Unfreeze() public {
         vm.prank(address(recipient));
         govNFTTimelock.freeze({_tokenId: tokenId});
@@ -67,17 +52,6 @@ contract FrozenTest is BaseTest {
         assertEq(frozenState.timestamp, 0);
     }
 
-    function test_RevertIf_FreezeNotRecipient() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, address(this), tokenId)
-        );
-        govNFTTimelock.freeze({_tokenId: tokenId});
-
-        IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
-        assertEq(frozenState.isFrozen, false);
-        assertEq(frozenState.timestamp, 0);
-    }
-
     function test_RevertIf_UnfreezeAlreadyUnfrozen() public {
         vm.prank(address(recipient));
         vm.expectRevert(IGovNFTTimelock.AlreadyIntendedUnfrozen.selector);
@@ -86,22 +60,6 @@ contract FrozenTest is BaseTest {
         IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
         assertEq(frozenState.isFrozen, false);
         assertEq(frozenState.timestamp, 0);
-    }
-
-    function test_RevertIf_FreezeAlreadyFrozen() public {
-        vm.prank(address(recipient));
-        govNFTTimelock.freeze({_tokenId: tokenId});
-        IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
-        assertTrue(frozenState.isFrozen);
-        assertEq(frozenState.timestamp, block.timestamp);
-
-        vm.expectRevert(IGovNFTTimelock.AlreadyIntendedFrozen.selector);
-        vm.prank(address(recipient));
-        govNFTTimelock.freeze({_tokenId: tokenId});
-
-        frozenState = govNFTTimelock.frozenState(tokenId);
-        assertTrue(frozenState.isFrozen);
-        assertEq(frozenState.timestamp, block.timestamp);
     }
 
     function test_ClaimUnfrozen() public {

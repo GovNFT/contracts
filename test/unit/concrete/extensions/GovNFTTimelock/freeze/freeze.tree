@@ -1,10 +1,10 @@
 FreezeUnitConcreteTest
 ├── When caller is not Authorized 
-│   └── It should revert with OwnableUnauthorizedAccount
+│   └── It should revert with ERC721InsufficientApproval
 └── When caller is Authorized
-    ├── When _tokenId is frozen
+    ├── When tokenId is frozen
     │   └── It should revert with AlreadyIntendedFrozen 
-    └── When _tokenId is not frozen
+    └── When tokenId is not frozen
         ├── It should set isFrozen of _tokenId to true 
         ├── It should set frozen timestamp of _tokenId to block timestamp
         └── It should emit a {Freeze} event
