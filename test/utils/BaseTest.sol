@@ -13,6 +13,7 @@ import {MockGovernanceToken} from "test/utils/MockGovernanceToken.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC20Errors} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC721Errors} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
