@@ -104,7 +104,7 @@ contract CreateLockUnitConcreteTest is BaseTest {
         govNFT.createLock({
             _token: token,
             _recipient: lockRecipient,
-            _amount: 0,
+            _amount: amount,
             _startTime: startTime,
             _endTime: endTime,
             _cliffLength: cliffLength,
@@ -355,7 +355,7 @@ contract CreateLockUnitConcreteTest is BaseTest {
         govNFT.createLock({
             _token: token,
             _recipient: lockRecipient,
-            _amount: 0,
+            _amount: amount,
             _startTime: startTime,
             _endTime: endTime,
             _cliffLength: cliffLength,

@@ -321,8 +321,8 @@ contract CreateLockUnitFuzzTest is BaseTest {
         });
     }
 
-    modifier whenCliffIsEqualOrSmallerThanDuration(uint40 cliff, uint40 duration) {
-        cliffLength = uint40(bound(cliff, 0, duration));
+    modifier whenCliffIsEqualOrSmallerThanDuration(uint40 cliff) {
+        cliffLength = uint40(bound(cliff, 0, endTime - startTime));
         assertLe(cliffLength, endTime - startTime);
         _;
     }
@@ -337,7 +337,7 @@ contract CreateLockUnitFuzzTest is BaseTest {
         whenAmountIsNotZero(lockAmount)
         whenEndTimeDoesNotEqualStartTime
         whenEndTimeIsGreaterThanStartTime(uint40(block.timestamp), uint40(block.timestamp) + WEEK * 2)
-        whenCliffIsEqualOrSmallerThanDuration_(cliffLength)
+        whenCliffIsEqualOrSmallerThanDuration(cliffLength)
     {
         admin.approve(feeOnTransferToken, address(govNFT), amount);
         vm.startPrank(address(admin));
@@ -367,7 +367,7 @@ contract CreateLockUnitFuzzTest is BaseTest {
         whenAmountIsNotZero(lockAmount)
         whenEndTimeDoesNotEqualStartTime
         whenEndTimeIsGreaterThanStartTime(start, end)
-        whenCliffIsEqualOrSmallerThanDuration_(cliff)
+        whenCliffIsEqualOrSmallerThanDuration(cliff)
     {
         uint256 tokenIdBefore = govNFT.tokenId();
         admin.approve(token, address(govNFT), amount);
