@@ -21,7 +21,7 @@ contract WithdrawUnitWithdrawTest is BaseTest {
     }
 
     function testFuzz_WhenCallerIsOwner(address beneficiary, uint256 initialBal, uint256 amount) external {
-        vm.assume(beneficiary != address(0));
+        vm.assume(beneficiary != address(0) && beneficiary != address(vault));
 
         initialBal = bound(amount, 1, type(uint256).max);
         amount = bound(amount, 1, initialBal);
