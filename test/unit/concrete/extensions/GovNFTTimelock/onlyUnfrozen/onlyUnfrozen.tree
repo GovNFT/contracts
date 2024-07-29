@@ -1,5 +1,0 @@
-OnlyUnfrozenUnitConcreteTest
- ├── Given Lock is Frozen
- │   └── It should revert with FrozenToken
- └── Given Lock is not Frozen
-     └── It should execute function
