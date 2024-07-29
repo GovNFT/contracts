@@ -14,6 +14,8 @@ contract MockAirdropper {
 
     error OnlyAirdropReceiver();
 
+    event ClaimedAirdrop(address indexed airdropReceiver);
+
     constructor(address _airdropToken, uint256 _airdropAmount, address _airdropReceiver) {
         airdropToken = _airdropToken;
         airdropAmount = _airdropAmount;
@@ -25,5 +27,6 @@ contract MockAirdropper {
             revert OnlyAirdropReceiver();
         }
         IERC20(airdropToken).safeTransfer(airdropReceiver, airdropAmount);
+        emit ClaimedAirdrop(airdropReceiver);
     }
 }

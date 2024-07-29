@@ -109,6 +109,7 @@ contract SplitFullTest is BaseTest {
         IVault(oldVault).execute(address(mockAirdropper), data);
 
         vm.prank(address(recipient));
+        emit MockAirdropper.ClaimedAirdrop(oldVault);
         IVault(oldVault).execute(address(mockAirdropper), data);
 
         assertEq(IERC20(airdropToken).balanceOf(address(recipient)), 0);
