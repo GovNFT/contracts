@@ -3,7 +3,7 @@ pragma solidity >=0.8.20 <0.9.0;
 
 import "test/utils/BaseTest.sol";
 
-contract FrozenTest is BaseTest {
+contract GovNFTTimelockTest is BaseTest {
     uint256 public tokenId;
     uint256 public timelock = 1 days;
     IGovNFTTimelock public govNFTTimelock;
@@ -33,33 +33,6 @@ contract FrozenTest is BaseTest {
             _cliffLength: 0,
             _description: ""
         });
-    }
-
-    function test_Unfreeze() public {
-        vm.prank(address(recipient));
-        govNFTTimelock.freeze({_tokenId: tokenId});
-        IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
-        assertTrue(frozenState.isFrozen);
-        assertEq(frozenState.timestamp, block.timestamp);
-
-        vm.expectEmit(address(govNFTTimelock));
-        emit IGovNFTTimelock.Unfreeze({tokenId: tokenId});
-        vm.prank(address(recipient));
-        govNFTTimelock.unfreeze({_tokenId: tokenId});
-
-        frozenState = govNFTTimelock.frozenState(tokenId);
-        assertEq(frozenState.isFrozen, false);
-        assertEq(frozenState.timestamp, 0);
-    }
-
-    function test_RevertIf_UnfreezeAlreadyUnfrozen() public {
-        vm.prank(address(recipient));
-        vm.expectRevert(IGovNFTTimelock.AlreadyIntendedUnfrozen.selector);
-        govNFTTimelock.unfreeze({_tokenId: tokenId});
-
-        IGovNFTTimelock.Frozen memory frozenState = govNFTTimelock.frozenState(tokenId);
-        assertEq(frozenState.isFrozen, false);
-        assertEq(frozenState.timestamp, 0);
     }
 
     function test_ClaimUnfrozen() public {
