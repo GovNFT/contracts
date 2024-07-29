@@ -1,7 +1,46 @@
 CreateLockUnitConcreteTest
-├── When govNFT is not permissionless and caller is not owner
-│   └── It should revert with OwnableUnauthorizedAccount
-└── When govNFT is permissionless or caller is owner
+├── Given govNFT is not permissionless
+│   ├── When caller is not owner
+│   │   └── It should revert with OwnableUnauthorizedAccount
+│   └── When caller is owner
+│       ├── When token is address zero_
+│       │   └── It should revert with ZeroAddress
+│       └── When token is not address zero_
+│           ├── When recipient is address zero_
+│           │   └── It should revert with ZeroAddress
+│           └── When recipient is not address zero_
+│               ├── When amount is zero_
+│               │    └── It should revert with ZeroAmount
+│               └── When amount is not zero_
+│                   ├── When end time is equal to start time_
+│                   │   └── It should revert with InvalidParameters
+│                   └── When end time does not equal start time_
+│                       ├── When end time is smaller than start time_
+│                       │   └── It should revert with ArithmeticError
+│                       └── When end time is greater than start time_
+│                           ├── When cliff is greater than duration_
+│                           │   └── It should revert with InvalidCliff
+│                           └── When cliff is equal or smaller than duration_
+│                               ├── Given vault balance after transfer is smaller than amount_
+│                               │   └── It should revert with InsufficientAmount
+│                               └── Given vault balance is equal or greater than amount_
+│                                   ├── It should create a vault
+│                                   ├── It should increment _tokenId
+│                                   ├── It should mint an NFT with _tokenId to recipient
+│                                   ├── It should set totalLocked to amount in new lock 
+│                                   ├── It should set initialDeposit to amount in new lock 
+│                                   ├── It should set totalClaimed to zero in new lock 
+│                                   ├── It should set unclaimedBeforeSplit to zero in new lock 
+│                                   ├── It should set token to _token in new lock 
+│                                   ├── It should set splitCount to zero in new lock 
+│                                   ├── It should set cliffLength to _cliffLength in new lock 
+│                                   ├── It should set start to _startTime in new lock 
+│                                   ├── It should set end to _endTime in new lock 
+│                                   ├── It should set vault to new vault in new lock 
+│                                   ├── It should set minter to msg.sender in new lock 
+│                                   ├── It should send amount to vault
+│                                   └── It should emit a {Create} event
+└── Given govNFT is permissionless
     ├── When token is address zero
     │   └── It should revert with ZeroAddress
     └── When token is not address zero
@@ -9,7 +48,7 @@ CreateLockUnitConcreteTest
         │   └── It should revert with ZeroAddress
         └── When recipient is not address zero
             ├── When amount is zero
-            │    └── It should revert with ZeroAmount
+            │   └── It should revert with ZeroAmount
             └── When amount is not zero
                 ├── When end time is equal to start time
                 │   └── It should revert with InvalidParameters
@@ -39,4 +78,3 @@ CreateLockUnitConcreteTest
                                 ├── It should set minter to msg.sender in new lock 
                                 ├── It should send amount to vault
                                 └── It should emit a {Create} event
-
