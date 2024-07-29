@@ -1,9 +1,9 @@
 CreateGovNFTUnitConcreteTest
-├── When owner is factory 
-│   └── It should revert with NotAuthorized 
-└── When owner is not factory 
-    ├── When artProxy is address zero 
-    │   └── It should revert with ZeroAddress 
+├── When owner is factory
+│   └── It should revert with NotAuthorized
+└── When owner is not factory
+    ├── When artProxy is address zero
+    │   └── It should revert with ZeroAddress
     └── When artProxy is not address zero
         ├── It should add new govNFT to registry
         ├── It should set owner to owner in the new govNFT
