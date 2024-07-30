@@ -11,4 +11,4 @@ CreateGovNFTUnitConcreteTest
         ├── It should set name to name in the new govNFT
         ├── It should set symbol to symbol in the new govNFT
         ├── It should set earlySweepLockToken to earlySweepLockToken in the new govNFT
-        └── It should emit a {GovNFTTimelockCreated} event
+        └── It should emit a {GovNFTCreated} event

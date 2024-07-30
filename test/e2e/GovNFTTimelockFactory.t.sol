@@ -38,48 +38,6 @@ contract GovNFTTimelockFactoryTest is BaseTest {
         assertEq(_govNFT.timelock(), timelock);
     }
 
-    function test_RevertIf_CreateWithFactoryAsAdmin() public {
-        vm.expectRevert(IGovNFTTimelockFactory.NotAuthorized.selector);
-        factoryLock.createGovNFT({
-            _owner: address(factoryLock),
-            _artProxy: address(0),
-            _name: NAME,
-            _symbol: SYMBOL,
-            _earlySweepLockToken: true,
-            _timelock: timelock
-        });
-    }
-
-    function test_CreateGovNFT() public {
-        address customArtProxy = vm.addr(0x54321);
-        assertEq(factoryLock.govNFTsLength(), 1);
-
-        GovNFTTimelock _govNFT = GovNFTTimelock(
-            factoryLock.createGovNFT({
-                _owner: address(admin),
-                _artProxy: customArtProxy,
-                _name: "CustomGovNFTTimelock",
-                _symbol: "CustomGovNFT",
-                _earlySweepLockToken: true,
-                _timelock: timelock
-            })
-        );
-        uint256 length = factoryLock.govNFTsLength();
-        assertEq(length, 2);
-        address[] memory govNFTs = factoryLock.govNFTs(0, length);
-        assertEq(govNFTs.length, 2);
-        assertEq(govNFTs[1], address(_govNFT));
-        assertEq(factoryLock.govNFTByIndex(1), address(_govNFT));
-
-        assertEq(_govNFT.name(), "CustomGovNFTTimelock");
-        assertEq(_govNFT.symbol(), "CustomGovNFT");
-        assertEq(_govNFT.owner(), address(admin));
-        assertEq(_govNFT.artProxy(), customArtProxy);
-        assertEq(_govNFT.vaultImplementation(), factoryLock.vaultImplementation());
-        assertTrue(_govNFT.earlySweepLockToken());
-        assertEq(_govNFT.timelock(), timelock);
-    }
-
     function testFuzz_CreateMultipleGovNFTs(uint8 govNFTCount) public {
         assertEq(factoryLock.govNFTsLength(), 1);
         address[] memory govNFTs = new address[](govNFTCount);
@@ -120,43 +78,6 @@ contract GovNFTTimelockFactoryTest is BaseTest {
         });
         notAdmin.approve(testToken, address(_govNFT), TOKEN_100K);
         vm.prank(address(notAdmin));
-        _govNFT.createLock({
-            _token: testToken,
-            _recipient: address(recipient),
-            _amount: TOKEN_100K,
-            _startTime: uint40(block.timestamp),
-            _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK,
-            _description: ""
-        });
-    }
-
-    function test_RevertIf_CreateLockIfNotOwner() public {
-        IGovNFT _govNFT = IGovNFT(
-            factoryLock.createGovNFT({
-                _owner: address(admin),
-                _artProxy: address(artProxy),
-                _name: NAME,
-                _symbol: SYMBOL,
-                _earlySweepLockToken: true,
-                _timelock: timelock
-            })
-        );
-
-        admin.approve(testToken, address(_govNFT), TOKEN_100K);
-        vm.prank(address(admin));
-        _govNFT.createLock({
-            _token: testToken,
-            _recipient: address(recipient),
-            _amount: TOKEN_100K,
-            _startTime: uint40(block.timestamp),
-            _endTime: uint40(block.timestamp) + WEEK * 2,
-            _cliffLength: WEEK,
-            _description: ""
-        });
-        notAdmin.approve(testToken, address(_govNFT), TOKEN_100K);
-        vm.prank(address(notAdmin));
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(notAdmin)));
         _govNFT.createLock({
             _token: testToken,
             _recipient: address(recipient),

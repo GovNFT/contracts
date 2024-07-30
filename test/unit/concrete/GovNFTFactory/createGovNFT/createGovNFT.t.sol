@@ -38,7 +38,7 @@ contract CreateGovNFTUnitConcreteTest is BaseTest {
     }
 
     function test_WhenArtProxyIsNotAddressZero() external whenOwnerIsNotFactory {
-        // It should emit a {GovNFTTimelockCreated} event
+        // It should emit a {GovNFTCreated} event
         vm.expectEmit(true, true, false, true, address(factory));
         emit IGovNFTFactory.GovNFTCreated({
             owner: owner,
