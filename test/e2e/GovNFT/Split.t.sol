@@ -213,6 +213,41 @@ contract SplitTest is BaseTest {
         assertEq(govNFT.locks(tokenId).totalClaimed, amount);
     }
 
+    function test_SplitBeforeCliffEndMaintainsCliffVesting() public {
+        skip(5 days); // skip somewhere before cliff ends
+
+        IGovNFT.Lock memory lock = govNFT.locks(from);
+        assertEq(lock.totalLocked, govNFT.locked(from)); // still on cliff, no tokens vested
+        uint40 remainingCliff = (lock.start + lock.cliffLength) - uint40(block.timestamp);
+        assertEq(remainingCliff, WEEK - 5 days);
+
+        uint256 lockedAfterSplit = lock.totalLocked - amount;
+        uint256 expectedVestAfterCliff = (lockedAfterSplit * lock.cliffLength) / (lock.end - lock.start);
+
+        vm.prank(address(recipient));
+        IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](1);
+        paramsList[0] = IGovNFT.SplitParams({
+            beneficiary: address(recipient2),
+            amount: amount,
+            start: uint40(block.timestamp),
+            end: lock.end,
+            cliff: remainingCliff,
+            description: ""
+        });
+        govNFT.split(from, paramsList);
+
+        lock = govNFT.locks(from);
+
+        skip(remainingCliff); // skip to end of cliff
+
+        // Claimable after cliff should remain the same after splitting
+        assertEq(govNFT.unclaimed(from), expectedVestAfterCliff);
+        assertEq(IERC20(testToken).balanceOf(address(recipient2)), 0);
+        vm.prank(address(recipient));
+        govNFT.claim(from, address(recipient2), type(uint256).max);
+        assertEq(IERC20(testToken).balanceOf(address(recipient2)), expectedVestAfterCliff);
+    }
+
     function test_SplitAfterCliffEnd() public {
         skip(WEEK + 2 days); // skip somewhere after cliff ends
 
