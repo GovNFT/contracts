@@ -28,6 +28,26 @@ contract SplitUnitFuzzTest is BaseTest {
         skip(WEEK / 2);
     }
 
+    /// @dev Generates Valid Split Timestamps  up until `maxIndex`
+    ///      Used to avoid invalid parameters in `paramsList` before `maxIndex`
+    function _generateValidTimestamps(uint256 maxIndex) internal {
+        uint40 minCliff;
+        uint40 parentCliffEnd = parentLock.start + parentLock.cliffLength;
+        for (uint256 i = 0; i < maxIndex; i++) {
+            // update start end and cliff to valid values
+            paramsList[i].start = uint40(
+                bound(paramsList[i].start, Math.max(block.timestamp, parentLock.start), type(uint40).max)
+            );
+
+            paramsList[i].end = uint40(
+                bound(paramsList[i].end, Math.max(paramsList[i].start + 1, parentLock.end), type(uint40).max)
+            );
+
+            minCliff = parentCliffEnd > paramsList[i].start ? parentCliffEnd - paramsList[i].start : 0;
+            paramsList[i].cliff = uint40(bound(paramsList[i].cliff, minCliff, paramsList[i].end - paramsList[i].start));
+        }
+    }
+
     modifier whenCallerIsAuthorized() {
         vm.startPrank(address(recipient));
         _;
@@ -117,6 +137,9 @@ contract SplitUnitFuzzTest is BaseTest {
         uint256 salt = uint256(keccak256(abi.encodePacked(cliff, splitCount)));
         uint256 randomIndex = bound(salt, 0, splitCount - 1);
 
+        // generate valid split timestamps up to `randomIndex`
+        _generateValidTimestamps(randomIndex);
+
         // randomly choose an invalid cliff
         uint40 duration = paramsList[randomIndex].end - paramsList[randomIndex].start;
         paramsList[randomIndex].cliff = uint40(bound(cliff, duration + 1, type(uint40).max));
@@ -151,6 +174,9 @@ contract SplitUnitFuzzTest is BaseTest {
     {
         uint256 salt = uint256(keccak256(abi.encodePacked(end, splitCount)));
         uint256 randomIndex = bound(salt, 0, splitCount - 1);
+
+        // generate valid split timestamps up to `randomIndex`
+        _generateValidTimestamps(randomIndex);
 
         // update start to avoid underflows and invalidstart
         paramsList[randomIndex].start = uint40(bound(start, block.timestamp, parentLock.end));
@@ -327,7 +353,7 @@ contract SplitUnitFuzzTest is BaseTest {
             // generate different cliff timestamp for each split
             minCliff = parentCliffEnd > paramsList[i].start ? parentCliffEnd - paramsList[i].start : 0;
             cliff = uint40(uint256(keccak256(abi.encode(cliff, i))));
-            paramsList[i].cliff = uint40(bound(paramsList[i].cliff, minCliff, paramsList[i].end - paramsList[i].start));
+            paramsList[i].cliff = uint40(bound(cliff, minCliff, paramsList[i].end - paramsList[i].start));
         }
         _;
     }

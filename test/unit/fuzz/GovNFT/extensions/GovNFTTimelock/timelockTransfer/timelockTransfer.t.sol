@@ -58,8 +58,8 @@ contract TimelockTransferUnitFuzzTest is BaseTest {
     }
 
     function test_GivenTimelockPeriodPassed(uint40 timeskip) external givenLockToTransferIsFrozen {
-        vm.assume(timeskip >= timelock);
-        skip(timelock);
+        timeskip = uint40(bound(timeskip, timelock, type(uint40).max));
+        skip(timeskip);
 
         IGovNFTTimelock.Frozen memory frozen = govNFTTimelock.frozenState(tokenId);
         assertLe(frozen.timestamp + timelock, block.timestamp);
