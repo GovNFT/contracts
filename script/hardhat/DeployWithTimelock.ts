@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Libraries } from "hardhat/types";
 import { join } from "path";
 import { writeFile } from "fs/promises";
-import { GovNFTTimelockFactory } from "../../artifacts/types";
+import { GovNFTTimelockFactory, ArtProxy, Vault } from "../../artifacts/types";
 
 export async function deploy<Type>(
   typeName: string,
@@ -18,10 +18,17 @@ export async function deploy<Type>(
 }
 
 async function main() {
+  const vaultImplementation = await deploy<Vault>("Vault", undefined);
+  console.log(
+    `Vault Implementation deployed to ${vaultImplementation.address}`,
+  );
+  const artProxy = await deploy<ArtProxy>("ArtProxy", undefined);
+  console.log(`ArtProxy deployed to ${artProxy.address}`);
   const govNFTTimelockFactory = await deploy<GovNFTTimelockFactory>(
     "GovNFTTimelockFactory",
     undefined,
-    "0x0000000000000000000000000000000000000000", //TODO veArtProxy contract address
+    vaultImplementation.address,
+    artProxy.address,
     "GovNFT: NFT for vested distribution of (governance) tokens",
     "GOVNFT",
     3600,
@@ -31,10 +38,14 @@ async function main() {
   );
 
   interface DeployOutput {
+    VaultImplementation: string;
+    ArtProxy: string;
     GovNFTTimelockFactory: string;
   }
 
   const output: DeployOutput = {
+    VaultImplementation: vaultImplementation.address,
+    ArtProxy: artProxy.address,
     GovNFTTimelockFactory: govNFTTimelockFactory.address,
   };
 
