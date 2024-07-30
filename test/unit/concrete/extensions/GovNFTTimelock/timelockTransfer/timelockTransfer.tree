@@ -6,4 +6,6 @@ TimelockTransferUnitConcreteTest
     │   └── It should revert with UnfrozenToken
     └── Given timelock period passed 
         ├── It should execute transfer
+        ├── It should set the frozen state to false
+        ├── It should set the frozen state timestamp to 0
         └── It should emit {Transfer}
