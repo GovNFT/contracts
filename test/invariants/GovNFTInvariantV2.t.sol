@@ -23,8 +23,7 @@ contract GovNFTInvariantV2Test is GovNFTInvariants {
             _testToken: testToken,
             _airdropToken: airdropToken,
             _testActorCount: 10,
-            _initialDeposit: 1e27, // 1e9 = 1B tokens with 18 decimals
-            _maxLocks: 5
+            _initialDeposit: 1e27 // 1e9 = 1B tokens with 18 decimals
         });
     }
 }

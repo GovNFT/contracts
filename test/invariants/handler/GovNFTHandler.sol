@@ -31,7 +31,6 @@ abstract contract GovNFTHandler is Test {
     uint256 public totalDeposited;
     uint256 constant MAX_SPLITS = 2;
     uint256 constant TOKEN_100K = 1e23; // 1e5 = 100K tokens with 18 decimals
-    uint256 public immutable maxLockCount;
 
     // @dev Keeps track of all tokens claimed for a Lock, regardless if it has been split
     mapping(uint256 tokenId => uint256 totalClaimed) public idToPersistentClaims;
@@ -42,13 +41,11 @@ abstract contract GovNFTHandler is Test {
         address _testToken,
         address _airdropToken,
         uint256 _testActorCount,
-        uint256 _initialDeposit,
-        uint256 _maxLocks
+        uint256 _initialDeposit
     ) {
         govNFT = _govNFT;
         testToken = _testToken;
         timestore = _timestore;
-        maxLockCount = _maxLocks;
         airdropToken = _airdropToken;
         totalDeposited = _initialDeposit;
         actors = new TestOwner[](_testActorCount);
@@ -56,7 +53,7 @@ abstract contract GovNFTHandler is Test {
         for (uint256 i = 0; i < _testActorCount; i++) {
             actors[i] = new TestOwner();
         }
-        timestore.increaseCurrentTimestamp({timeskip: 2 weeks});
+        timestore.increaseCurrentTimestamp({timeskip: 3 weeks});
         vm.warp(timestore.currentTimestamp());
         vm.roll(timestore.currentBlockNumber());
         _setUpHandler();
@@ -102,38 +99,6 @@ abstract contract GovNFTHandler is Test {
         _;
     }
 
-    /// @dev If `maxLockCount` is exceeded, test Sweep or Claim instead
-    modifier maxLocks(
-        uint256 _amount,
-        uint256 _actorIndex,
-        uint256 _salt
-    ) {
-        if (govNFT.tokenId() >= maxLockCount) {
-            if (_amount % 2 == 0) {
-                claim({
-                    _tokenId: uint256((keccak256(abi.encode(_amount, _salt)))),
-                    _amount: _amount,
-                    _actorIndex: _actorIndex,
-                    _beneficiaryActorIndex: uint256((keccak256(abi.encode(_actorIndex, _salt)))),
-                    // @dev 0 Timeskip because time is already skipped in `increaseTimestamp`
-                    _timeskipSeed: 0
-                });
-            } else {
-                sweep({
-                    _tokenId: uint256((keccak256(abi.encode(_amount, _salt)))),
-                    _amount: _amount,
-                    _actorIndex: _actorIndex,
-                    _beneficiaryActorIndex: uint256((keccak256(abi.encode(_actorIndex, _salt)))),
-                    // @dev 0 Timeskip because time is already skipped in `increaseTimestamp`
-                    _timeskipSeed: 0
-                });
-            }
-        } else {
-            // Only create more locks if Max is not exceeded
-            _;
-        }
-    }
-
     function createLock(
         uint256 _amount,
         uint40 _startTime,
@@ -141,7 +106,7 @@ abstract contract GovNFTHandler is Test {
         uint40 _cliffLength,
         uint256 _actorIndex,
         uint256 _timeskipSeed
-    ) external useActor(_actorIndex) increaseTimestamp(_timeskipSeed) maxLocks(_amount, _actorIndex, _timeskipSeed) {
+    ) external useActor(_actorIndex) increaseTimestamp(_timeskipSeed) {
         _startTime = uint40(
             bound(
                 _startTime,
@@ -149,24 +114,43 @@ abstract contract GovNFTHandler is Test {
                 Math.min(block.timestamp + 4 weeks, type(uint40).max - 6 weeks - 1)
             )
         );
-        _endTime = uint40(bound(_endTime, _startTime + 1, _startTime + 6 weeks));
-        _cliffLength = uint40(bound(_cliffLength, 0, _endTime - _startTime));
+        /// @dev `_endTime` should be invalid if smaller or equal to `_startTime`
+        _endTime = uint40(bound(_endTime, _startTime - 1 weeks, _startTime + 6 weeks));
+        /// @dev `_cliffLength` should be invalid if greater than `_endTime - _startTime`
+        _cliffLength = uint40(bound(_cliffLength, 0, _endTime > _startTime ? _endTime - _startTime + 1 weeks : 0));
 
-        _amount = bound(_amount, TOKEN_100K / 2, TOKEN_100K);
+        /// @dev `_amount` should be invalid if zero
+        _amount = bound(_amount, 0, TOKEN_100K);
+
         deal(testToken, address(currentActor), _amount);
         currentActor.approve(testToken, address(govNFT), _amount);
 
-        govNFT.createLock({
-            _token: testToken, // creating locks in test token by default
-            _recipient: address(currentActor),
-            _amount: _amount,
-            _startTime: _startTime,
-            _endTime: _endTime,
-            _cliffLength: _cliffLength,
-            _description: ""
-        });
-        actorsWithLocks.add(address(currentActor));
-        totalDeposited += _amount;
+        try
+            govNFT.createLock({
+                _token: testToken, // creating locks in test token by default
+                _recipient: address(currentActor),
+                _amount: _amount,
+                _startTime: _startTime,
+                _endTime: _endTime,
+                _cliffLength: _cliffLength,
+                _description: ""
+            })
+        returns (uint256) {
+            actorsWithLocks.add(address(currentActor));
+            totalDeposited += _amount;
+        } catch (bytes memory reason) {
+            if (_amount == 0) {
+                assertEq(reason, abi.encodeWithSelector(IGovNFT.ZeroAmount.selector));
+            } else if (_startTime == _endTime) {
+                assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidParameters.selector));
+            } else if (_endTime < _startTime) {
+                assertEq(reason, stdError.arithmeticError);
+            } else if (_endTime - _startTime < _cliffLength) {
+                assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidCliff.selector));
+            } else {
+                revert();
+            }
+        }
     }
 
     function claim(
@@ -181,10 +165,13 @@ abstract contract GovNFTHandler is Test {
 
         _tokenId = _getRandomLockOfCurrentActor({_tokenIdSeed: _tokenId});
 
-        _amount = bound(_amount, 0, govNFT.unclaimed(_tokenId));
+        uint256 unclaimed = govNFT.unclaimed(_tokenId);
+        /// @dev allow amounts slightly larger than unclaimed
+        _amount = bound(_amount, 0, unclaimed + unclaimed / 3);
 
-        idToPersistentClaims[_tokenId] += _amount;
         govNFT.claim({_tokenId: _tokenId, _beneficiary: beneficiary, _amount: _amount});
+        /// @dev if `_amount` is greater than `unclaimed`, should only claim `unclaimed`
+        idToPersistentClaims[_tokenId] += Math.min(_amount, unclaimed);
     }
 
     function sweep(
@@ -192,20 +179,40 @@ abstract contract GovNFTHandler is Test {
         uint256 _amount,
         uint256 _actorIndex,
         uint256 _beneficiaryActorIndex,
-        uint256 _timeskipSeed
+        uint256 _timeskipSeed,
+        bool _testInvalidSweep
     ) public useActorWithLocks(_actorIndex) increaseTimestamp(_timeskipSeed) {
         // Select a Random actor to be the Recipient
         address beneficiary = _getRandomActor({_actorSeed: _beneficiaryActorIndex});
 
         _tokenId = _getRandomLockOfCurrentActor({_tokenIdSeed: _tokenId});
 
-        // Only sweep Lock token if Lock has finished vesting
-        address token = govNFT.locks(_tokenId).end >= block.timestamp ? airdropToken : testToken;
+        address token = testToken;
+        uint256 end = govNFT.locks(_tokenId).end;
+        _amount = bound(_amount, 0, 10 * TOKEN_100K);
+        // Can only sweep Lock token if Lock has finished vesting
+        if (end >= block.timestamp) {
+            // chance of not using airdrop token and getting an InvalidSweep()
+            if (!_testInvalidSweep) {
+                token = airdropToken;
+            } else {
+                _amount = 0; // reset amount to avoid dealing tokens in InvalidSweeps
+            }
+        }
         address vault = govNFT.locks(_tokenId).vault;
-        _amount = bound(_amount, 1, 10 * TOKEN_100K);
 
         deal(token, vault, IERC20(token).balanceOf(vault) + _amount);
-        govNFT.sweep({_tokenId: _tokenId, _token: token, _recipient: beneficiary, _amount: _amount});
+        try govNFT.sweep({_tokenId: _tokenId, _token: token, _recipient: beneficiary, _amount: _amount}) {} catch (
+            bytes memory reason
+        ) {
+            if (end > block.timestamp && token == testToken) {
+                assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidSweep.selector));
+            } else if (_amount == 0) {
+                assertEq(reason, abi.encodeWithSelector(IGovNFT.ZeroAmount.selector));
+            } else {
+                revert();
+            }
+        }
     }
 
     function split(
@@ -215,44 +222,116 @@ abstract contract GovNFTHandler is Test {
         uint256 _beneficiaryActorIndex,
         uint256 _timeskipSeed,
         uint8 _splitCount
-    )
-        external
-        useActorWithLocks(_actorIndex)
-        increaseTimestamp(_timeskipSeed)
-        maxLocks(_amount, _actorIndex, _timeskipSeed)
-    {
-        if (govNFT.tokenId() > 5) return;
+    ) external useActorWithLocks(_actorIndex) increaseTimestamp(_timeskipSeed) {
         _tokenId = _getRandomLockOfCurrentActor({_tokenIdSeed: _tokenId});
 
         // Split Lock in `_splitCount` childLocks
         uint40 parentEnd = govNFT.locks(_tokenId).end;
-        uint256 totalSplitAmount = Math.min(govNFT.locked(_tokenId), TOKEN_100K);
+        /// @dev if amount is greater than locked, should revert with AmountTooBig
+        uint256 totalSplitAmount = Math.min(govNFT.locked(_tokenId) + 1e18 * 100, TOKEN_100K);
         if (totalSplitAmount > 1 && parentEnd > block.timestamp) {
             // Ensure `totalSplitAmount` can be divided by `_splitCount`
             _splitCount = uint8(bound(_splitCount, 2, Math.min(totalSplitAmount, MAX_SPLITS)));
 
-            IGovNFT.SplitParams[] memory params = new IGovNFT.SplitParams[](_splitCount);
+            IGovNFT.SplitParams[] memory paramsList = new IGovNFT.SplitParams[](_splitCount);
             for (uint256 i = 0; i < _splitCount; i++) {
                 // Select a Random actor to be the Recipient
-                params[i].beneficiary = _getRandomActor({
+                paramsList[i].beneficiary = _getRandomActor({
                     _actorSeed: uint256((keccak256(abi.encode(_beneficiaryActorIndex, i))))
                 });
-                actorsWithLocks.add(params[i].beneficiary);
 
                 // Generate random Split Amount
-                params[i].amount = bound({
+                paramsList[i].amount = bound({
                     x: uint256(keccak256(abi.encode(_amount, i))),
-                    min: 1,
+                    min: 0,
                     max: totalSplitAmount / _splitCount
                 });
 
                 // Generate random Timestamp parameters for Child Lock
-                (params[i].start, params[i].end, params[i].cliff) = _generateSplitTimestamps({
+                (paramsList[i].start, paramsList[i].end, paramsList[i].cliff) = _generateSplitTimestamps({
                     _tokenId: _tokenId,
                     _salt: i
                 });
             }
-            govNFT.split({_from: _tokenId, _paramsList: params});
+            try govNFT.split({_from: _tokenId, _paramsList: paramsList}) {
+                uint256 length = paramsList.length;
+                for (uint256 i = 0; i < length; i++) {
+                    actorsWithLocks.add(paramsList[i].beneficiary);
+                }
+            } catch (bytes memory reason) {
+                if (!_validateSplits(_tokenId, reason, paramsList)) revert();
+            }
         }
+    }
+
+    function _validateSplits(
+        uint256 tokenId,
+        bytes memory reason,
+        IGovNFT.SplitParams[] memory paramsList
+    ) internal returns (bool) {
+        uint256 sum;
+        IGovNFT.SplitParams memory params;
+        uint256 length = paramsList.length;
+        for (uint256 i = 0; i < length; i++) {
+            params = paramsList[i];
+
+            if (_validateLockCreation(reason, params.amount, params.start, params.end, params.cliff)) return true;
+            if (_validateSplit(tokenId, reason, params.start, params.end, params.cliff)) return true;
+            sum += params.amount;
+        }
+        if (sum > govNFT.locked(tokenId)) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.AmountTooBig.selector));
+            return true;
+        }
+        return false;
+    }
+
+    function _validateLockCreation(
+        bytes memory reason,
+        uint256 amount,
+        uint40 start,
+        uint40 end,
+        uint40 cliff
+    ) internal returns (bool) {
+        if (amount == 0) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.ZeroAmount.selector));
+            return true;
+        }
+        if (start == end) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidParameters.selector));
+            return true;
+        }
+        if (end < start) {
+            assertEq(reason, stdError.arithmeticError);
+            return true;
+        }
+        if (end - start < cliff) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidCliff.selector));
+            return true;
+        }
+        return false;
+    }
+
+    function _validateSplit(
+        uint256 tokenId,
+        bytes memory reason,
+        uint40 start,
+        uint40 end,
+        uint40 cliff
+    ) internal returns (bool) {
+        IGovNFT.Lock memory parentLock = govNFT.locks(tokenId);
+        if (end < parentLock.end) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidEnd.selector));
+            return true;
+        }
+        if (start < parentLock.start || start < block.timestamp) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidStart.selector));
+            return true;
+        }
+        if (start + cliff < parentLock.start + parentLock.cliffLength) {
+            assertEq(reason, abi.encodeWithSelector(IGovNFT.InvalidCliff.selector));
+            return true;
+        }
+        return false;
     }
 }

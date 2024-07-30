@@ -14,9 +14,8 @@ contract GovNFTHandlerV1 is GovNFTHandler {
         address _testToken,
         address _airdropToken,
         uint256 _testActorCount,
-        uint256 _initialDeposit,
-        uint256 _maxLocks
-    ) GovNFTHandler(_govNFT, _timestore, _testToken, _airdropToken, _testActorCount, _initialDeposit, _maxLocks) {}
+        uint256 _initialDeposit
+    ) GovNFTHandler(_govNFT, _timestore, _testToken, _airdropToken, _testActorCount, _initialDeposit) {}
 
     // @dev Sets up the Handler contract with an initial 3 year Lock
     function _setUpHandler() internal virtual override {
@@ -43,28 +42,36 @@ contract GovNFTHandlerV1 is GovNFTHandler {
         uint40 parentEnd = lock.end;
         uint40 parentStart = lock.start;
         uint40 parentCliffEnd = parentStart + lock.cliffLength;
+        /// @dev `start` should be invalid if smaller or equal to `parentStart` or `block.timestamp`
         start = uint40(
             bound({
                 x: uint256(keccak256(abi.encode(block.timestamp, _salt + 1))),
-                min: Math.max(parentStart, block.timestamp),
-                // @dev Avoid overflow if `parentEnd + 1 weeks > type(uint40).max`
-                max: Math.min(uint256(parentEnd) + 1 weeks, type(uint40).max - 1)
+                min: Math.max(parentStart - 1 weeks, block.timestamp - 1 weeks),
+                // @dev Avoid overflow if `parentEnd + 2 weeks > type(uint40).max`
+                max: Math.min(uint256(parentEnd) + 2 weeks, type(uint40).max - 1)
             })
         );
+        /// @dev `end` should be invalid if smaller or equal to `start` or `parentEnd`
         end = uint40(
             bound({
                 x: uint256(keccak256(abi.encode(block.timestamp, _salt + 2))),
-                min: Math.max(start + 1, parentEnd),
+                min: Math.max(start - 2 weeks, parentEnd > 2 weeks ? parentEnd - 2 weeks : parentEnd),
                 max: type(uint40).max
             })
         );
-        cliff = uint40(
-            bound({
-                x: uint256(keccak256(abi.encode(block.timestamp, _salt + 3))),
-                // If new start is before parent's cliff end, need to account for remaining cliff
-                min: start < parentCliffEnd ? parentCliffEnd - start : 0,
-                max: end - start
-            })
-        );
+        if (end <= start) {
+            cliff = 0; // If invalid start and end, no cliff is necessary
+        } else {
+            // If new start is before parent's cliff end, need to account for remaining cliff
+            uint256 min = start < parentCliffEnd ? parentCliffEnd - start : 0;
+            /// @dev `cliff` should be invalid if greater than lock duration or smaller than remaining cliff
+            cliff = uint40(
+                bound({
+                    x: uint256(keccak256(abi.encode(block.timestamp, _salt + 3))),
+                    min: min > 1 weeks ? min - 1 weeks : min, // allow smaller values to test invalid cliffs
+                    max: end - start + 2 weeks
+                })
+            );
+        }
     }
 }
