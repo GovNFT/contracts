@@ -68,4 +68,8 @@ The GovNFT contract can:
 
 ## Deployment
 
-GovNFT - TODO: add deployed address
+| Name                | Address                                                                                                                               |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------ |
+| ArtProxy            | [0x6A3A9B0fd01D8e2F1DC78c62114D009Ac8966060](https://optimistic.etherscan.io/address/0x6A3A9B0fd01D8e2F1DC78c62114D009Ac8966060#code) |
+| GovNFTFactory       | [0xefB034F630F7cfA595C3858EaE6b67eF8fdD8e30](https://optimistic.etherscan.io/address/0xefB034F630F7cfA595C3858EaE6b67eF8fdD8e30#code) |
+| VaultImplementation | [0xd69D0f1800Fbd43E5DD28701c2c3d2aBA690C388](https://optimistic.etherscan.io/address/0xd69D0f1800Fbd43E5DD28701c2c3d2aBA690C388#code) |
